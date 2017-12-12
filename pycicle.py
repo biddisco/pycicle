@@ -37,7 +37,7 @@ parser.add_argument('-d', '--debug', dest='debug', action='store_true',
 #----------------------------------------------
 home = str(os.path.expanduser('~'))
 pycicle_dir = os.environ.get('PYCICLE_ROOT', home + '/pycicle')
-parser.add_argument('-r', '--pycicle-dir', dest='pycicle_dir',
+parser.add_argument('-r', '--pycicle-root', dest='pycicle_dir',
     default=pycicle_dir, help='pycicle root path/directory')
 
 #--------------------------------------------------------------------------
@@ -135,7 +135,7 @@ def launch_build(nickname, compiler, branch_id, branch_name) :
     cmd1 = 'ctest' if not args.debug else 'echo'
     script = 'dashboard_slurm.cmake' if args.slurm else 'dashboard_script.cmake'
     cmd = ['ssh', remote_ssh, cmd1, '-S',
-           remote_path          + '/repo/tools/pycicle/' + script,
+           remote_path          + '/repo/pycicle/' + script,
            '-DPYCICLE_ROOT='    + remote_path,
            '-DPYCICLE_HOST='    + nickname,
            '-DPYCICLE_PR='      + branch_id if branch_id != 'master' else '',
