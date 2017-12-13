@@ -28,7 +28,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_HOST}.cmake)
 #######################################################################
 set(PYCICLE_SLURM_TEMPLATE ${PYCICLE_SLURM_TEMPLATE}
   "ctest "
-  "-S ${PYCICLE_ROOT}/repo/tools/pycicle/dashboard_script.cmake "
+  "-S ${PYCICLE_ROOT}/pycicle/dashboard_script.cmake "
   "-DPYCICLE_ROOT=${PYCICLE_ROOT} "
   "-DPYCICLE_HOST=${PYCICLE_HOST} "
   "-DPYCICLE_PR=${PYCICLE_PR} "

@@ -135,7 +135,7 @@ def launch_build(nickname, compiler, branch_id, branch_name) :
     cmd1 = 'ctest' if not args.debug else 'echo'
     script = 'dashboard_slurm.cmake' if args.slurm else 'dashboard_script.cmake'
     cmd = ['ssh', remote_ssh, cmd1, '-S',
-           remote_path          + '/repo/pycicle/' + script,
+           remote_path          + '/pycicle/' + script,
            '-DPYCICLE_ROOT='    + remote_path,
            '-DPYCICLE_HOST='    + nickname,
            '-DPYCICLE_PR='      + branch_id if branch_id != 'master' else '',
