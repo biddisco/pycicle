@@ -22,6 +22,8 @@ inside an `SBATCH` wrapper so that the build is triggered by slurm on a compute 
 The build script will checkout the latest master branch, merge the PR (branch) into it,
 then do ctest configure/build/test with submit steps after each configure/build/test step respectively
 to produce an entry in the dashboard that is updated as the build progresses.
+Note that if a pull request is modified whilst a previous build is still going, an `scancel`
+of the existing job is used to terminate the first before starting the second.
 
 Every M seconds, pycicle will find (scrape) a small log file generated in each build dir that contains a summary
 of config/build/test results and update the github PR status based on it so that build failures
@@ -165,7 +167,22 @@ directory.
 Details of the CMake Vars that need to be set will follow. Most is self explanatory for developers
 familiar with CMake/CTest.
 
-# ToDo
+## Force rebuilds
+In the $PYCICLE_ROOT directory of the machine that runs the pycicle script you can delete
+the file that holds the last checked SHA from github. This will trigger a new build for
+all PRs.
+```
+cd $PYCICLE_ROOT
+find src -maxdepth 2 -name last_pr_sha.txt -delete
+```
+If you only want to force a rebuild for PR 3042, then
+```
+cd $PYCICLE_ROOT
+rm -f src/3042/last_pr_sha.txt
+```
+NB. A command line param should be added to allow this to be done without manual deletion.
+
+## ToDo
 Currently, scripts are configured to work with the HPX project and some things have been hardcoded,
 these need to be changed to easily editable config settings.
 
