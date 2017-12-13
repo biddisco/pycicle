@@ -138,7 +138,7 @@ def launch_build(nickname, compiler, branch_id, branch_name) :
            remote_path          + '/pycicle/' + script,
            '-DPYCICLE_ROOT='    + remote_path,
            '-DPYCICLE_HOST='    + nickname,
-           '-DPYCICLE_PR='      + branch_id if branch_id != 'master' else '',
+           '-DPYCICLE_PR='      + branch_id,
            '-DPYCICLE_BRANCH='  + branch_name,
            '-DPYCICLE_RANDOM='  + random_string(10),
            '-DPYCICLE_COMPILER='+ compiler,
