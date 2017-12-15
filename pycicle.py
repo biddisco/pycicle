@@ -343,6 +343,7 @@ while True:
             branch_sha  = pr.head.sha
             # need details, including last commit on PR for setting status
             pr_list[branch_id] = [machine, branch_name, pr.get_commits().reversed[0]]
+
             #
             if args.pull_request!=0 and pr.number!=args.pull_request:
                 continue
@@ -380,7 +381,7 @@ while True:
                         builds_done.get(branch_id))
 
 
-    except (github.GithubException, socket.timeout) as ex:
+    except (github.GithubException, socket.timeout, ssl.SSLError) as ex:
         # github might be down, or there may be a network issue,
         # just go to the sleep statement and try again in a minute
         print('Github/Socket exception :', ex)
