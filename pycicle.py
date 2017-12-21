@@ -10,7 +10,7 @@
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 from __future__ import absolute_import, division, print_function, unicode_literals
-import github, os, subprocess, time, re, string, random, socket, datetime, argparse
+import github, ssl, os, subprocess, time, re, string, random, socket, datetime, argparse
 
 #--------------------------------------------------------------------------
 # Command line args
