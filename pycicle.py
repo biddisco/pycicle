@@ -33,6 +33,12 @@ parser.add_argument('-d', '--debug', dest='debug', action='store_true',
     default=False, help="Enable debug mode")
 
 #----------------------------------------------
+# force rebuild mode
+#----------------------------------------------
+parser.add_argument('-f', '--force', dest='force', action='store_true',
+    default=False, help="Force rebuild of active PRs on next check")
+
+#----------------------------------------------
 # set default path for pycicle work dir
 #----------------------------------------------
 home = str(os.path.expanduser('~'))
@@ -80,6 +86,7 @@ print('pycicle: slurm       :', 'enabled' if args.slurm else 'disabled')
 print('pycicle: debug       :',
     'enabled (no build trigger commands will be sent)' if args.debug else 'disabled')
 print('pycicle: scrape-only :', 'enabled' if args.slurm else 'disabled')
+print('pycicle: force       :', 'enabled' if args.force else 'disabled')
 print('pycicle: path        :', args.pycicle_dir)
 print('pycicle: token       :', args.user_token)
 print('pycicle: machines    :', args.machines)
@@ -320,6 +327,7 @@ def needs_update(branch_id, branch_name, branch_sha, master_sha):
 #
 github_t1       = datetime.datetime.now()
 scrape_t1       = github_t1 + datetime.timedelta(hours=-1)
+force           = args.force
 #
 random.seed(7)
 #
@@ -351,13 +359,13 @@ while True:
                 continue
             #
             if not args.scrape_only:
-                update = needs_update(branch_id, branch_name, branch_sha, master_sha)
+                update = force or needs_update(branch_id, branch_name, branch_sha, master_sha)
                 if update:
                     choose_and_launch(machine, branch_id, branch_name)
 
         # also build the master branch if it has changed
         if not args.scrape_only and args.pull_request==0:
-            if needs_update('master', 'master', master_sha, master_sha):
+            if force or needs_update('master', 'master', master_sha, master_sha):
                 choose_and_launch(machine, 'master', 'master')
                 pr_list['master'] = [machine, 'master', master_branch.commit, ""]
 
@@ -380,7 +388,6 @@ while True:
                         get_setting_for_machine(machine, 'PYCICLE_MACHINE'),
                         builds_done.get(branch_id))
 
-
     except (github.GithubException, socket.timeout, ssl.SSLError) as ex:
         # github might be down, or there may be a network issue,
         # just go to the sleep statement and try again in a minute
@@ -388,3 +395,5 @@ while True:
 
     # Sleep for a while before polling github again
     time.sleep(poll_time)
+    # force option should only have effect on the first iteration
+    force = False
