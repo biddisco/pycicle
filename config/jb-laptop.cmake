@@ -43,7 +43,7 @@ set(BUILD_PARALLELISM "8")
 
 set(CTEST_SITE "linux(jblaptop)-gcc-${GCC_VER}-Boost-${BOOST_VER}")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT "45")
+set(CTEST_TEST_TIMEOUT "200")
 
 #######################################################################
 # The string that is used to drive cmake config step
