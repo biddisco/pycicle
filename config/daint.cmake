@@ -106,7 +106,7 @@ set(PAPI_LIBRARY     "${INSTALL_ROOT}/papi/${PAPI_VER}/lib/libpfm.so")
 
 set(CTEST_SITE "cray(daint)-${PYCICLE_BUILD_STAMP}-Boost-${BOOST_VER}")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT "45")
+set(CTEST_TEST_TIMEOUT "200")
 set(BUILD_PARALLELISM  "32")
 
 #######################################################################
