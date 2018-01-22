@@ -322,6 +322,27 @@ def needs_update(branch_id, branch_name, branch_sha, master_sha):
     return update
 
 #--------------------------------------------------------------------------
+# Delete old build and src dirs from pycicle root
+#--------------------------------------------------------------------------
+def delete_old_files(nickname, path, days) :
+    remote_ssh  = get_setting_for_machine(nickname, 'PYCICLE_MACHINE')
+    directory   = '${PYCICLE_ROOT}/'+ path
+    Dirs        = []
+
+    cmd = ['ssh', remote_ssh, 'find ',
+           directory, ' -mindepth 1 -maxdepth 1 -type d -mtime +' + str(days)]
+
+    try:
+        result = subprocess.check_output(cmd).split()
+        for s in result:
+            temp = s.decode('utf-8')
+            cmd = ['ssh', remote_ssh, 'rm', '-rf', temp]
+            print('Deleting old/stale directory : ', cmd)
+            result = subprocess.check_output(cmd).split()
+    except Exception as ex:
+        print('Cleanup failed for ', nickname)
+
+#--------------------------------------------------------------------------
 # main polling routine
 #--------------------------------------------------------------------------
 #
@@ -387,6 +408,10 @@ while True:
                     erase_file(
                         get_setting_for_machine(machine, 'PYCICLE_MACHINE'),
                         builds_done.get(branch_id))
+
+            # cleanup old files that need to be purged every N days
+            delete_old_files(machine, 'src',   3)
+            delete_old_files(machine, 'build', 3)
 
     except (github.GithubException, socket.timeout, ssl.SSLError) as ex:
         # github might be down, or there may be a network issue,
