@@ -17,7 +17,9 @@ message("Random string is " ${PYCICLE_RANDOM})
 message("COMPILER is      " ${PYCICLE_COMPILER})
 message("BOOST is         " ${PYCICLE_BOOST})
 
+#######################################################################
 # need to make this a passed in option
+#######################################################################
 set(CTEST_BUILD_CONFIGURATION "Release")
 
 #######################################################################
@@ -67,7 +69,7 @@ set(WITH_COVERAGE FALSE)
 #######################################################################
 # Wipe build dir when starting a new build
 #######################################################################
-#ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
+ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 
 #######################################################################
 # setup git
