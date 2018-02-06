@@ -8,6 +8,9 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 #######################################################################
 # For debugging this script
 #######################################################################
+message("Project name is  " ${PYCICLE_PROJECT_NAME})
+message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
+message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
 message("Pull request is  " ${PYCICLE_PR})
 message("PR-Branchname is " ${PYCICLE_BRANCH})
 message("master branch is " ${PYCICLE_MASTER})
@@ -26,12 +29,7 @@ set(CTEST_BUILD_CONFIGURATION "Release")
 # Load machine specific settings
 # This is where the main machine config file is read in and params set
 #######################################################################
-include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_HOST}.cmake)
-
-#######################################################################
-# User vars that need to be set on each machine using this script
-#######################################################################
-set(GIT_REPO "https://github.com/STEllAR-GROUP/hpx.git")
+include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
 # a function that calls ctest_submit - only used to make
@@ -48,7 +46,7 @@ endfunction()
 #######################################################################
 set(PYCICLE_SRC_ROOT       "${PYCICLE_ROOT}/src")
 set(PYCICLE_BUILD_ROOT     "${PYCICLE_ROOT}/build")
-set(PYCICLE_LOCAL_GIT_COPY "${PYCICLE_ROOT}/repo")
+set(PYCICLE_LOCAL_GIT_COPY "${PYCICLE_ROOT}/repos/${PYCICLE_GITHUB_PROJECT_NAME}")
 
 file(MAKE_DIRECTORY          "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}")
 set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}/repo")
@@ -65,11 +63,6 @@ endif()
 #######################################################################
 set(WITH_MEMCHECK FALSE)
 set(WITH_COVERAGE FALSE)
-
-#######################################################################
-# Wipe build dir when starting a new build
-#######################################################################
-ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 
 #######################################################################
 # setup git
@@ -151,22 +144,24 @@ set(CTEST_MODEL Experimental)
 #######################################################################
 # INSPECT : START a fake dashboard using only configure to run inspect
 #######################################################################
-message("Initialize dashboard : ${CTEST_MODEL} ...")
-set(CTEST_BINARY_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}/inspect")
-ctest_start(${CTEST_MODEL}
+if (PYCICLE_PROJECT_NAME MATCHES "hpx")
+  message("Initialize dashboard : ${CTEST_MODEL} ...")
+  set(CTEST_BINARY_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}/inspect")
+  ctest_start(${CTEST_MODEL}
     TRACK "Inspect"
     "${CTEST_SOURCE_DIRECTORY}"
     "${CTEST_BINARY_DIRECTORY}"
-)
+  )
 
-# configure step calls inspect instead of cmake
-string(CONCAT CTEST_CONFIGURE_COMMAND
-  "${PYCICLE_ROOT}/inspect/inspect ${CTEST_SOURCE_DIRECTORY}/hpx --all --text"
-)
+  # configure step calls inspect instead of cmake
+  string(CONCAT CTEST_CONFIGURE_COMMAND
+    "${PYCICLE_ROOT}/inspect/inspect ${CTEST_SOURCE_DIRECTORY}/hpx --all --text"
+  )
 
-message("Running inspect...")
-ctest_configure()
-ctest_submit(PARTS Configure)
+  message("Running inspect...")
+  ctest_configure()
+  ctest_submit(PARTS Configure)
+endif()
 
 #######################################################################
 # Erase any test complete status before starting new dashboard run
@@ -183,6 +178,12 @@ ctest_start(${CTEST_MODEL}
     "${CTEST_SOURCE_DIRECTORY}"
     "${CTEST_BINARY_DIRECTORY}"
 )
+
+#######################################################################
+# Wipe build dir when starting a new build
+#######################################################################
+#message("Wiping binary directory ${CTEST_BINARY_DIRECTORY}")
+#ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 
 #######################################################################
 # Update dashboard
