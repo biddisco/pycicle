@@ -8,6 +8,9 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 #######################################################################
 # For debugging this script
 #######################################################################
+message("Project name is  " ${PYCICLE_PROJECT_NAME})
+message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
+message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
 message("Pull request is  " ${PYCICLE_PR})
 message("PR-Branchname is " ${PYCICLE_BRANCH})
 message("master branch is " ${PYCICLE_MASTER})
@@ -20,7 +23,7 @@ message("BOOST is         " ${PYCICLE_BOOST})
 #######################################################################
 # Load machine specific settings
 #######################################################################
-include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_HOST}.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
 # Generate a slurm job script and launch it
@@ -31,6 +34,9 @@ set(PYCICLE_SLURM_TEMPLATE ${PYCICLE_SLURM_TEMPLATE}
   "-S ${PYCICLE_ROOT}/pycicle/dashboard_script.cmake "
   "-DPYCICLE_ROOT=${PYCICLE_ROOT} "
   "-DPYCICLE_HOST=${PYCICLE_HOST} "
+  "-DPYCICLE_PROJECT_NAME=${PYCICLE_PROJECT_NAME} "
+  "-DPYCICLE_GITHUB_PROJECT_NAME=${PYCICLE_GITHUB_PROJECT_NAME} "
+  "-DPYCICLE_GITHUB_ORGANISATION=${PYCICLE_GITHUB_ORGANISATION} "
   "-DPYCICLE_PR=${PYCICLE_PR} "
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
   "-DPYCICLE_COMPILER=${PYCICLE_COMPILER} "
@@ -47,10 +53,14 @@ file(WRITE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh" ${PYCICLE_SL
 #   pushes to the same branch are handled cleanly
 # 2 Spawn a new build
 #######################################################################
+message("sbatch \n"
+    ${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh
+)
+
 execute_process(
-  COMMAND bash "-c" "scancel $(squeue -n hpx-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP} -h -o %A) > /dev/null 2>&1;
+  COMMAND bash "-c" "scancel $(squeue -n ${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP} -h -o %A) > /dev/null 2>&1;
                      sbatch ${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh"
 )
 
 # wipe the temp file job script
-file(REMOVE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh")
+#file(REMOVE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh")
