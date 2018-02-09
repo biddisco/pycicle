@@ -95,7 +95,7 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
 #######################################################################
 set(PYCICLE_SLURM_TEMPLATE "#!/bin/bash
 #SBATCH --job-name=DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
-#SBATCH --time=04:00:00
+#SBATCH --time=01:00:00
 #SBATCH --nodes=1
 #SBATCH --exclusive
 #SBATCH --constraint=gpu

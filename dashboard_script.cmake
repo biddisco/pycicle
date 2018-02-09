@@ -29,6 +29,7 @@ set(CTEST_BUILD_CONFIGURATION "Release")
 # Load machine specific settings
 # This is where the main machine config file is read in and params set
 #######################################################################
+include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
@@ -94,7 +95,7 @@ endif()
 # if this is a PR to be merged with master for testing
 #####################################################################
 if (NOT PYCICLE_PR STREQUAL "master")
-  set(CTEST_SUBMISSION_TRACK "Pull Requests")
+  set(CTEST_SUBMISSION_TRACK "Pull_Requests")
   set(PYCICLE_BRANCH "pull/${PYCICLE_PR}/head")
   set(GIT_BRANCH "PYCICLE_PR_${PYCICLE_PR}")
   #
@@ -140,6 +141,12 @@ else()
 endif()
 
 #######################################################################
+# Wipe build dir when starting a new build
+#######################################################################
+message("Wiping binary directory ${CTEST_BINARY_DIRECTORY}")
+ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
+
+#######################################################################
 # Dashboard model : use Experimental unless problems arise
 #######################################################################
 set(CTEST_MODEL Experimental)
@@ -168,6 +175,7 @@ endif()
 
 #######################################################################
 # Erase any test complete status before starting new dashboard run
+# (this should have been wiped anyway by ctest_empty_binary_directory)
 #######################################################################
 set(CTEST_BINARY_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}")
 file(REMOVE "${CTEST_BINARY_DIRECTORY}/pycicle-TAG.txt")
@@ -182,26 +190,19 @@ ctest_start(${CTEST_MODEL}
     "${CTEST_BINARY_DIRECTORY}"
 )
 
-#######################################################################
-# Wipe build dir when starting a new build
-#######################################################################
-#message("Wiping binary directory ${CTEST_BINARY_DIRECTORY}")
-#ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
-
-#######################################################################
-# Update dashboard
-#######################################################################
-message("Update source... using ${CTEST_SOURCE_DIRECTORY}")
-ctest_update(RETURN_VALUE NB_CHANGED_FILES)
-pycicle_submit(PARTS Update)
-message("Found ${NB_CHANGED_FILES} changed file(s)")
-
 string(CONCAT CTEST_CONFIGURE_COMMAND
   " ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CTEST_BUILD_CONFIGURATION} "
   " ${CTEST_BUILD_OPTIONS}"
   " ${CTEST_CONFIGURE_COMMAND} \"-G${CTEST_CMAKE_GENERATOR}\""
   " ${CTEST_CONFIGURE_COMMAND} \"${CTEST_SOURCE_DIRECTORY}\"")
 
+#######################################################################
+# Update dashboard
+#######################################################################
+message("Update source... using ${CTEST_SOURCE_DIRECTORY}")
+
+ctest_update(RETURN_VALUE NB_CHANGED_FILES)
+message("Found ${NB_CHANGED_FILES} changed file(s)")
 message("CTEST_CONFIGURE_COMMAND is\n${CTEST_CONFIGURE_COMMAND}")
 
 message("Configure...")
@@ -210,12 +211,12 @@ pycicle_submit(PARTS Update Configure)
 
 message("Build...")
 set(CTEST_BUILD_FLAGS "-j ${BUILD_PARALLELISM}")
-ctest_build(TARGET "tests" )
-pycicle_submit(PARTS Update Configure Build)
+ctest_build(TARGET ${PYCICLE_CTEST_BUILD_TARGET} )
+pycicle_submit(PARTS Build)
 
 message("Test...")
 ctest_test(RETURN_VALUE test_result_ EXCLUDE "compile")
-pycicle_submit(PARTS Update Configure Build Test)
+pycicle_submit(PARTS Test)
 
 if (WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
   ctest_coverage()
