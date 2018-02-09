@@ -52,6 +52,9 @@ file(MAKE_DIRECTORY          "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}")
 set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}/repo")
 set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
 
+# include any ctest settings to make sure we have them
+include(${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake)
+
 if (PYCICLE_PR STREQUAL "master")
   set(CTEST_BUILD_NAME "${PYCICLE_BRANCH}-${CTEST_BUILD_CONFIGURATION}")
 else()
@@ -84,7 +87,7 @@ endif()
 set (make_repo_copy_ "")
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
   set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
-  message("cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
+  message("${make_repo_copy_}")
 endif()
 
 #####################################################################
