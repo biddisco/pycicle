@@ -49,9 +49,12 @@ set(PYCICLE_SRC_ROOT       "${PYCICLE_ROOT}/src")
 set(PYCICLE_BUILD_ROOT     "${PYCICLE_ROOT}/build")
 set(PYCICLE_LOCAL_GIT_COPY "${PYCICLE_ROOT}/repos/${PYCICLE_GITHUB_PROJECT_NAME}")
 
-file(MAKE_DIRECTORY          "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}")
-set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}/repo")
-set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
+set(PYCICLE_PR_ROOT          "${PYCICLE_SRC_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}")
+set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_PR_ROOT}/repo")
+set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
+
+# make sure root dir exists
+file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
 
 # include any ctest settings to make sure we have them
 include(${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake)
@@ -104,7 +107,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
   # to fetch the merged branch so that the update step shows the
   # files that are different in the branch from master
   #
-  set(WORK_DIR "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}")
+  set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
     COMMAND bash "-c" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
@@ -125,7 +128,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
   set(CTEST_UPDATE_OPTIONS "${CTEST_SOURCE_DIRECTORY} ${GIT_BRANCH}")
 else()
   set(CTEST_SUBMISSION_TRACK "Master")
-  set(WORK_DIR "${PYCICLE_SRC_ROOT}/master")
+  set(WORK_DIR "${PYCICLE_PR_ROOT}/")
   execute_process(
     COMMAND bash "-c" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
