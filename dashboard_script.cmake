@@ -29,6 +29,7 @@ set(CTEST_BUILD_CONFIGURATION "Release")
 # Load machine specific settings
 # This is where the main machine config file is read in and params set
 #######################################################################
+include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
@@ -48,9 +49,15 @@ set(PYCICLE_SRC_ROOT       "${PYCICLE_ROOT}/src")
 set(PYCICLE_BUILD_ROOT     "${PYCICLE_ROOT}/build")
 set(PYCICLE_LOCAL_GIT_COPY "${PYCICLE_ROOT}/repos/${PYCICLE_GITHUB_PROJECT_NAME}")
 
-file(MAKE_DIRECTORY          "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}")
-set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}/repo")
-set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
+set(PYCICLE_PR_ROOT          "${PYCICLE_SRC_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}")
+set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_PR_ROOT}/repo")
+set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
+
+# make sure root dir exists
+file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
+
+# include any ctest settings to make sure we have them
+include(${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake)
 
 if (PYCICLE_PR STREQUAL "master")
   set(CTEST_BUILD_NAME "${PYCICLE_BRANCH}-${CTEST_BUILD_CONFIGURATION}")
@@ -84,14 +91,14 @@ endif()
 set (make_repo_copy_ "")
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
   set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
-  message("cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
+  message("${make_repo_copy_}")
 endif()
 
 #####################################################################
 # if this is a PR to be merged with master for testing
 #####################################################################
 if (NOT PYCICLE_PR STREQUAL "master")
-  set(CTEST_SUBMISSION_TRACK "Pull Requests")
+  set(CTEST_SUBMISSION_TRACK "Pull_Requests")
   set(PYCICLE_BRANCH "pull/${PYCICLE_PR}/head")
   set(GIT_BRANCH "PYCICLE_PR_${PYCICLE_PR}")
   #
@@ -100,7 +107,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
   # to fetch the merged branch so that the update step shows the
   # files that are different in the branch from master
   #
-  set(WORK_DIR "${PYCICLE_SRC_ROOT}/${PYCICLE_PR}")
+  set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
     COMMAND bash "-c" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
@@ -121,7 +128,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
   set(CTEST_UPDATE_OPTIONS "${CTEST_SOURCE_DIRECTORY} ${GIT_BRANCH}")
 else()
   set(CTEST_SUBMISSION_TRACK "Master")
-  set(WORK_DIR "${PYCICLE_SRC_ROOT}/master")
+  set(WORK_DIR "${PYCICLE_PR_ROOT}/")
   execute_process(
     COMMAND bash "-c" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
@@ -135,6 +142,12 @@ else()
   )
   #message("Process output copy : " ${output})
 endif()
+
+#######################################################################
+# Wipe build dir when starting a new build
+#######################################################################
+message("Wiping binary directory ${CTEST_BINARY_DIRECTORY}")
+ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 
 #######################################################################
 # Dashboard model : use Experimental unless problems arise
@@ -165,6 +178,7 @@ endif()
 
 #######################################################################
 # Erase any test complete status before starting new dashboard run
+# (this should have been wiped anyway by ctest_empty_binary_directory)
 #######################################################################
 set(CTEST_BINARY_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}")
 file(REMOVE "${CTEST_BINARY_DIRECTORY}/pycicle-TAG.txt")
@@ -179,26 +193,19 @@ ctest_start(${CTEST_MODEL}
     "${CTEST_BINARY_DIRECTORY}"
 )
 
-#######################################################################
-# Wipe build dir when starting a new build
-#######################################################################
-#message("Wiping binary directory ${CTEST_BINARY_DIRECTORY}")
-#ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
-
-#######################################################################
-# Update dashboard
-#######################################################################
-message("Update source... using ${CTEST_SOURCE_DIRECTORY}")
-ctest_update(RETURN_VALUE NB_CHANGED_FILES)
-pycicle_submit(PARTS Update)
-message("Found ${NB_CHANGED_FILES} changed file(s)")
-
 string(CONCAT CTEST_CONFIGURE_COMMAND
   " ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CTEST_BUILD_CONFIGURATION} "
   " ${CTEST_BUILD_OPTIONS}"
   " ${CTEST_CONFIGURE_COMMAND} \"-G${CTEST_CMAKE_GENERATOR}\""
   " ${CTEST_CONFIGURE_COMMAND} \"${CTEST_SOURCE_DIRECTORY}\"")
 
+#######################################################################
+# Update dashboard
+#######################################################################
+message("Update source... using ${CTEST_SOURCE_DIRECTORY}")
+
+ctest_update(RETURN_VALUE NB_CHANGED_FILES)
+message("Found ${NB_CHANGED_FILES} changed file(s)")
 message("CTEST_CONFIGURE_COMMAND is\n${CTEST_CONFIGURE_COMMAND}")
 
 message("Configure...")
@@ -207,12 +214,12 @@ pycicle_submit(PARTS Update Configure)
 
 message("Build...")
 set(CTEST_BUILD_FLAGS "-j ${BUILD_PARALLELISM}")
-ctest_build(TARGET "tests" )
-pycicle_submit(PARTS Update Configure Build)
+ctest_build(TARGET ${PYCICLE_CTEST_BUILD_TARGET} )
+pycicle_submit(PARTS Build)
 
 message("Test...")
 ctest_test(RETURN_VALUE test_result_ EXCLUDE "compile")
-pycicle_submit(PARTS Update Configure Build Test)
+pycicle_submit(PARTS Test)
 
 if (WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
   ctest_coverage()

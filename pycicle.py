@@ -108,10 +108,10 @@ print('\ncurrent implementation supports only 1 machine :', machine, '\n')
 #--------------------------------------------------------------------------
 def get_setting_for_machine(project, machine, setting) :
     current_path = os.path.dirname(os.path.realpath(__file__))
-#    print('looking for setting in file', current_path + '/config/' + project + '/' + machine + '.cmake')
+    print('looking for setting', setting, ' in file', current_path + '/config/' + project + '/' + machine + '.cmake')
     f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
     for line in f:
-        m = re.findall(setting + ' \"(.+?)\"', line)
+        m = re.findall(setting + ' *\"(.+?)\"', line)
         if m:
             return m[0]
     return ''
@@ -141,7 +141,7 @@ def launch_build(nickname, compiler, branch_id, branch_name) :
            '-DPYCICLE_RANDOM='              + random_string(10),
            '-DPYCICLE_COMPILER='            + compiler,
            '-DPYCICLE_BOOST='               + boost,
-           '-DPYCICLE_MASTER='              + 'master',
+           '-DPYCICLE_MASTER='              + github_master,
            # These are to quiet warnings from ctest about unset vars
            '-DCTEST_SOURCE_DIRECTORY=.',
            '-DCTEST_BINARY_DIRECTORY=.',
@@ -340,10 +340,13 @@ def delete_old_files(nickname, path, days) :
 #--------------------------------------------------------------------------
 github_reponame     = get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_PROJECT_NAME')
 github_organisation = get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_ORGANISATION')
+github_master       = get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_MASTER_BRANCH')
 cdash_servername    = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_SERVER_NAME')
-print('PYCICLE_GITHUB_PROJECT_NAME is', github_reponame)
-print('PYCICLE_GITHUB_ORGANISATION is', github_organisation)
-print('PYCICLE_CDASH_SERVER_NAME is  ', cdash_servername)
+
+print('PYCICLE_GITHUB_PROJECT_NAME  is', github_reponame)
+print('PYCICLE_GITHUB_ORGANISATION  is', github_organisation)
+print('PYCICLE_GITHUB_MASTER_BRANCH is', github_master)
+print('PYCICLE_CDASH_SERVER_NAME    is', cdash_servername)
 
 poll_time   = 60
 scrape_time = 10*60
