@@ -170,6 +170,18 @@ def choose_and_launch(project, machine, branch_id, branch_name) :
         launch_build(machine, 'gcc', branch_id, branch_name)
 
 #--------------------------------------------------------------------------
+# Utility function to remove a file from a remote filesystem
+#--------------------------------------------------------------------------
+def erase_file(remote_ssh, file):
+    # erase the pycicle scrape file if we have set status corectly
+    try:
+        cmd = ['ssh', remote_ssh, 'rm', '-f', file]
+        result = subprocess.check_output(cmd).split()
+        print ('File removed', file)
+    except Exception as ex:
+        print ('File deletion failed', ex)
+
+#--------------------------------------------------------------------------
 # find all the PR build jobs submitted and from them the build dirs
 # that we can use to scrape results from
 #--------------------------------------------------------------------------
@@ -181,36 +193,26 @@ def find_scrape_files(project, nickname) :
     PR_numbers = {}
     #
     cmd = ['ssh', remote_ssh, 'find ',
-           remote_path + '/build/', '-maxdepth 2', '-name pycicle-TAG.txt']
+           remote_path + '/build/'+project+'-*', '-maxdepth 2', '-name pycicle-TAG.txt']
     #
     result = subprocess.check_output(cmd).splitlines()
+    # print('find pycicle-TAG using', cmd, ' gives :', result)
     for s in result: JobFiles.append(s.decode('utf-8'))
 
     # for each build dir, return the PR number and results file
     for f in JobFiles:
-        m = re.search(r'/build/(.+?)-.*/pycicle-TAG.txt', f)
+        m = re.search(r'/build/'+project+'-(.+?)-.*/pycicle-TAG.txt', f)
+        print('search pycicle-TAG gives :', m)
         if m:
             PR_numbers[m.group(1)] = f
 
     return PR_numbers
 
 #--------------------------------------------------------------------------
-# Utility function to remove a file from a remote filesystem
-#--------------------------------------------------------------------------
-def erase_file(remote_ssh, scrape_file):
-    # erase the pycicle scrape file if we have set status corectly
-    try:
-        cmd = ['ssh', remote_ssh, 'rm', '-f', scrape_file]
-        result = subprocess.check_output(cmd).split()
-        print ('File removed', scrape_file)
-    except Exception as ex:
-        print ('File deletion failed', ex)
-
-#--------------------------------------------------------------------------
 # collect test results so that we can update github PR status
 #--------------------------------------------------------------------------
-def scrape_testing_results(nickname, scrape_file, branch_id, branch_name, head_commit) :
-    remote_ssh  = get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
+def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_name, head_commit) :
+    remote_ssh  = get_setting_for_machine(project, nickname, 'PYCICLE_MACHINE')
 
     cmd = ['ssh', remote_ssh, 'cat', scrape_file]
 
@@ -219,8 +221,8 @@ def scrape_testing_results(nickname, scrape_file, branch_id, branch_name, head_c
     Test_Errors   = 0
     Errors        = []
 
-    context = re.search(r'/build/.*?-(.+)/pycicle-TAG.txt', scrape_file)
-
+    context = re.search(r'/build/'+project+'.*?-(.+)/pycicle-TAG.txt', scrape_file)
+    # print('context pycicle-TAG', context)
     if context:
         origin = nickname + '-' + context.group(1)
     else:
@@ -424,6 +426,7 @@ while True:
                 if branch_id in pr_list:
                     # nickname, scrape_file, branch_id, branch_name, head_commit
                     scrape_testing_results(
+                        args.project,
                         pr_list[branch_id][0], builds_done.get(branch_id),
                         branch_id, pr_list[branch_id][1], pr_list[branch_id][2])
                 else:

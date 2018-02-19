@@ -146,6 +146,7 @@ endif()
 #######################################################################
 # Wipe build dir when starting a new build
 #######################################################################
+set(CTEST_BINARY_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}")
 message("Wiping binary directory ${CTEST_BINARY_DIRECTORY}")
 ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 
@@ -180,7 +181,6 @@ endif()
 # Erase any test complete status before starting new dashboard run
 # (this should have been wiped anyway by ctest_empty_binary_directory)
 #######################################################################
-set(CTEST_BINARY_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}")
 file(REMOVE "${CTEST_BINARY_DIRECTORY}/pycicle-TAG.txt")
 
 #######################################################################
@@ -240,7 +240,7 @@ execute_process(
     grep '<Error>' ${PYCICLE_BINARY_DIRECTORY}/Testing/$TEMP/Build.xml | wc -l
     grep '<Test Status=\"failed\">' ${PYCICLE_BINARY_DIRECTORY}/Testing/$TEMP/Test.xml | wc -l
     echo $TEMP
-    } > ${CTEST_BINARY_DIRECTORY}/pycicle-TAG.txt"
+    } > ${PYCICLE_BINARY_DIRECTORY}/pycicle-TAG.txt"
   WORKING_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}"
   OUTPUT_VARIABLE output
   ERROR_VARIABLE  output
