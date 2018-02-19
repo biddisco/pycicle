@@ -281,8 +281,8 @@ def random_string(N):
 #--------------------------------------------------------------------------
 # Check if a PR Needs and Update
 #--------------------------------------------------------------------------
-def needs_update(branch_id, branch_name, branch_sha, master_sha):
-    directory     = pycicle_dir + '/src/' + branch_id
+def needs_update(project_name, branch_id, branch_name, branch_sha, master_sha):
+    directory     = pycicle_dir + '/src/' + project_name + '-' + branch_id
     status_file   = directory + '/last_pr_sha.txt'
     update        = False
     #
@@ -403,13 +403,13 @@ while True:
                 continue
             #
             if not args.scrape_only:
-                update = force or needs_update(branch_id, branch_name, branch_sha, master_sha)
+                update = force or needs_update(args.project, branch_id, branch_name, branch_sha, master_sha)
                 if update:
                     choose_and_launch(args.project, machine, branch_id, branch_name)
 
         # also build the master branch if it has changed
         if not args.scrape_only and args.pull_request==0:
-            if force or needs_update('master', 'master', master_sha, master_sha):
+            if force or needs_update(args.project, 'master', 'master', master_sha, master_sha):
                 choose_and_launch(args.project, machine, 'master', 'master')
                 pr_list['master'] = [machine, 'master', master_branch.commit, ""]
 
