@@ -108,7 +108,7 @@ print('\ncurrent implementation supports only 1 machine :', machine, '\n')
 #--------------------------------------------------------------------------
 def get_setting_for_machine(project, machine, setting) :
     current_path = os.path.dirname(os.path.realpath(__file__))
-    print('looking for setting', setting, ' in file', current_path + '/config/' + project + '/' + machine + '.cmake')
+#    print('looking for setting', setting, ' in file', current_path + '/config/' + project + '/' + machine + '.cmake')
     f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
     for line in f:
         m = re.findall(setting + ' *\"(.+?)\"', line)
