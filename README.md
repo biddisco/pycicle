@@ -6,7 +6,8 @@ or when the master branch changes. Projects are assumed to be `C++`, use `CMake`
 for testing with results submitted to a `CDash` dasboard.
 
 The project was/is created for use with [HPX](https://github.com/STEllAR-GROUP/hpx)
-and the HPX (CDash) dashboard associated with the project is [Here](http://cdash.cscs.ch/index.php?project=HPX)
+and the HPX (CDash) dashboard associated with the project is [Here](http://cdash.cscs.ch/index.php?project=HPX),
+other (non HPX) projects are supported.
 
 ## What does it do and how does it work
 When running, pycicle will poll github once every N seconds and look for open pull requests using the pygithub API.
@@ -19,14 +20,14 @@ to spawn a build, or by calling `ctest -S dashboard-slurm.cmake <args>` if the m
 The slurm version of the script does nothing more than wrap the call to the dashboard script
 inside an `SBATCH` wrapper so that the build is triggered by slurm on a compute node, rather than on the login node.
 
-The build script will checkout the latest master branch, merge the PR (branch) into it,
+The build script will checkout the latest master branch (or another on request), merge the PR (branch) into it,
 then do ctest configure/build/test with submit steps after each configure/build/test step respectively
 to produce an entry in the dashboard that is updated as the build progresses.
 Note that if a pull request is modified whilst a previous build is still going, an `scancel`
 of the existing job is used to terminate the first before starting the second.
 
 Every M seconds, pycicle will find (scrape) a small log file generated in each build dir that contains a summary
-of config/build/test results and update the github PR status based on it so that build failures
+of config/build/test results and update the github PR status based on it so that failures
 flag the PR as not ready for merging.
 
 ## Why use this instead of Jenkins/other CI tool
@@ -38,15 +39,20 @@ from the test build's copy of the repo.
 You can run it inside a screen session, at startup or just leave a terminal open with it and start and stop it
 on demand.
 
-CDash supports the display of build information from many sites, so pycicle can be run at several instituations
-with results from machines at each being submitted to a single CDash dashboard.
-Machines at each location may be configured by users and no central coordination is required -
+CDash supports the display of build information from many sites, so pycicle can be run at several institutions
+with results from machines at each location being submitted to a single CDash dashboard.
+Machines at each location may be configured by different users and no central coordination is required -
 it is this aspect that makes it attractive to projects like HPX that have developers in several
 locations and compute resources ditributed worldwide with different architectures/hardware.
 
 ## Running pycicle
+To run locally and use machine daint for builds of the hpx project
 ```bash
-python ./pycicle.py -m daint
+python ./pycicle.py -m daint -P hpx
+``` or for builds of the dca project
+```
+python ./pycicle.py -m daint -P hpx
+
 ```
 
 ## options
@@ -54,6 +60,10 @@ python ./pycicle.py -m daint
 usage: pycicle.py [-h] [-s] [--no-slurm] [-d] [-r PYCICLE_ROOT] [-t USER_TOKEN]
                   [-m MACHINES [MACHINES ...]] [-p PULL_REQUEST] [-c]
 ```
+
+`-P PROJECT, --project : Project name (case sensitive)`
+This is the name of the project to be tested, it should be the same as the name/name.cmake
+file that holds the settings. 
 
 `-s, --slurm           : Use slurm for job launching (default).`
 When slurm is enabled, builds are triggered by launching a slurm script that in turn launches the ctest build script
@@ -96,6 +106,8 @@ Create a pycicle directory on a machine, set $PYCICLE_ROOT to the path and add i
 to your `bash` startup so that a machine that ssh's in will have it set.
 
 ### Running pycicle and doing build/tests on the same machine
+(Note that this mode of operation might not work as it hasn't been used for a while
+but the setup steps are still valid for both modes).
 ```
 # setup for machine that will do builds and run pycicle script
 PYCICLE_ROOT=/user/biddisco/pycicle
@@ -103,11 +115,14 @@ mkdir -p $PYCICLE_ROOT
 cd $PYCICLE_ROOT
 # clone pycicle into the root
 git clone https://github.com/biddisco/pycicle.git pycicle
-# make a copy of your project git repository here as well
-cp -r /path/to/your/project/hpx $PYCICLE_ROOT/repo
-# alternatively, cloe your project into a dir called repo
-# git clone git@github.com:STEllAR-GROUP/hpx.git repo
+# create a directory called `repos` where projects to be tested will go
+# make a copy of your project git repository in the `repos` folder
+cp -r /path/to/your/project/hpx $PYCICLE_ROOT/repos/hpx
+# alternatively, clone your project into the `repos` folder
+# git -C ./repos/ clone git@github.com:STEllAR-GROUP/hpx.git repos/
 ```
+Note that if you are testing more than one project using the same tree then
+it is only necessary to clone/copy a second project into the `repos` folder.
 
 ### Running pycicle on machine A, build/test on machine B
 Follow the steps above on the machine that will do builds.
@@ -121,10 +136,6 @@ cd $PYCICLE_ROOT
 git clone https://github.com/biddisco/pycicle.git pycicle
 ```
 
-Note - your project is copied/cloned into a directory called `repo`.
-This is because some of scripts use the path `$PYCICLE_ROOT/repo` for the initial
-source code reference. This should be fixed to use the real project name.
-
 Why do we keep a copy of the project repository in the pycicle root dir?
 The reason is that when initially developing pycicle on a laptop, using wifi internet access,
 it turned out to be very painful to git clone the entire HPX project for each PR being tested,
@@ -135,9 +146,9 @@ but this is much faster than a full clone.
 (NB. Doing a shallow clone isn't a great solution because you need to go back far enough
 to ensure the merge-base between the PR and the master branch is in the history).
 
-after using the above setup, pycicle can be started using a command like
+After using the above setup, pycicle can be started using a command like
 ```
-python $PYCICLE_ROOT/pycicle/pycicle.py -m greina
+python $PYCICLE_ROOT/pycicle/pycicle.py -m MACHINE -P project
 ```
 When it runs, two directories will be created
 ```
@@ -151,8 +162,9 @@ when they need to be built.
 The HPX project runs a tool called `inspect` on the code (similar to clang-format/style checks etc) to ensure
 that `#includes` are set correctly and basic format checks pass.
 Currently this is hardcoded into the ctest script as a prebuild step to do
-an extra configure and submit step to a different dashboard track. This needs to be cleaned up a bit to make
-pycicle portable to other projects.
+an extra configure and submit step to a different dashboard track. 
+If you use pycicle to test non HPX projects, the inspect step will be skipped - at some point the scripts
+will be updated to allow a custom tool per project to be run.
 
 ## Docs
 Not yet implemented, but adding a doc build step to `pycicle.py` or the ctest scripts should be straightforward.
@@ -178,14 +190,11 @@ find src -maxdepth 2 -name last_pr_sha.txt -delete
 If you only want to force a rebuild for PR 3042, then
 ```
 cd $PYCICLE_ROOT
-rm -f src/3042/last_pr_sha.txt
+rm -f src/${project-name}-3042/last_pr_sha.txt
 ```
 NB. A command line param should be added to allow this to be done without manual deletion.
 
 ## ToDo
-Currently, scripts are configured to work with the HPX project and some things have been hardcoded,
-these need to be changed to easily editable config settings.
-
 I don't really know anything about python, so have no real idea if this works with python2
 and python3. I think it does and I added a few imports to make it work, but it isn't tested.
 
