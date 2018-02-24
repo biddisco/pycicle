@@ -436,8 +436,8 @@ while True:
                         builds_done.get(branch_id))
 
             # cleanup old files that need to be purged every N days
-            delete_old_files(machine, 'src',   3)
-            delete_old_files(machine, 'build', 3)
+            delete_old_files(machine, 'src',   1)
+            delete_old_files(machine, 'build', 1)
 
     except (github.GithubException, socket.timeout, ssl.SSLError) as ex:
         # github might be down, or there may be a network issue,
