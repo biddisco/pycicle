@@ -19,7 +19,7 @@ message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
 message("COMPILER is      " ${PYCICLE_COMPILER})
 message("BOOST is         " ${PYCICLE_BOOST})
-
+message("Build type is    " ${PYCICLE_BUILD_TYPE})
 message( WARNING, "${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
 #######################################################################
 # Load machine specific settings
@@ -27,7 +27,7 @@ message( WARNING, "${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PY
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
-# Generate a slurm job script and launch it
+# Generate a pbs job script and launch it
 # we must pass all the parms we received through to the slurm script
 #######################################################################
 set(PYCICLE_PBS_TEMPLATE ${PYCICLE_PBS_TEMPLATE}
@@ -42,6 +42,7 @@ set(PYCICLE_PBS_TEMPLATE ${PYCICLE_PBS_TEMPLATE}
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
   "-DPYCICLE_COMPILER=${PYCICLE_COMPILER} "
   "-DPYCICLE_BOOST=${PYCICLE_BOOST} "
+  "-DPYCICLE_BUILD_TYPE=${PYCICLE_BUILD_TYPE}) "
   "-DPYCICLE_MASTER=${PYCICLE_MASTER} \n"
 )
 

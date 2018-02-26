@@ -42,6 +42,7 @@ if (PYCICLE_COMPILER MATCHES "gcc")
     #
     module load PE-gnu
     module load fftw/3.3.5
+    module load hdf5/1.8.17
     #module load openmpi/1.10.3
     #
     # use openmpi compiler wrappers to make MPI use easy
@@ -80,7 +81,7 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DCMAKE_C_COMPILER=mpicc\" "
     "\"-DCMAKE_EXE_LINKER_FLAGS=${LDCXXFLAGS}\" "
     "\"-DDCA_THREADING_LIBRARY:STRING=STDTHREAD\" "
-    "\"-DCMAKE_BUILD_TYPE:STRING=Debug\" "
+    "\"-DCMAKE_BUILD_TYPE:Debug\" "
     "\"-DDCA_WITH_THREADED_SOLVER:BOOL=ON\" "
     "\"-DDCA_WITH_MPI:BOOL=ON\" "
     "\"-DDCA_WITH_TESTS_EXTENSIVE:BOOL=OFF\" "
