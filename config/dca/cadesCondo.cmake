@@ -118,7 +118,8 @@ set(PYCICLE_PBS_TEMPLATE "#!/bin/bash
 # unload or load modules that differ from the defaults on the system
 # ---------------------
 . /software/user_tools/current/cades-cnms/spack/share/spack/setup-env.sh
-openmpi/1.10.3
+module load openmpi/1.10.3
+module load hdf5/1.8.17
 spack load cmake
 spack load git
 
