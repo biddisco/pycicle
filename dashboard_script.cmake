@@ -124,7 +124,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
   set(CTEST_UPDATE_OPTIONS "${CTEST_SOURCE_DIRECTORY} ${GIT_BRANCH}")
 else()
   set(CTEST_SUBMISSION_TRACK "Master")
-  set(WORK_DIR "${PYCICLE_PR_ROOT}/")
+  set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
     COMMAND bash "-c" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};

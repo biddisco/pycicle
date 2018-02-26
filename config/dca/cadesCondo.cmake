@@ -36,7 +36,7 @@ if (PYCICLE_COMPILER MATCHES "gcc")
   set(CXXFLAGS         "-g -fPIC -march=native -mtune=native -ffast-math -std=c++14")
   set(LDFLAGS          "")
   set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
-
+  set(FFTW_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/fftw/3.3.5/centos7.2_gnu5.3.0")
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
     #
@@ -83,9 +83,9 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DCMAKE_BUILD_TYPE:STRING=Debug\" "
     "\"-DDCA_WITH_THREADED_SOLVER:BOOL=ON\" "
     "\"-DDCA_WITH_MPI:BOOL=ON\" "
-    "\"-DDCA_WITH_TESTS_EXTENSIVE:BOOL=ON\" "
+    "\"-DDCA_WITH_TESTS_EXTENSIVE:BOOL=OFF\" "
     "\"-DDCA_WITH_TESTS_FAST:BOOL=ON\" "
-    "\"-DDCA_WITH_TESTS_PERFORMANCE:BOOL=ON\" "
+    "\"-DDCA_WITH_TESTS_PERFORMANCE:BOOL=OFF\" "
     "\"-DDCA_WITH_TESTS_VALIDATION:BOOL=ON\" "
     "\"-DTEST_RUNNER=mpirun\" "
     "\"-DFFTW_INCLUDE_DIR=${FFTW_DIR}/include\" "

@@ -109,6 +109,12 @@ parser.add_argument('-p', '--pull-request', dest='pull_request', type=int,
 parser.add_argument('-c', '--scrape-only', dest='scrape_only', action='store_true',
 default=False, help="Only scrape results and set github status (no building)")
 
+#--------------------------------------------------------------------------
+# CMake Build Type
+#--------------------------------------------------------------------------
+parser.add_argument('-B', '--build-type', dest='build_type',
+                    help='Cmake Build Type', default="Release")
+
 #----------------------------------------------
 # print summary of parse args
 #----------------------------------------------
@@ -197,7 +203,7 @@ def launch_build(nickname, compiler, branch_id, branch_name) :
                   '-DPYCICLE_RANDOM='              + random_string(10),
                   '-DPYCICLE_COMPILER='            + compiler,
                   '-DPYCICLE_BOOST='               + boost,
-                  '-DPYCICLE_BUILD_TYPE='          + build_type,
+                  '-DPYCICLE_BUILD_TYPE='          + args.build_type,
                   '-DPYCICLE_MASTER='              + github_master,
                   # These are to quiet warnings from ctest about unset vars
                   '-DCTEST_SOURCE_DIRECTORY=.',
