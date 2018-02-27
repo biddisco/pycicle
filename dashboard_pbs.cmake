@@ -65,4 +65,4 @@ execute_process(
   )
                     
 # wipe the temp file job script
-#file(REMOVE "${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh")
+file(REMOVE "${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh")

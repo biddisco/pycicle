@@ -114,7 +114,7 @@ default=False, help="Only scrape results and set github status (no building)")
 #--------------------------------------------------------------------------
 # CMake Build Type
 #--------------------------------------------------------------------------
-parser.add_argument('-B', '--build-type', dest='build_type',
+parser.add_argument('-b', '--build-type', dest='build_type',
                     help='Cmake Build Type', default="Release")
 
 #----------------------------------------------

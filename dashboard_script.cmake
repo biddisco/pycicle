@@ -113,7 +113,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
                        ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} fetch origin ${PYCICLE_BRANCH};
-                       ${CTEST_GIT_COMMAND} merge --no-edit FETCH_HEAD;
+                       ${CTEST_GIT_COMMAND} merge --no-edit --no-ff -s recursive -X theirs origin/${PYCICLE_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} clean -fd;"
     WORKING_DIRECTORY "${WORK_DIR}"
