@@ -37,6 +37,7 @@ if (PYCICLE_COMPILER MATCHES "gcc")
   set(LDFLAGS          "")
   set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
   set(FFTW_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/fftw/3.3.5/centos7.2_gnu5.3.0")
+  set(HDF5_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/hdf5/1.8.17/centos7.2_gnu5.3.0")
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
     #
@@ -87,12 +88,13 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DDCA_WITH_TESTS_EXTENSIVE:BOOL=OFF\" "
     "\"-DDCA_WITH_TESTS_FAST:BOOL=ON\" "
     "\"-DDCA_WITH_TESTS_PERFORMANCE:BOOL=OFF\" "
-    "\"-DDCA_WITH_TESTS_VALIDATION:BOOL=ON\" "
     "\"-DTEST_RUNNER=mpirun\" "
     "\"-DFFTW_INCLUDE_DIR=${FFTW_DIR}/include\" "
     "\"-DFFTW_LIBRARY=${FFTW_DIR}/lib/libfftw3.a\" "
-)
-
+    "\"-DHDF5_ROOT=${HDF5_DIR}\" "
+    "\"-DMPIEXEC_NUMPROC_FLAG=-np\" "
+    )
+    #"\"-DDCA_WITH_TESTS_VALIDATION:BOOL=ON\" "
     # "\"-DMKL_ROOT=$MKLROOT \" "
     # "\"-DDCA_WITH_CUDA:BOOL=ON\" "
     # "\"-DCUDA_PROPAGATE_HOST_FLAGS=OFF\" 
@@ -118,7 +120,8 @@ set(PYCICLE_PBS_TEMPLATE "#!/bin/bash
 # unload or load modules that differ from the defaults on the system
 # ---------------------
 . /software/user_tools/current/cades-cnms/spack/share/spack/setup-env.sh
-module load openmpi/1.10.3
+module load PE-gnu
+#module load openmpi/1.10.3
 module load hdf5/1.8.17
 spack load cmake
 spack load git
