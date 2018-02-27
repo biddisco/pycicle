@@ -36,6 +36,8 @@ parser.add_argument('-P', '--project', dest='project',
 
 #----------------------------------------------
 # enable or disable slurm for Job launching
+# prefer this to be like the pbs option, just building local
+# is more sensible default  
 #----------------------------------------------
 parser.add_argument('-s', '--slurm', dest='slurm', action='store_true',
     help="Use slurm for job launching (default)")
@@ -153,15 +155,19 @@ def get_setting_for_machine(project, machine, setting) :
 # launch a command that will start one build
 #--------------------------------------------------------------------------
 def launch_build(nickname, compiler, branch_id, branch_name) :
-    # import paramiko
+    # consider import paramiko
+    # client = paramiko.SSHClient()
+    # client.load_system_host_keys()
+    # client.connect(remote_ssh)
+     
     remote_ssh  = get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
     remote_path = get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
     remote_http = get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
     print ("launching build", compiler, branch_id, branch_name)
     # we are not yet using these as 'options'
     boost = 'x.xx.x'
-    #
-
+    
+    # This is a clumsy way to do this.
     if args.slurm:
         script = 'dashboard_slurm.cmake'
     elif args.pbs:
@@ -171,10 +177,7 @@ def launch_build(nickname, compiler, branch_id, branch_name) :
         script = 'dashboard_script.cmake'
 
     if 'local' not in remote_ssh:
-    # client = paramiko.SSHClient()
-    # client.load_system_host_keys()
-    # client.connect(remote_ssh)
-        # We need to setup the environment on the remote machine, often even cmake comes from
+       # We need to setup the environment on the remote machine, often even cmake comes from
         # a module or the like.
         org_dir = '.'
         cmd1 = ['. /software/user_tools/current/cades-cnms/spack/share/spack/setup-env.sh;',
