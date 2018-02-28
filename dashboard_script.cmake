@@ -83,10 +83,12 @@ endif()
 
 #######################################################################
 # First checkout, copy from a local repo to save clone of many GB's
+# on Cades Condo Lustre a local checkout is much faster
 #######################################################################
 set (make_repo_copy_ "")
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
   set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
+  #set (make_repo_copy_ git clone ${GIT_BRANCH} ${CTEST_SOURCE_DIRECTORY}--branch 
   message("${make_repo_copy_}")
 endif()
 
@@ -113,7 +115,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
                        ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} fetch origin ${PYCICLE_BRANCH};
-                       ${CTEST_GIT_COMMAND} merge --no-edit --no-ff -s recursive -X theirs origin/${PYCICLE_BRANCH};
+                       ${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} clean -fd;"
     WORKING_DIRECTORY "${WORK_DIR}"
@@ -121,6 +123,24 @@ if (NOT PYCICLE_PR STREQUAL "master")
     ERROR_VARIABLE  output
     RESULT_VARIABLE failed
   )
+
+  message(
+    "COMMAND bash \"-c\" \"${make_repo_copy_}
+                       cd ${CTEST_SOURCE_DIRECTORY};
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
+                       ${CTEST_GIT_COMMAND} fetch origin;
+                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
+                       ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};
+                       ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
+                       ${CTEST_GIT_COMMAND} fetch origin ${PYCICLE_BRANCH};
+                       ${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};
+                       ${CTEST_GIT_COMMAND} clean -fd;\"
+    WORKING_DIRECTORY \"${WORK_DIR}\"
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE  output
+    RESULT_VARIABLE failed
+    ")
+
   set(CTEST_UPDATE_OPTIONS "${CTEST_SOURCE_DIRECTORY} ${GIT_BRANCH}")
 else()
   set(CTEST_SUBMISSION_TRACK "Master")
@@ -204,7 +224,8 @@ string(CONCAT CTEST_CONFIGURE_COMMAND
 # Update dashboard
 #######################################################################
 message("Update source... using ${CTEST_SOURCE_DIRECTORY}")
-
+message("CTEST_UPDATE_COMMAND:${CTEST_UPDATE_COMMAND}")
+message("CTEST_UPDATE_OPTIONS:${CTEST_UPDATE_OPTIONS}")
 ctest_update(RETURN_VALUE NB_CHANGED_FILES)
 message("Found ${NB_CHANGED_FILES} changed file(s)")
 message("CTEST_CONFIGURE_COMMAND is\n${CTEST_CONFIGURE_COMMAND}")
