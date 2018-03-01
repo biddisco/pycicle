@@ -17,6 +17,8 @@ set(PYCICLE_HTTP FALSE)
 set(PYCICLE_SLURM FALSE)
 set(PYCICLE_PBS TRUE)
 set(PYCICLE_COMPILER_TYPE "gcc" )
+set(PYCICLE_BUILD_TYPE "Debug")
+
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
 set(HWLOC_VER            "1.11.7")
@@ -69,7 +71,7 @@ endif()
 set(CTEST_SITE "CENTOS7(cades-condo)-${PYCICLE_BUILD_STAMP}")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT "600")
-set(BUILD_PARALLELISM  "32")
+set(BUILD_PARALLELISM  "16")
 
 #######################################################################
 # The string that is used to drive cmake config step

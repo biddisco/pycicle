@@ -112,7 +112,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
   # files that are different in the branch from master
   #
   message(
-    "COMMAND bash \"-c\" \"${make_repo_copy_}
+    "COMMAND bash \"-c\" \"-e\" \"${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} pull origin master;
@@ -122,7 +122,6 @@ if (NOT PYCICLE_PR STREQUAL "master")
                        ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} clean -fd;\"
-
     WORKING_DIRECTORY \"${WORK_DIR}\"
     OUTPUT_VARIABLE output
     ERROR_VARIABLE  output
@@ -133,7 +132,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
 
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
-    COMMAND bash "-c" "${make_repo_copy_}
+    COMMAND bash "-c" "-e" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} pull origin master;
@@ -148,6 +147,9 @@ if (NOT PYCICLE_PR STREQUAL "master")
     ERROR_VARIABLE  output
     RESULT_VARIABLE failed
   )
+  if ( failed EQUAL 1 )
+    MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
+      "Can you access github from the build location?" )
  #${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
  #                        ${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};"
 
