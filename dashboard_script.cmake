@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 #######################################################################
 # For debugging this script
 #######################################################################
+message("In ${CMAKE_CURRENT_LIST_FILE}")
 message("Project name is  " ${PYCICLE_PROJECT_NAME})
 message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
@@ -17,6 +18,7 @@ message("master branch is " ${PYCICLE_MASTER})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
+message("COMPILER type is      " ${PYCICLE_COMPILER_TYPE})
 message("COMPILER is      " ${PYCICLE_COMPILER})
 message("BOOST is         " ${PYCICLE_BOOST})
 message("Build type is    " ${PYCICLE_BUILD_TYPE})
@@ -48,6 +50,9 @@ set(PYCICLE_LOCAL_GIT_COPY "${PYCICLE_ROOT}/repos/${PYCICLE_GITHUB_PROJECT_NAME}
 set(PYCICLE_PR_ROOT          "${PYCICLE_SRC_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}")
 set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_PR_ROOT}/repo")
 set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
+
+message("Pycicle local repo copy ${PYCICLE_LOCAL_GIT_COPY}")
+
 
 # make sure root dir exists
 file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
@@ -87,6 +92,7 @@ endif()
 #######################################################################
 set (make_repo_copy_ "")
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
+  message("Making Local Repo Copy")
   set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
   #set (make_repo_copy_ git clone ${GIT_BRANCH} ${CTEST_SOURCE_DIRECTORY}--branch 
   message("${make_repo_copy_}")
@@ -105,17 +111,36 @@ if (NOT PYCICLE_PR STREQUAL "master")
   # to fetch the merged branch so that the update step shows the
   # files that are different in the branch from master
   #
+  message(
+    "COMMAND bash \"-c\" \"${make_repo_copy_}
+                       cd ${CTEST_SOURCE_DIRECTORY};
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
+                       ${CTEST_GIT_COMMAND} pull origin master;
+                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
+                       ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};
+                       ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
+                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH};
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
+                       ${CTEST_GIT_COMMAND} clean -fd;\"
+
+    WORKING_DIRECTORY \"${WORK_DIR}\"
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE  output
+    RESULT_VARIABLE failed
+    ")
+  #${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
+  #${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};\"
+
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
     COMMAND bash "-c" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} fetch origin;
+                       ${CTEST_GIT_COMMAND} pull origin master;
                        ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
-                       ${CTEST_GIT_COMMAND} fetch origin ${PYCICLE_BRANCH};
-                       ${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};
+                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} clean -fd;"
     WORKING_DIRECTORY "${WORK_DIR}"
@@ -123,23 +148,8 @@ if (NOT PYCICLE_PR STREQUAL "master")
     ERROR_VARIABLE  output
     RESULT_VARIABLE failed
   )
-
-  message(
-    "COMMAND bash \"-c\" \"${make_repo_copy_}
-                       cd ${CTEST_SOURCE_DIRECTORY};
-                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} fetch origin;
-                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};
-                       ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
-                       ${CTEST_GIT_COMMAND} fetch origin ${PYCICLE_BRANCH};
-                       ${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};
-                       ${CTEST_GIT_COMMAND} clean -fd;\"
-    WORKING_DIRECTORY \"${WORK_DIR}\"
-    OUTPUT_VARIABLE output
-    ERROR_VARIABLE  output
-    RESULT_VARIABLE failed
-    ")
+ #${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
+ #                        ${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};"
 
   set(CTEST_UPDATE_OPTIONS "${CTEST_SOURCE_DIRECTORY} ${GIT_BRANCH}")
 else()
@@ -156,7 +166,7 @@ else()
     ERROR_VARIABLE  output
     RESULT_VARIABLE failed
   )
-  #message("Process output copy : " ${output})
+  message("Process output copy : " ${output})
 endif()
 
 #######################################################################

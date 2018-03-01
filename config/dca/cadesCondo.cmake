@@ -16,7 +16,7 @@ set(PYCICLE_HTTP FALSE)
 # Launch jobs using slurm rather than directly running them on the machine
 set(PYCICLE_SLURM FALSE)
 set(PYCICLE_PBS TRUE)
-
+set(PYCICLE_COMPILER_TYPE "gcc" )
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
 set(HWLOC_VER            "1.11.7")
@@ -26,7 +26,7 @@ set(PAPI_VER             "5.5.1")
 set(BOOST_SUFFIX         "1_65_0")
 set(CMAKE_VER            "3.9.1")
 
-if (PYCICLE_COMPILER MATCHES "gcc")
+if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   set(GCC_VER             "5.3.0")
   set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}")
   #
@@ -56,7 +56,7 @@ if (PYCICLE_COMPILER MATCHES "gcc")
     export LDCXXFLAGS=\"${LDCXXFLAGS}\"
   ")
 
-elseif(PYCICLE_COMPILER MATCHES "clang")
+elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
 endif()
 
 # set(HWLOC_ROOT       "${INSTALL_ROOT}/hwloc/${HWLOC_VER}")

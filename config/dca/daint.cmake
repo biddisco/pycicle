@@ -24,7 +24,7 @@ set(PAPI_VER             "5.5.1")
 set(BOOST_SUFFIX         "1_65_0")
 set(CMAKE_VER            "3.9.1")
 
-if (PYCICLE_COMPILER MATCHES "gcc")
+if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   set(GCC_VER             "5.3.0")
   set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
   #
@@ -51,7 +51,7 @@ if (PYCICLE_COMPILER MATCHES "gcc")
     export LDCXXFLAGS=\"${LDCXXFLAGS}\"
   ")
 
-elseif(PYCICLE_COMPILER MATCHES "clang")
+elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
 endif()
 
 set(HWLOC_ROOT       "${INSTALL_ROOT}/hwloc/${HWLOC_VER}")
