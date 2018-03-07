@@ -167,14 +167,14 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
     # client = paramiko.SSHClient()
     # client.load_system_host_keys()
     # client.connect(remote_ssh)
-     
+
     remote_ssh  = get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
     remote_path = get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
     remote_http = get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
     print ("launching build", compiler_type, branch_id, branch_name)
     # we are not yet using these as 'options'
     boost = 'x.xx.x'
-    
+
     # This is a clumsy way to do this.
     if args.slurm:
         script = 'dashboard_slurm.cmake'
@@ -346,7 +346,7 @@ def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_nam
                    '&filtercount=1' +
                    '&field1=buildname/string&compare1=63&value1=' +
                    branch_id + '-' + branch_name)
-
+            print ("URL:", URL)
             if args.debug:
                 print ('Debug github PR status', URL)
             else:
