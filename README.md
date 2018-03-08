@@ -49,10 +49,10 @@ locations and compute resources ditributed worldwide with different architecture
 To run locally and use machine daint for builds of the hpx project
 ```bash
 python ./pycicle.py -m daint -P hpx
-``` or for builds of the dca project
+```
+or for builds of the dca project
 ```
 python ./pycicle.py -m daint -P hpx
-
 ```
 
 ## options
