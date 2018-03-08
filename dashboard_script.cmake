@@ -178,6 +178,11 @@ if (PYCICLE_PROJECT_NAME MATCHES "hpx")
 endif()
 
 #######################################################################
+# Reset binary directory path
+#######################################################################
+set(CTEST_BINARY_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}")
+
+#######################################################################
 # Erase any test complete status before starting new dashboard run
 # (this should have been wiped anyway by ctest_empty_binary_directory)
 #######################################################################
