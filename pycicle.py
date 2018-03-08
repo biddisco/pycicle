@@ -472,7 +472,7 @@ try:
     git  = github.Github(github_organisation, args.user_token)
     print ("Github User:",git.get_user().name)
     if github_organisation:
-        org = git.get_organization('eth-cscs') # github_organisation)
+        org = git.get_organization(github_organisation)
         print ("Org:", org.name)
         repo = org.get_repo(github_reponame)
     else:
