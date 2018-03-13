@@ -37,7 +37,7 @@ parser.add_argument('-P', '--project', dest='project',
 #----------------------------------------------
 # enable or disable slurm for Job launching
 # prefer this to be like the pbs option, just building local
-# is more sensible default  
+# is more sensible default
 #----------------------------------------------
 parser.add_argument('-s', '--slurm', dest='slurm', action='store_true',
     help="Use slurm for job launching (default)")
@@ -51,7 +51,6 @@ parser.set_defaults(slurm=True)
 parser.add_argument('--pbs', dest='pbs', action='store_true',
     help="Use pbs for job launching")
 parser.set_defaults(pbs=False)
-
 
 #----------------------------------------------
 # enable/debug mode
@@ -122,7 +121,6 @@ default=False, help="Only scrape results and set github status (no building)")
 #--------------------------------------------------------------------------
 parser.add_argument('--cdash-server', dest='cdash_server',
                     help='CDash server', default=None)
-
 
 #----------------------------------------------
 # print summary of parse args
@@ -278,7 +276,7 @@ def find_scrape_files(project, nickname) :
     #
     try:
         if 'local' not in remote_ssh:
-            cmd = ['ssh', remote_ssh ] 
+            cmd = ['ssh', remote_ssh ]
         else:
             cmd = []
 
@@ -454,15 +452,15 @@ if args.cdash_server:
 else:
     cdash_server    = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_SERVER_NAME')
 cdash_project_name  = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_PROJECT_NAME')
-compiler_type = get_setting_for_machine(args.project, args.project, 'PYCICLE_COMPILER_TYPE')
-cdash_http_path = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_HTTP_PATH')
+compiler_type       = get_setting_for_machine(args.project, args.project, 'PYCICLE_COMPILER_TYPE')
+cdash_http_path     = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_HTTP_PATH')
 
 print('PYCICLE_GITHUB_PROJECT_NAME  is', github_reponame)
 print('PYCICLE_GITHUB_ORGANISATION  is', github_organisation)
 print('PYCICLE_GITHUB_MASTER_BRANCH is', github_master)
-print('PYCICLE_CDASH_PROJECT_NAME    is', cdash_project_name)
+print('PYCICLE_CDASH_PROJECT_NAME   is', cdash_project_name)
 print('PYCICLE_CDASH_SERVER_NAME    is', cdash_server)
-print('PYCICLE_CDASH_HTTP_PATH    is', cdash_http_path)
+print('PYCICLE_CDASH_HTTP_PATH      is', cdash_http_path)
 
 poll_time   = 60
 scrape_time = 10*60
