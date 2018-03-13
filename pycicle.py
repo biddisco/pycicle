@@ -53,6 +53,15 @@ parser.add_argument('--pbs', dest='pbs', action='store_true',
 parser.set_defaults(pbs=False)
 
 #----------------------------------------------
+# pre_ctest_commands
+# imagine your host does not have cmake installed at the system
+# level. You make need to load a module or set a export a path
+# here. Right now it just takes a string to be run in shell
+#----------------------------------------------
+parser.add_argument('--pre_ctest_commands', dest='pre_ctest_commands', type=str,
+                    default=None, help="Pre ctest commands")
+
+#----------------------------------------------
 # enable/debug mode
 #----------------------------------------------
 parser.add_argument('-d', '--debug', dest='debug', action='store_true',
@@ -186,9 +195,10 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
        # We need to setup the environment on the remote machine, often even cmake comes from
         # a module or the like.
         org_dir = '.'
-        cmd1 = ['. /software/user_tools/current/cades-cnms/spack/share/spack/setup-env.sh;',
-                'spack load cmake;',
-                'ctest']
+        cmd1 = []
+        if args.pre_ctest_commands:
+            cmd1.append(args.pre_ctest_commands)
+        cmd1.append('ctest')
 
         cmd1 = ' '.join(cmd1)
         #if not args.debug else {'echo ', ' ', 'ctest'}
