@@ -152,7 +152,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
   if ( failed EQUAL 1 )
     MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
       "Can you access github from the build location?" )
-  endif ( failted EQUAL 1 )
+  endif ( failed EQUAL 1 )
  #${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
  #                        ${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};"
 
