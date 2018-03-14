@@ -111,34 +111,41 @@ if (NOT PYCICLE_PR STREQUAL "master")
   # files that are different in the branch from master
   #
   # The below can partially fail without it being obvious,
-  # the -e should stop that, not sure if the check of failed is necessary
-  message(
-    "COMMAND bash \"-c\" \"-e\" \"${make_repo_copy_}
-                       cd ${CTEST_SOURCE_DIRECTORY};
-                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} pull origin master;
-                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};
-                       ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
-                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH};
-                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} clean -fd;\"
-    WORKING_DIRECTORY \"${WORK_DIR}\"
+  # the -e should stop that, but certain things like the PR Delete can Fail
+  # even if nothing is wrong.
+
+  set(WORK_DIR "${PYCICLE_PR_ROOT}")
+  execute_process(
+    COMMAND bash "-c" "-e" "${make_repo_copy_}"
+    WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
     ERROR_VARIABLE  output
     RESULT_VARIABLE failed
-    ")
-  #${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
-  #${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};\"
+  )
+  if ( failed EQUAL 1 )
+    MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
+      "Could not copy local repo. "
+      "Is your local repo specified properly?" )
+  endif ( failed EQUAL 1 )
 
-  set(WORK_DIR "${PYCICLE_PR_ROOT}")
+  execute_process(
+    COMMAND bash "-c" "-e" "cd ${CTEST_SOURCE_DIRECTORY};
+                            ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};"
+    WORKING_DIRECTORY "${WORK_DIR}"
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE  output
+    RESULT_VARIABLE failed
+  )
+  if ( failed EQUAL 1 )
+    MESSAGE( "First time for ${GIT_BRANCH} update?" )
+  endif ( failed EQUAL 1 )
+
   execute_process(
     COMMAND bash "-c" "-e" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} pull origin master;
                        ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
