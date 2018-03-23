@@ -10,9 +10,9 @@ message( WARNING "Cades GPU Condo is local only")
 # the name used to ssh into the machine
 set(PYCICLE_MACHINE "local")
 # the root location of the build/test tree on the machine
-set(PYCICLE_ROOT "/lustre/or-hydra/cades-cnms/epd/DCA_CI")
+set(PYCICLE_ROOT "/lustre/or-hydra/cades-cnms/epd/DCA_GPU_CI")
 # a flag that says if the machine can send http results to cdash
-set(PYCICLE_HTTP FALSE)
+set(PYCICLE_HTTP TRUE)
 # Launch jobs using slurm rather than directly running them on the machine
 set(PYCICLE_SLURM FALSE)
 set(PYCICLE_PBS TRUE)
@@ -36,10 +36,12 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   #
   set(CFLAGS           "-g -fPIC")
   set(CXXFLAGS         "-g -fPIC -march=native -mtune=native -ffast-math -std=c++14")
-  set(LDFLAGS          "")
+  set(LDFLAGS          "-L/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/gcc/5.3.0/centos7.2_gcc4.8.5/lib64 -Wl,-rpath,/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/gcc/5.3.0/centos7.2_gcc4.8.5/lib64")
   set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
   set(FFTW_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/fftw/3.3.5/centos7.2_gnu5.3.0")
-  set(HDF5_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/hdf5/1.8.17/centos7.2_gnu5.3.0")
+  set(HDF5_DIR         "/software/user_tools/centos-7.2.1511/cades-cnms/spack/opt/spack/linux-centos7-x86_64/gcc-5.3.0/hdf5-1.10.1-zpabgesdnfouatl7eoaw2npw5awjmawv/")
+  set(CUDA_DIR         "/software/user_tools/centos-7.2.1511/cades-cnms/spack/opt/spack/linux-centos7-x86_64/gcc-5.3.0/cuda-8.0.61-pz7ileloxiwrc7kvi4htvwo5p7t3ugvv")
+  set(MAGMA_DIR        "/software/user_tools/centos-7.2.1511/cades-cnms/spack/opt/spack/linux-centos7-x86_64/gcc-5.3.0/magma-2.2.0-qy7ciibhq2avtqkddwfntzrvu5g5yh7i")
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
     #
@@ -47,9 +49,8 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
     spack load cmake@3.10.1%gcc@5.3.0
     spack load openmpi@3.0.0%gcc@5.3.0
     spack load hdf5@1.10.1%gcc@5.3.0
-    spack load cuda@9.1.85%gcc@5.3.0
+    spack load cuda@8.0.61%gcc@5.3.0
     spack load magma@2.2.0%gcc@5.3.0 +no_openmp
-    export CUDA_DIR=/software/user_tools/centos-7.2.1511/cades-cnms/spack/opt/spack/linux-centos7-x86_64/gcc-5.3.0/cuda-9.1.85-pug3iefofxk5mylifjczqcyyhkgyp2ui
     #
     # use openmpi compiler wrappers to make MPI use easy
     export CC=mpicc
@@ -99,7 +100,7 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DHDF5_ROOT=${HDF5_DIR}\" "
     "\"-DMPIEXEC_NUMPROC_FLAG=-np\" "
     "\"-DDCA_WITH_CUDA=ON\" "
-    "\"-DCUDA_CPU_ARCH=sm60\" "
+    "\"-DCUDA_GPU_ARCH=sm_50\" "
     "\"-DCUDA_TOOLKIT_ROOT_DIR=${CUDA_DIR}\" "
     "\"-DMAGMA_DIR=${MAGMA_DIR}\" "
     )
