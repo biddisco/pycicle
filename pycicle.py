@@ -462,12 +462,13 @@ if args.cdash_server:
 else:
     cdash_server    = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_SERVER_NAME')
 cdash_project_name  = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_PROJECT_NAME')
-compiler_type       = get_setting_for_machine(args.project, args.project, 'PYCICLE_COMPILER_TYPE')
+compiler_type       = get_setting_for_machine(args.project, args.machines[0], 'PYCICLE_COMPILER_TYPE')
 cdash_http_path     = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_HTTP_PATH')
 
 print('PYCICLE_GITHUB_PROJECT_NAME  is', github_reponame)
 print('PYCICLE_GITHUB_ORGANISATION  is', github_organisation)
 print('PYCICLE_GITHUB_MASTER_BRANCH is', github_master)
+print('PYCICLE_COMPILER_TYPE is'       , compiler_type)
 print('PYCICLE_CDASH_PROJECT_NAME   is', cdash_project_name)
 print('PYCICLE_CDASH_SERVER_NAME    is', cdash_server)
 print('PYCICLE_CDASH_HTTP_PATH      is', cdash_http_path)
