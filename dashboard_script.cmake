@@ -19,11 +19,7 @@ message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
 message("COMPILER is      " ${PYCICLE_COMPILER})
 message("BOOST is         " ${PYCICLE_BOOST})
-
-#######################################################################
-# need to make this a passed in option
-#######################################################################
-set(CTEST_BUILD_CONFIGURATION "Release")
+message("Build type is    " ${PYCICLE_BUILD_TYPE})
 
 #######################################################################
 # Load machine specific settings
@@ -60,9 +56,9 @@ file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
 include(${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake)
 
 if (PYCICLE_PR STREQUAL "master")
-  set(CTEST_BUILD_NAME "${PYCICLE_BRANCH}-${CTEST_BUILD_CONFIGURATION}")
+  set(CTEST_BUILD_NAME "${PYCICLE_BRANCH}-${PYCICLE_BUILD_STAMP}")
 else()
-  set(CTEST_BUILD_NAME "${PYCICLE_PR}-${PYCICLE_BRANCH}-${CTEST_BUILD_CONFIGURATION}")
+  set(CTEST_BUILD_NAME "${PYCICLE_PR}-${PYCICLE_BRANCH}-${PYCICLE_BUILD_STAMP}")
 endif()
 
 #######################################################################
@@ -199,7 +195,7 @@ ctest_start(${CTEST_MODEL}
 )
 
 string(CONCAT CTEST_CONFIGURE_COMMAND
-  " ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CTEST_BUILD_CONFIGURATION} "
+  " ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${PYCICLE_BUILD_TYPE} "
   " ${CTEST_BUILD_OPTIONS}"
   " ${CTEST_CONFIGURE_COMMAND} \"-G${CTEST_CMAKE_GENERATOR}\""
   " ${CTEST_CONFIGURE_COMMAND} \"${CTEST_SOURCE_DIRECTORY}\"")

@@ -26,7 +26,7 @@ set(CMAKE_VER            "3.9.1")
 
 if (PYCICLE_COMPILER MATCHES "gcc")
   set(GCC_VER             "5.3.0")
-  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}")
+  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
   #
   set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
@@ -61,7 +61,7 @@ set(PAPI_ROOT        "${INSTALL_ROOT}/papi/${PAPI_VER}")
 set(PAPI_INCLUDE_DIR "${INSTALL_ROOT}/papi/${PAPI_VER}/include")
 set(PAPI_LIBRARY     "${INSTALL_ROOT}/papi/${PAPI_VER}/lib/libpfm.so")
 
-set(CTEST_SITE "cray(daint)-${PYCICLE_BUILD_STAMP}-Boost-${BOOST_VER}")
+set(CTEST_SITE "cray(daint)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT "600")
 set(BUILD_PARALLELISM  "32")

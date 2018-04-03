@@ -41,7 +41,7 @@ set(LDFLAGS    "")
 set(LDCXXFLAGS "${LDFLAGS} -std c++14")
 set(BUILD_PARALLELISM "8")
 
-set(CTEST_SITE "linux(jblaptop)-gcc-${GCC_VER}-Boost-${BOOST_VER}")
+set(CTEST_SITE "linux(jblaptop)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT "200")
 
