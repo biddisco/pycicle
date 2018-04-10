@@ -26,7 +26,7 @@ set(OTF2_VER      "2.0")
 set(PAPI_VER      "5.5.1")
 set(BOOST_SUFFIX  "1_65_1")
 
-set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}")
+set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
 
 set(INSTALL_ROOT     "/users/biddisco/apps")
 set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${BOOST_VER}")
@@ -43,7 +43,7 @@ set(LDFLAGS    "-dynamic")
 set(LDCXXFLAGS "${LDFLAGS} -std c++14")
 set(BUILD_PARALLELISM "8")
 
-set(CTEST_SITE "linux(greina)-gcc-${GCC_VER}-Boost-${BOOST_VER}")
+set(CTEST_SITE "linux(greina)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT "200")
 

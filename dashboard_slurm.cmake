@@ -19,6 +19,7 @@ message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
 message("COMPILER is      " ${PYCICLE_COMPILER})
 message("BOOST is         " ${PYCICLE_BOOST})
+message("Build type is    " ${PYCICLE_BUILD_TYPE})
 
 #######################################################################
 # Load machine specific settings
@@ -41,6 +42,7 @@ set(PYCICLE_SLURM_TEMPLATE ${PYCICLE_SLURM_TEMPLATE}
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
   "-DPYCICLE_COMPILER=${PYCICLE_COMPILER} "
   "-DPYCICLE_BOOST=${PYCICLE_BOOST} "
+  "-DPYCICLE_BUILD_TYPE=${PYCICLE_BUILD_TYPE} "
   "-DPYCICLE_MASTER=${PYCICLE_MASTER} \n"
 )
 

@@ -74,6 +74,12 @@ parser.add_argument('-m', '--machines', dest='machines', nargs='+',
     default=machines, help='list of machines to use for testing')
 
 #--------------------------------------------------------------------------
+# CMake build type
+#--------------------------------------------------------------------------
+parser.add_argument('-b', '--build-type', dest='build_type',
+    default='Release', help='CMake build type used for all builds')
+
+#--------------------------------------------------------------------------
 # PR - when testing, limit checks to a single PR
 #--------------------------------------------------------------------------
 parser.add_argument('-p', '--pull-request', dest='pull_request', type=int,
@@ -99,8 +105,10 @@ print('pycicle: path        :', args.pycicle_dir)
 print('pycicle: token       :', args.user_token)
 print('pycicle: machines    :', args.machines)
 print('pycicle: PR          :', args.pull_request)
+print('pycicle: build_type  :', args.build_type)
 #
 machine = args.machines[0]
+build_type = args.build_type
 print('\ncurrent implementation supports only 1 machine :', machine, '\n')
 
 #--------------------------------------------------------------------------
@@ -141,6 +149,7 @@ def launch_build(nickname, compiler, branch_id, branch_name) :
            '-DPYCICLE_RANDOM='              + random_string(10),
            '-DPYCICLE_COMPILER='            + compiler,
            '-DPYCICLE_BOOST='               + boost,
+           '-DPYCICLE_BUILD_TYPE='          + build_type,
            '-DPYCICLE_MASTER='              + github_master,
            # These are to quiet warnings from ctest about unset vars
            '-DCTEST_SOURCE_DIRECTORY=.',
