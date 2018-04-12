@@ -204,16 +204,20 @@ def find_scrape_files(project, nickname) :
     cmd = ['ssh', remote_ssh, 'find ',
            remote_path + '/build/'+project+'-*', '-maxdepth 2', '-name pycicle-TAG.txt']
     #
-    result = subprocess.check_output(cmd).splitlines()
-    # print('find pycicle-TAG using', cmd, ' gives :', result)
-    for s in result: JobFiles.append(s.decode('utf-8'))
+    try:
+        result = subprocess.check_output(cmd).splitlines()
+        # print('find pycicle-TAG using', cmd, ' gives :', result)
+        for s in result: JobFiles.append(s.decode('utf-8'))
 
-    # for each build dir, return the PR number and results file
-    for f in JobFiles:
-        m = re.search(r'/build/'+project+'-(.+?)-.*/pycicle-TAG.txt', f)
-        print('search pycicle-TAG gives :', m)
-        if m:
-            PR_numbers[m.group(1)] = f
+        # for each build dir, return the PR number and results file
+        for f in JobFiles:
+            m = re.search(r'/build/'+project+'-(.+?)-.*/pycicle-TAG.txt', f)
+            print('search pycicle-TAG gives :', m)
+            if m:
+                PR_numbers[m.group(1)] = f
+
+    except Exception as ex:
+        print('find_scrape_files failed using ', cmd)
 
     return PR_numbers
 
