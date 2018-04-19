@@ -1,6 +1,7 @@
 # pycicle
-Python Continuous Integration Command Line Engine
-
+  <p align="center">Python Continuous Integration Command Line Engine<p align="center">
+    <img src="/pycicle-logo.png" width="128"/></p>
+    
 A simple command line tool to poll github for Pull Requests on a project and trigger builds when they change,
 or when the master branch changes. Projects are assumed to be `C++`, use `CMake` for configuration and `CTest`
 for testing with results submitted to a `CDash` dasboard.
