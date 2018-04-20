@@ -9,7 +9,7 @@
 # Simple tool to poll PRs/etc on github and spawn builds
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
-from __future__ import absolute_import, division, print_function #unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 import github
 import ssl
 import os
@@ -21,6 +21,19 @@ import random
 import socket
 import datetime
 import argparse
+
+#--------------------------------------------------------------------------
+# Fix unicode python 2 and python 3 problem with argument parsing
+#--------------------------------------------------------------------------
+try:
+    unicode
+except NameError:
+    # Define `unicode` for Python3
+    def unicode(s, *_):
+        return s
+
+def to_unicode(s):
+    return unicode(s, "utf-8")
 
 #--------------------------------------------------------------------------
 # Command line args
@@ -86,7 +99,7 @@ parser.add_argument('-r', '--pycicle-root', dest='pycicle_dir',
 #--------------------------------------------------------------------------
 user_token = 'generate a token and paste it here, or set env var'
 user_token = os.environ.get('PYCICLE_GITHUB_TOKEN', user_token)
-parser.add_argument('-t', '--github-token', dest='user_token', type=unicode,
+parser.add_argument('-t', '--github-token', dest='user_token', type=to_unicode,
     default=user_token, help='github token used to authenticate access')
 
 #--------------------------------------------------------------------------
