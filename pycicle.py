@@ -10,7 +10,40 @@
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 from __future__ import absolute_import, division, print_function, unicode_literals
-import github, ssl, os, subprocess, time, re, string, random, socket, datetime, argparse
+import github
+import ssl
+import os
+import subprocess
+import time
+import re
+import string
+import random
+import socket
+import datetime
+import argparse
+
+#--------------------------------------------------------------------------
+# Fix unicode python 2 and python 3 problem with argument parsing
+#--------------------------------------------------------------------------
+try:
+    unicode
+except NameError:
+    # Define `unicode` for Python3
+    def unicode(s, *_):
+        return s
+
+def to_unicode(s):
+    return unicode(s, "utf-8")
+
+#--------------------------------------------------------------------------
+# debug print
+#--------------------------------------------------------------------------
+def debug_print(*text):
+    if args.debug or args.debug_info:
+        print('debug: ', end='')
+        for txt in text:
+            print(txt, end=' ')
+        print()
 
 #--------------------------------------------------------------------------
 # Command line args
@@ -25,19 +58,25 @@ parser.add_argument('-P', '--project', dest='project',
     help='Project name (case sensitive) used as root of config dir for settings')
 
 #----------------------------------------------
-# enable or disable slurm for Job launching
+# pre_ctest_commands
+# imagine your host does not have cmake installed at the system
+# level. You make need to load a module or set a export a path
+# here. Right now it just takes a string to be run in shell
 #----------------------------------------------
-parser.add_argument('-s', '--slurm', dest='slurm', action='store_true',
-    help="Use slurm for job launching (default)")
-parser.add_argument('--no-slurm', dest='slurm', action='store_false',
-    help="Disable slurm job launching")
-parser.set_defaults(slurm=True)
+parser.add_argument('--pre_ctest_commands', dest='pre_ctest_commands', type=str,
+                    default=None, help="Pre ctest commands")
 
 #----------------------------------------------
 # enable/debug mode
 #----------------------------------------------
 parser.add_argument('-d', '--debug', dest='debug', action='store_true',
     default=False, help="Enable debug mode")
+
+#----------------------------------------------
+# enable/debug display mode
+#----------------------------------------------
+parser.add_argument('-D', '--debug-info', dest='debug_info', action='store_true',
+    default=False, help="Display extra debugging info")
 
 #----------------------------------------------
 # force rebuild mode
@@ -58,7 +97,7 @@ parser.add_argument('-r', '--pycicle-root', dest='pycicle_dir',
 #--------------------------------------------------------------------------
 user_token = 'generate a token and paste it here, or set env var'
 user_token = os.environ.get('PYCICLE_GITHUB_TOKEN', user_token)
-parser.add_argument('-t', '--github-token', dest='user_token',
+parser.add_argument('-t', '--github-token', dest='user_token', type=to_unicode,
     default=user_token, help='github token used to authenticate access')
 
 #--------------------------------------------------------------------------
@@ -91,32 +130,44 @@ parser.add_argument('-p', '--pull-request', dest='pull_request', type=int,
 parser.add_argument('-c', '--scrape-only', dest='scrape_only', action='store_true',
 default=False, help="Only scrape results and set github status (no building)")
 
+#--------------------------------------------------------------------------
+# CMake Build Type
+#--------------------------------------------------------------------------
+#parser.add_argument('-b', '--build-type', dest='build_type',
+#                    help='Cmake Build Type', default="Release")
+
+#--------------------------------------------------------------------------
+# CDash Server
+#--------------------------------------------------------------------------
+parser.add_argument('--cdash-server', dest='cdash_server',
+                    help='CDash server', default=None)
+
 #----------------------------------------------
 # print summary of parse args
 #----------------------------------------------
 args = parser.parse_args()
+machine = args.machines[0]
+build_type = args.build_type
+print('-' * 30)
 print('pycicle: project     :', args.project)
-print('pycicle: slurm       :', 'enabled' if args.slurm else 'disabled')
 print('pycicle: debug       :',
     'enabled (no build trigger commands will be sent)' if args.debug else 'disabled')
-print('pycicle: scrape-only :', 'enabled' if args.slurm else 'disabled')
+print('pycicle: scrape-only :', 'enabled' if args.scrape_only else 'disabled')
 print('pycicle: force       :', 'enabled' if args.force else 'disabled')
 print('pycicle: path        :', args.pycicle_dir)
 print('pycicle: token       :', args.user_token)
 print('pycicle: machines    :', args.machines)
 print('pycicle: PR          :', args.pull_request)
 print('pycicle: build_type  :', args.build_type)
-#
-machine = args.machines[0]
-build_type = args.build_type
-print('\ncurrent implementation supports only 1 machine :', machine, '\n')
+print('pycicle: machine     :', machine, '(only 1 supported currently)')
+print('-' * 30)
 
 #--------------------------------------------------------------------------
 # read one value from the CMake config for use elsewhere
 #--------------------------------------------------------------------------
 def get_setting_for_machine(project, machine, setting) :
     current_path = os.path.dirname(os.path.realpath(__file__))
-#    print('looking for setting', setting, ' in file', current_path + '/config/' + project + '/' + machine + '.cmake')
+    debug_print('looking for setting', setting, 'in file', current_path + '/config/' + project + '/' + machine + '.cmake')
     f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
     for line in f:
         m = re.findall(setting + ' *\"(.+?)\"', line)
@@ -127,56 +178,91 @@ def get_setting_for_machine(project, machine, setting) :
 #--------------------------------------------------------------------------
 # launch a command that will start one build
 #--------------------------------------------------------------------------
-def launch_build(nickname, compiler, branch_id, branch_name) :
+def launch_build(nickname, compiler_type, branch_id, branch_name) :
     remote_ssh  = get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
     remote_path = get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
     remote_http = get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
-
+    job_type    = get_setting_for_machine(args.project, nickname, 'PYCICLE_JOB_LAUNCH')
+    debug_print('launching build', compiler_type, branch_id, branch_name, job_type)
     # we are not yet using these as 'options'
     boost = 'x.xx.x'
-    #
-    cmd1 = 'ctest' if not args.debug else {'echo ', ' ', 'ctest'}
-    script = 'dashboard_slurm.cmake' if args.slurm else 'dashboard_script.cmake'
-    cmd = ['ssh', remote_ssh, cmd1, '-S',
-           remote_path                      + '/pycicle/' + script,
-           '-DPYCICLE_ROOT='                + remote_path,
-           '-DPYCICLE_HOST='                + nickname,
-           '-DPYCICLE_PROJECT_NAME='        + args.project,
-           '-DPYCICLE_GITHUB_PROJECT_NAME=' + github_reponame,
-           '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation,
-           '-DPYCICLE_PR='                  + branch_id,
-           '-DPYCICLE_BRANCH='              + branch_name,
-           '-DPYCICLE_RANDOM='              + random_string(10),
-           '-DPYCICLE_COMPILER='            + compiler,
-           '-DPYCICLE_BOOST='               + boost,
-           '-DPYCICLE_BUILD_TYPE='          + build_type,
-           '-DPYCICLE_MASTER='              + github_master,
-           # These are to quiet warnings from ctest about unset vars
-           '-DCTEST_SOURCE_DIRECTORY=.',
-           '-DCTEST_BINARY_DIRECTORY=.',
-           '-DCTEST_COMMAND=":"']
 
+    # This is a clumsy way to do this.
+    if job_type=='slurm':
+        debug_print("slurm build:", args.project)
+        script = 'dashboard_slurm.cmake'
+    elif job_type=='pbs':
+        debug_print("pbs build:", args.project)
+        script = 'dashboard_pbs.cmake'
+    else:
+        debug_print("direct build:", args.project)
+        script = 'dashboard_script.cmake'
+
+    if 'local' not in remote_ssh:
+        # We need to setup the environment on the remote machine,
+        # often even cmake comes from a module or the like.
+        org_dir = '.'
+        cmd1 = []
+        if args.pre_ctest_commands:
+            cmd1.append(args.pre_ctest_commands)
+        cmd1.append('ctest')
+        cmd1 = ' '.join(cmd1)
+        cmd = ['ssh', remote_ssh, cmd1, '-S',
+               remote_path                      + '/pycicle/' + script ]
+    else:
+        # if we're local we assume the current context has the module setup
+        debug_print( "Local build working in:", os.getcwd())
+        cmd = ['ctest','-S', "./pycicle/" + script ] #'./pycicle/'
+
+    build_type = get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
+
+    cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
+                  '-DPYCICLE_HOST='                + nickname,
+                  '-DPYCICLE_PROJECT_NAME='        + args.project,
+                  '-DPYCICLE_GITHUB_PROJECT_NAME=' + github_reponame,
+                  '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation,
+                  '-DPYCICLE_PR='                  + branch_id,
+                  '-DPYCICLE_BRANCH='              + branch_name,
+                  '-DPYCICLE_RANDOM='              + random_string(10),
+                  '-DPYCICLE_COMPILER_TYPE='            + compiler_type,
+                  '-DPYCICLE_BOOST='               + boost,
+                  '-DPYCICLE_BUILD_TYPE='          + build_type,
+                  '-DPYCICLE_MASTER='              + github_master,
+                  # These are to quiet warnings from ctest about unset vars
+                  '-DCTEST_SOURCE_DIRECTORY=.',
+                  '-DCTEST_BINARY_DIRECTORY=.',
+                  '-DCTEST_COMMAND=":"' ]
     if args.debug:
         print('\n' + '-' * 20, 'Debug\n', subprocess.list2cmdline(cmd))
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         print('-' * 20 + '\n')
+        debug_out, _ = p.communicate()
+        print(debug_out)
     else:
-        print('\n' + '-' * 20, 'Executing\n', subprocess.list2cmdline(cmd))
-        p = subprocess.Popen(cmd)
+        print('\n' + '-' * 20, 'Executing\n', subprocess.list2cmdline(cmd), '\n')
+        # if local then wait for the result
+        if 'local' in remote_ssh:
+            result = subprocess.check_output(cmd).splitlines()
+            print('-' * 30)
+            print(result)
+        else:
+            p = subprocess.Popen(cmd)
         print('-' * 20 + '\n')
 
+    # os.chdir(org_dir)
     return None
 
 #--------------------------------------------------------------------------
 # launch one build from a list of options
 #--------------------------------------------------------------------------
-def choose_and_launch(project, machine, branch_id, branch_name) :
+def choose_and_launch(project, machine, branch_id, branch_name, compiler_type="gcc") :
+    debug_print("Begin : choose_and_launch", project, machine, branch_id, branch_name)
     if project=='hpx' and machine=='daint':
         if bool(random.getrandbits(1)):
-            launch_build(machine, 'gcc', branch_id, branch_name)
+            compiler_type = 'gcc'
         else:
-            launch_build(machine, 'clang', branch_id, branch_name)
-    else:
-        launch_build(machine, 'gcc', branch_id, branch_name)
+            compiler_type = 'clang'
+    launch_build(machine, compiler_type, branch_id, branch_name)
 
 #--------------------------------------------------------------------------
 # Utility function to remove a file from a remote filesystem
@@ -184,11 +270,15 @@ def choose_and_launch(project, machine, branch_id, branch_name) :
 def erase_file(remote_ssh, file):
     # erase the pycicle scrape file if we have set status corectly
     try:
-        cmd = ['ssh', remote_ssh, 'rm', '-f', file]
+        if 'local' not in remote_ssh:
+            cmd = ['ssh', remote_ssh ]
+        else:
+            cmd = []
+        cmd = cmd + [ 'rm', '-f', file]
         result = subprocess.check_output(cmd).split()
-        print ('File removed', file)
+        print('File removed', file)
     except Exception as ex:
-        print ('File deletion failed', ex)
+        print('File deletion failed', ex)
 
 #--------------------------------------------------------------------------
 # find all the PR build jobs submitted and from them the build dirs
@@ -201,24 +291,34 @@ def find_scrape_files(project, nickname) :
     JobFiles   = []
     PR_numbers = {}
     #
-    cmd = ['ssh', remote_ssh, 'find ',
-           remote_path + '/build/'+project+'-*', '-maxdepth 2', '-name pycicle-TAG.txt']
-    #
     try:
+        if 'local' not in remote_ssh:
+            cmd = ['ssh', remote_ssh ]
+        else:
+            cmd = []
+
+        search_path = remote_path + '/build/'
+        cmd = cmd + [ 'find', search_path,
+                      '-maxdepth',  '2',
+                      '-path', search_path + project + '-*',
+                      '-name', 'pycicle-TAG.txt']
+
+        debug_print('executing', cmd)
         result = subprocess.check_output(cmd).splitlines()
-        # print('find pycicle-TAG using', cmd, ' gives :', result)
-        for s in result: JobFiles.append(s.decode('utf-8'))
-
-        # for each build dir, return the PR number and results file
-        for f in JobFiles:
-            m = re.search(r'/build/'+project+'-(.+?)-.*/pycicle-TAG.txt', f)
-            print('search pycicle-TAG gives :', m)
+        debug_print('find pycicle-TAG using', cmd, 'gives :\n', result)
+        for s in result:
+            tagfile = s.decode('utf-8')
+            JobFiles.append(tagfile)
+            debug_print('#'*5, tagfile)
+            # for each build dir, return the PR number and results file
+            m = re.search(search_path + project + '-([0-9]+).*/pycicle-TAG.txt', tagfile)
             if m:
-                PR_numbers[m.group(1)] = f
+                PR_numbers[m.group(1)] = tagfile
+                debug_print('#'*5, 'Regex search pycicle-TAG gives PR:', m.group(1))
 
-    except Exception as ex:
-        print('find_scrape_files failed using ', cmd)
-
+    except Exception as e:
+        print("Exception", e, " : "
+            "find_scrape_files failed for {}".format(search_path))
     return PR_numbers
 
 #--------------------------------------------------------------------------
@@ -227,7 +327,11 @@ def find_scrape_files(project, nickname) :
 def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_name, head_commit) :
     remote_ssh  = get_setting_for_machine(project, nickname, 'PYCICLE_MACHINE')
 
-    cmd = ['ssh', remote_ssh, 'cat', scrape_file]
+    if 'local' not in remote_ssh:
+        cmd = ['ssh', remote_ssh ]
+    else:
+        cmd = []
+    cmd = cmd + [ 'cat', scrape_file ]
 
     Config_Errors = 0
     Build_Errors  = 0
@@ -235,7 +339,6 @@ def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_nam
     Errors        = []
 
     context = re.search(r'/build/'+project+'.*?-(.+)/pycicle-TAG.txt', scrape_file)
-    # print('context pycicle-TAG', context)
     if context:
         origin = nickname + '-' + context.group(1)
     else:
@@ -244,7 +347,7 @@ def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_nam
     try:
         result = subprocess.check_output(cmd).split()
         for s in result: Errors.append(s.decode('utf-8'))
-        print('Errors are', Errors)
+        print('Config/Build/Test Errors are', Errors)
 
         Config_Errors = int(Errors[0])
         Build_Errors  = int(Errors[1])
@@ -255,14 +358,14 @@ def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_nam
             DateURL   = DateStamp[0:4]+'-'+DateStamp[4:6]+'-'+DateStamp[6:8]
             print('Extracted date as', DateURL)
 
-            URL = ('http://cdash.cscs.ch/index.php?project=' + cdash_servername +
+            URL = ('http://{}/{}/index.php?project='.format(cdash_server, cdash_http_path) + cdash_project_name +
                    '&date=' + DateURL +
                    '&filtercount=1' +
                    '&field1=buildname/string&compare1=63&value1=' +
                    branch_id + '-' + branch_name)
-
+            print("URL:", URL)
             if args.debug:
-                print ('Debug github PR status', URL)
+                print('Debug github PR status', URL)
             else:
                 head_commit.create_status(
                     'success' if Config_Errors==0 else 'failure',
@@ -279,9 +382,10 @@ def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_nam
                     target_url=URL,
                     description='errors ' + Errors[2],
                     context='pycicle ' + origin + ' Test')
-                print ('Done setting github PR status for', origin)
+                print('Done setting github PR status for', origin)
 
         erase_file(remote_ssh, scrape_file)
+        print('-' * 30)
 
     except Exception as ex:
         print('Scrape failed for PR', branch_id, ex)
@@ -297,12 +401,14 @@ def random_string(N):
 # Check if a PR Needs and Update
 #--------------------------------------------------------------------------
 def needs_update(project_name, branch_id, branch_name, branch_sha, master_sha):
-    directory     = pycicle_dir + '/src/' + project_name + '-' + branch_id
+    directory     = args.pycicle_dir + '/src/' + project_name + '-' + branch_id
     status_file   = directory + '/last_pr_sha.txt'
     update        = False
     #
-    if not os.path.exists(directory):
+    debug_print("Begin : needs_update", directory)
+    if os.path.exists(directory) == False:
         os.makedirs(directory)
+        print("Created ", directory)
         update = True
     else:
         try:
@@ -332,21 +438,27 @@ def needs_update(project_name, branch_id, branch_name, branch_sha, master_sha):
 #--------------------------------------------------------------------------
 def delete_old_files(nickname, path, days) :
     remote_ssh  = get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
-    directory   = '${PYCICLE_ROOT}/'+ path
+    remote_path = get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
+    directory   = remote_path + '/' + path
     Dirs        = []
 
-    cmd = ['ssh', remote_ssh, 'find ',
-           directory, ' -mindepth 1 -maxdepth 1 -type d -mtime +' + str(days)]
+    if 'local' not in remote_ssh:
+        cmd_transport = ['ssh', remote_ssh ]
+    else:
+        cmd_transport = []
+    cmd = cmd_transport + ['find', directory,
+        '-mindepth', '1', '-maxdepth', '1', '-type', 'd', '-mtime', str(days)]
 
+    debug_print('Cleanup find:', cmd)
     try:
         result = subprocess.check_output(cmd).split()
         for s in result:
             temp = s.decode('utf-8')
-            cmd = ['ssh', remote_ssh, 'rm', '-rf', temp]
-            print('Deleting old/stale directory : ', cmd)
+            cmd = cmd_transport + [ 'rm', '-rf', temp]
+            print('Deleting old/stale directory : ', temp)
             result = subprocess.check_output(cmd).split()
     except Exception as ex:
-        print('Cleanup failed for ', nickname)
+        print('Cleanup failed for ', nickname, ex)
 
 #--------------------------------------------------------------------------
 # main program starts here
@@ -356,28 +468,48 @@ def delete_old_files(nickname, path, days) :
 github_reponame     = get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_PROJECT_NAME')
 github_organisation = get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_ORGANISATION')
 github_master       = get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_MASTER_BRANCH')
-cdash_servername    = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_SERVER_NAME')
+if args.cdash_server:
+    cdash_server = args.cdash_server
+else:
+    cdash_server    = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_SERVER_NAME')
+cdash_project_name  = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_PROJECT_NAME')
+compiler_type       = get_setting_for_machine(args.project, args.machines[0], 'PYCICLE_COMPILER_TYPE')
+cdash_http_path     = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_HTTP_PATH')
 
-print('PYCICLE_GITHUB_PROJECT_NAME  is', github_reponame)
-print('PYCICLE_GITHUB_ORGANISATION  is', github_organisation)
-print('PYCICLE_GITHUB_MASTER_BRANCH is', github_master)
-print('PYCICLE_CDASH_SERVER_NAME    is', cdash_servername)
+print('-' * 30)
+print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
+print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
+print('PYCICLE_GITHUB_MASTER_BRANCH =', github_master)
+print('PYCICLE_COMPILER_TYPE        =', compiler_type)
+print('PYCICLE_CDASH_PROJECT_NAME   =', cdash_project_name)
+print('PYCICLE_CDASH_SERVER_NAME    =', cdash_server)
+print('PYCICLE_CDASH_HTTP_PATH      =', cdash_http_path)
+print('-' * 30)
 
+# @todo make these into options
+# 60 seconds between polls.
 poll_time   = 60
+# 10 mins between checks for results and cleanups.
 scrape_time = 10*60
 
 try:
-    git  = github.Github(github_organisation, user_token)
-    org  = git.get_organization(github_organisation)
-    repo = org.get_repo(github_reponame)
-except:
-    print('Failed to connect to github. Network down?')
+    git  = github.Github(github_organisation, args.user_token)
+    print("Github User   :",git.get_user().name)
+    if github_organisation:
+        org = git.get_organization(github_organisation)
+        print("Organisation  :", org.name)
+        repo = org.get_repo(github_reponame)
+    else:
+        repo = git.get_repo(github_reponame)
+    print("Repo Fullname :", repo.full_name)
+except Exception as e:
+    print(e, 'Failed to connect to github. Network down?')
 
 #--------------------------------------------------------------------------
 # Scrape-list : machine/build that we must check for status files
 # This will need to support lots of build/machine combinations eventually
 #--------------------------------------------------------------------------
-scrape_list = {}
+scrape_list = {"cadesCondo":"Debug"}
 
 #--------------------------------------------------------------------------
 # main polling routine
@@ -396,21 +528,43 @@ while True:
         github_t2     = datetime.datetime.now()
         github_tdiff  = github_t2 - github_t1
         github_t1     = github_t2
-        print('Checking github:', 'Time since last check', github_tdiff.seconds, '(s)')
+        print('-' * 30)
+        print('Checking github:', 'Time since last check:', github_tdiff.seconds, '(s)')
+        print('-' * 30)
         #
         master_branch = repo.get_branch(repo.default_branch)
         master_sha    = master_branch.commit.sha
         #
-        pull_requests = repo.get_pulls('open')
-        pr_list       = {}
+        # just get a single PR if that was all that was asker for
+        if args.pull_request!=0:
+            pr = repo.get_pull(args.pull_request)
+            pull_requests = {pr}
+            debug_print('Requested PR: ', pr)
+        # otherwise get all open PRs
+        else:
+            pull_requests = repo.get_pulls('open')
+
+        pr_list = {}
+        #
         for pr in pull_requests:
+            # find out if the PR is from a local branch or from a clone of the repo
+            debug_print('-' * 30)
+            debug_print(pr)
+            debug_print('Repo to merge from   :', pr.head.repo.owner.login)
+            debug_print('Branch to merge from :', pr.head.ref)
+            if pr.head.repo.owner.login==github_organisation:
+                debug_print('Pull request is from local repo')
+                debug_print('git pull https://github.com/' + pr.head.repo.owner.login + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
+            else:
+                debug_print('Pull request is from clone')
+                debug_print('git pull https://github.com/' + pr.head.repo.owner.login + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
             #
+            debug_print('-' * 30)
             branch_id   = str(pr.number)
             branch_name = pr.head.label.rsplit(':',1)[1]
             branch_sha  = pr.head.sha
             # need details, including last commit on PR for setting status
             pr_list[branch_id] = [machine, branch_name, pr.get_commits().reversed[0]]
-
             #
             if args.pull_request!=0 and pr.number!=args.pull_request:
                 continue
@@ -420,12 +574,12 @@ while True:
             if not args.scrape_only:
                 update = force or needs_update(args.project, branch_id, branch_name, branch_sha, master_sha)
                 if update:
-                    choose_and_launch(args.project, machine, branch_id, branch_name)
+                    choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
 
         # also build the master branch if it has changed
         if not args.scrape_only and args.pull_request==0:
             if force or needs_update(args.project, 'master', 'master', master_sha, master_sha):
-                choose_and_launch(args.project, machine, 'master', 'master')
+                choose_and_launch(args.project, machine, 'master', 'master', compiler_type)
                 pr_list['master'] = [machine, 'master', master_branch.commit, ""]
 
         scrape_t2    = datetime.datetime.now()
@@ -434,7 +588,7 @@ while True:
             scrape_t1 = scrape_t2
             print('Scraping results:', 'Time since last check', scrape_tdiff.seconds, '(s)')
             builds_done = find_scrape_files(args.project, machine)
-            print(builds_done)
+            print('scrape files for PRs', builds_done)
             for branch_id in builds_done:
                 if branch_id in pr_list:
                     # nickname, scrape_file, branch_id, branch_name, head_commit

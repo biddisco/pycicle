@@ -12,8 +12,8 @@ set(PYCICLE_MACHINE "greina.cscs.ch")
 set(PYCICLE_ROOT "/scratch/biddisco/pycicle")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP "TRUE")
-# Launch jobs using slurm rather than directly running them on the machine
-set(PYCICLE_SLURM "TRUE")
+# Method used to launch jobs "slurm", "pbs" or "direct" supported
+set(PYCICLE_JOB_LAUNCH "slurm")
 #
 #######################################################################
 # These are settings you can use to define anything useful
@@ -80,7 +80,7 @@ string(CONCAT CTEST_BUILD_OPTIONS
 # Setup a slurm job submission template
 # note that this is intentionally multiline
 #######################################################################
-set(PYCICLE_SLURM_TEMPLATE "#!/bin/bash
+set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --job-name=hpx-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
 #SBATCH --time=04:00:00
 #SBATCH --nodes=1

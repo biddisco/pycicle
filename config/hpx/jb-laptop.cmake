@@ -1,4 +1,4 @@
-#  Copyright (c) 2017 John Biddiscombe
+#  Copyright (c) 2017-2018 John Biddiscombe
 #
 #  Distributed under the Boost Software License, Version 1.0. (See accompanying
 #  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -9,11 +9,11 @@
 # the name used to ssh into the machine
 set(PYCICLE_MACHINE "localhost")
 # the root location of the build/test tree on the machine
-set(PYCICLE_ROOT "/home/biddisco/pyci")
+set(PYCICLE_ROOT "/home/biddisco/pycicle")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP TRUE)
-# Launch jobs using slurm rather than directly running them on the machine
-set(PYCICLE_SLURM FALSE)
+# Method used to launch jobs "slurm", "pbs" or "direct" supported
+set(PYCICLE_JOB_LAUNCH "direct")
 
 #######################################################################
 # These are settings you can use to define anything useful

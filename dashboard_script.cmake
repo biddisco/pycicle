@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 #######################################################################
 # For debugging this script
 #######################################################################
+message("In ${CMAKE_CURRENT_LIST_FILE}")
 message("Project name is  " ${PYCICLE_PROJECT_NAME})
 message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
@@ -17,7 +18,7 @@ message("master branch is " ${PYCICLE_MASTER})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
-message("COMPILER is      " ${PYCICLE_COMPILER})
+message("COMPILER type is " ${PYCICLE_COMPILER_TYPE})
 message("BOOST is         " ${PYCICLE_BOOST})
 message("Build type is    " ${PYCICLE_BUILD_TYPE})
 
@@ -52,9 +53,6 @@ set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PROJECT_NAME}-${PY
 # make sure root dir exists
 file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
 
-# include any ctest settings to make sure we have them
-include(${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake)
-
 if (PYCICLE_PR STREQUAL "master")
   set(CTEST_BUILD_NAME "${PYCICLE_BRANCH}-${PYCICLE_BUILD_STAMP}")
 else()
@@ -74,19 +72,21 @@ include(FindGit)
 set(CTEST_GIT_COMMAND "${GIT_EXECUTABLE}")
 
 #######################################################################
-# Initial checkout if no source directory
-# if repo copy local - save time by copying instead of doing a clone
-#######################################################################
-if(NOT PYCICLE_LOCAL_GIT_COPY)
-  message(FATAL_ERROR "You must have a local clone")
-endif()
-
-#######################################################################
-# First checkout, copy from a local repo to save clone of many GB's
+# First checkout, copy from $PYCICLE_ROOT/repos/$project to save
+# cloning many GB's which can be a problem for large repos over on
+# slow connections
+#
+# if $PYCICLE_ROOT/repos/$project does not exist already, then perform a
+# full checkout
 #######################################################################
 set (make_repo_copy_ "")
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
+  message("Configuring src repo copy from local repo cache")
   set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
+  if (NOT EXISTS "${PYCICLE_LOCAL_GIT_COPY}/.git")
+    message("Local repo cache missing, using full clone of src repo")
+    set (make_repo_copy_ "git clone git@github.com:${PYCICLE_GITHUB_ORGANISATION}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
+  endif()
   message("${make_repo_copy_}")
 endif()
 
@@ -103,17 +103,45 @@ if (NOT PYCICLE_PR STREQUAL "master")
   # to fetch the merged branch so that the update step shows the
   # files that are different in the branch from master
   #
+  # The below can partially fail without it being obvious,
+  # the -e should stop that, but certain things like the PR Delete can Fail
+  # even if nothing is wrong.
+
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
-    COMMAND bash "-c" "${make_repo_copy_}
+    COMMAND bash "-c" "-e" "${make_repo_copy_}"
+    WORKING_DIRECTORY "${WORK_DIR}"
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE  output
+    RESULT_VARIABLE failed
+  )
+  if ( failed EQUAL 1 )
+    MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
+      "Could not copy local repo. "
+      "Is your local repo specified properly?" )
+  endif ( failed EQUAL 1 )
+
+  execute_process(
+    COMMAND bash "-c" "-e"
+                      "cd ${CTEST_SOURCE_DIRECTORY};
+                      ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};"
+    WORKING_DIRECTORY "${WORK_DIR}"
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE  output
+    RESULT_VARIABLE failed
+  )
+  if ( failed EQUAL 1 )
+    MESSAGE( "First time for ${GIT_BRANCH} update?" )
+  endif ( failed EQUAL 1 )
+
+  execute_process(
+    COMMAND bash "-c" "-e" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} fetch origin;
+                       ${CTEST_GIT_COMMAND} pull origin master;
                        ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
-                       ${CTEST_GIT_COMMAND} fetch origin ${PYCICLE_BRANCH};
-                       ${CTEST_GIT_COMMAND} merge --no-edit FETCH_HEAD;
+                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} clean -fd;"
     WORKING_DIRECTORY "${WORK_DIR}"
@@ -121,12 +149,20 @@ if (NOT PYCICLE_PR STREQUAL "master")
     ERROR_VARIABLE  output
     RESULT_VARIABLE failed
   )
+  if ( failed EQUAL 1 )
+    MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
+      "Can you access github from the build location?" )
+  endif ( failed EQUAL 1 )
+
+ #${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
+ #                        ${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};"
+
   set(CTEST_UPDATE_OPTIONS "${CTEST_SOURCE_DIRECTORY} ${GIT_BRANCH}")
 else()
   set(CTEST_SUBMISSION_TRACK "Master")
-  set(WORK_DIR "${PYCICLE_PR_ROOT}/")
+  set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
-    COMMAND bash "-c" "${make_repo_copy_}
+    COMMAND bash "-c" "-e" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} fetch origin;
@@ -136,7 +172,10 @@ else()
     ERROR_VARIABLE  output
     RESULT_VARIABLE failed
   )
-  #message("Process output copy : " ${output})
+  if ( failed EQUAL 1 )
+    MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
+      "Can you access github from the build location?" )
+  endif ( failed EQUAL 1 )
 endif()
 
 #######################################################################
@@ -204,7 +243,8 @@ string(CONCAT CTEST_CONFIGURE_COMMAND
 # Update dashboard
 #######################################################################
 message("Update source... using ${CTEST_SOURCE_DIRECTORY}")
-
+message("CTEST_UPDATE_COMMAND:${CTEST_UPDATE_COMMAND}")
+message("CTEST_UPDATE_OPTIONS:${CTEST_UPDATE_OPTIONS}")
 ctest_update(RETURN_VALUE NB_CHANGED_FILES)
 message("Found ${NB_CHANGED_FILES} changed file(s)")
 message("CTEST_CONFIGURE_COMMAND is\n${CTEST_CONFIGURE_COMMAND}")
