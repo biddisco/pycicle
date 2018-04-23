@@ -39,10 +39,10 @@ def to_unicode(s):
 # debug print
 #--------------------------------------------------------------------------
 def debug_print(*text):
-    if args.debug:
+    if args.debug or args.debug_info:
         print('debug: ', end='')
         for txt in text:
-            print(txt, ' ', end='')
+            print(txt, end=' ')
         print()
 
 #--------------------------------------------------------------------------
@@ -89,6 +89,12 @@ parser.add_argument('--pre_ctest_commands', dest='pre_ctest_commands', type=str,
 #----------------------------------------------
 parser.add_argument('-d', '--debug', dest='debug', action='store_true',
     default=False, help="Enable debug mode")
+
+#----------------------------------------------
+# enable/debug display mode
+#----------------------------------------------
+parser.add_argument('-D', '--debug-info', dest='debug_info', action='store_true',
+    default=False, help="Display extra debugging info")
 
 #----------------------------------------------
 # force rebuild mode
