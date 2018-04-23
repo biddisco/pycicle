@@ -15,6 +15,8 @@ set(PYCICLE_HTTP "TRUE")
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "slurm")
 #
+set(PYCICLE_BUILD_TYPE "Release")
+
 #######################################################################
 # These are settings you can use to define anything useful
 #######################################################################

@@ -15,6 +15,8 @@ set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "direct")
 
+set(PYCICLE_BUILD_TYPE "Release")
+
 #######################################################################
 # These are settings you can use to define anything useful
 #######################################################################
@@ -58,11 +60,7 @@ string(CONCAT CTEST_BUILD_OPTIONS
     " -DJEMALLOC_ROOT=${JEMALLOC_ROOT} "
     " -DBOOST_ROOT=${BOOST_ROOT} "
     " -DBoost_ADDITIONAL_VERSIONS=${BOOST_VER} "
-    " -DBoost_COMPILER=-gcc71 "
-#    " -DOTF2_ROOT=${OTF2_ROOT} "
-#    " -DPAPI_ROOT=${PAPI_ROOT} "
-#    " -DPAPI_INCLUDE_DIR=${PAPI_INCLUDE_DIR} "
-#    " -DPAPI_LIBRARY=${PAPI_LIBRARY} "
+    " -DBoost_COMPILER=-gcc73 "
     " -DHPX_WITH_MALLOC=JEMALLOC "
     " -DHPX_WITH_EXAMPLES=ON "
     " -DHPX_WITH_TESTS=ON "
@@ -75,3 +73,7 @@ string(CONCAT CTEST_BUILD_OPTIONS
     " -DHPX_WITH_THREAD_IDLE_RATES=ON "
 )
 
+#    " -DOTF2_ROOT=${OTF2_ROOT} "
+#    " -DPAPI_ROOT=${PAPI_ROOT} "
+#    " -DPAPI_INCLUDE_DIR=${PAPI_INCLUDE_DIR} "
+#    " -DPAPI_LIBRARY=${PAPI_LIBRARY} "
