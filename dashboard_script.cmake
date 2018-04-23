@@ -50,14 +50,8 @@ set(PYCICLE_PR_ROOT          "${PYCICLE_SRC_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCI
 set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_PR_ROOT}/repo")
 set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
 
-message("Pycicle local repo copy ${PYCICLE_LOCAL_GIT_COPY}")
-
-
 # make sure root dir exists
 file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
-
-# include any ctest settings to make sure we have them
-include(${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake)
 
 if (PYCICLE_PR STREQUAL "master")
   set(CTEST_BUILD_NAME "${PYCICLE_BRANCH}-${PYCICLE_BUILD_STAMP}")
@@ -78,22 +72,21 @@ include(FindGit)
 set(CTEST_GIT_COMMAND "${GIT_EXECUTABLE}")
 
 #######################################################################
-# Initial checkout if no source directory
-# if repo copy local - save time by copying instead of doing a clone
-#######################################################################
-if(NOT PYCICLE_LOCAL_GIT_COPY)
-  message(FATAL_ERROR "You must have a local clone")
-endif()
-
-#######################################################################
-# First checkout, copy from a local repo to save clone of many GB's
-# on Cades Condo Lustre a local checkout is much faster
+# First checkout, copy from $PYCICLE_ROOT/repos/$project to save
+# cloning many GB's which can be a problem for large repos over on
+# slow connections
+#
+# if $PYCICLE_ROOT/repos/$project does not exist already, then perform a
+# full checkout
 #######################################################################
 set (make_repo_copy_ "")
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
-  message("Making Local Repo Copy")
+  message("Configuring src repo copy from local repo cache")
   set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
-  #set (make_repo_copy_ git clone ${GIT_BRANCH} ${CTEST_SOURCE_DIRECTORY}--branch 
+  if (NOT EXISTS "${PYCICLE_LOCAL_GIT_COPY}/.git")
+    message("Local repo cache missing, using full clone of src repo")
+    set (make_repo_copy_ "git clone git@github.com:${PYCICLE_GITHUB_ORGANISATION}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
+  endif()
   message("${make_repo_copy_}")
 endif()
 
@@ -129,8 +122,9 @@ if (NOT PYCICLE_PR STREQUAL "master")
   endif ( failed EQUAL 1 )
 
   execute_process(
-    COMMAND bash "-c" "-e" "cd ${CTEST_SOURCE_DIRECTORY};
-                            ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};"
+    COMMAND bash "-c" "-e"
+                      "cd ${CTEST_SOURCE_DIRECTORY};
+                      ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
     ERROR_VARIABLE  output
