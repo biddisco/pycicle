@@ -26,7 +26,7 @@ set(PAPI_VER             "5.5.1")
 set(BOOST_SUFFIX         "1_65_0")
 set(CMAKE_VER            "3.9.1")
 
-if (PYCICLE_COMPILER MATCHES "gcc")
+if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   set(GCC_VER             "6.2.0")
   set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
   #
@@ -57,7 +57,7 @@ if (PYCICLE_COMPILER MATCHES "gcc")
     "  -DHPX_WITH_CXX14=ON "
   )
 
-elseif(PYCICLE_COMPILER MATCHES "clang")
+elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
   set(CLANG_ROOT         "/users/biddisco/apps/daint/llvm")
   set(CMAKE_C_COMPILER   "${CLANG_ROOT}/bin/clang")
   set(CMAKE_CXX_COMPILER "${CLANG_ROOT}/bin/clang++")

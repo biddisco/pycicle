@@ -208,7 +208,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
         cmd1.append('ctest')
         cmd1 = ' '.join(cmd1)
         cmd = ['ssh', remote_ssh, cmd1, '-S',
-               remote_path                      + '/pycicle/' + script ]
+               remote_path  + '/pycicle/' + script ]
     else:
         # if we're local we assume the current context has the module setup
         debug_print( "Local build working in:", os.getcwd())
@@ -224,7 +224,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
                   '-DPYCICLE_PR='                  + branch_id,
                   '-DPYCICLE_BRANCH='              + branch_name,
                   '-DPYCICLE_RANDOM='              + random_string(10),
-                  '-DPYCICLE_COMPILER_TYPE='            + compiler_type,
+                  '-DPYCICLE_COMPILER_TYPE='       + compiler_type,
                   '-DPYCICLE_BOOST='               + boost,
                   '-DPYCICLE_BUILD_TYPE='          + build_type,
                   '-DPYCICLE_MASTER='              + github_master,
