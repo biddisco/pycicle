@@ -258,8 +258,14 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
         debug_out, _ = p.communicate()
         print(debug_out)
     else:
-        print('\n' + '-' * 20, 'Executing\n', subprocess.list2cmdline(cmd))
-        p = subprocess.Popen(cmd)
+        print('\n' + '-' * 20, 'Executing\n', subprocess.list2cmdline(cmd), '\n')
+        # if local then wait for the result
+        if 'local' in remote_ssh:
+            result = subprocess.check_output(cmd).splitlines()
+            print('-' * 30)
+            print(result)
+        else:
+            p = subprocess.Popen(cmd)
         print('-' * 20 + '\n')
 
     # os.chdir(org_dir)
