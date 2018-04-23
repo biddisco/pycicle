@@ -300,7 +300,7 @@ def find_scrape_files(project, nickname) :
         search_path = remote_path + '/build/'
         cmd = cmd + [ 'find', search_path,
                       '-maxdepth',  '2',
-                      '-path', search_path + project + '-*',
+                      '-path', '\'' + search_path + project + '-*' + '\'',
                       '-name', 'pycicle-TAG.txt']
 
         debug_print('executing', cmd)
