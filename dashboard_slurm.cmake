@@ -30,7 +30,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}
 # Generate a slurm job script and launch it
 # we must pass all the parms we received through to the slurm script
 #######################################################################
-set(PYCICLE_SLURM_TEMPLATE ${PYCICLE_SLURM_TEMPLATE}
+set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "ctest "
   "-S ${PYCICLE_ROOT}/pycicle/dashboard_script.cmake "
   "-DPYCICLE_ROOT=${PYCICLE_ROOT} "
@@ -47,7 +47,7 @@ set(PYCICLE_SLURM_TEMPLATE ${PYCICLE_SLURM_TEMPLATE}
 )
 
 # write the job script into a temp file
-file(WRITE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh" ${PYCICLE_SLURM_TEMPLATE})
+file(WRITE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh" ${PYCICLE_JOB_SCRIPT_TEMPLATE})
 
 #######################################################################
 # Launch the dashboard test using slurm

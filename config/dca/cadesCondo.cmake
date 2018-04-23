@@ -14,9 +14,9 @@ set(PYCICLE_MACHINE "local")
 set(PYCICLE_ROOT "/lustre/or-hydra/cades-cnms/epd/DCA_CI")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP FALSE)
-# Launch jobs using slurm rather than directly running them on the machine
-set(PYCICLE_SLURM FALSE)
-set(PYCICLE_PBS TRUE)
+# Method used to launch jobs "slurm", "pbs" or "direct" supported
+set(PYCICLE_JOB_LAUNCH "pbs")
+
 set(PYCICLE_COMPILER_TYPE "gcc" )
 set(PYCICLE_BUILD_TYPE "Debug")
 
@@ -100,14 +100,14 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     #"\"-DDCA_WITH_TESTS_VALIDATION:BOOL=ON\" "
     # "\"-DMKL_ROOT=$MKLROOT \" "
     # "\"-DDCA_WITH_CUDA:BOOL=ON\" "
-    # "\"-DCUDA_PROPAGATE_HOST_FLAGS=OFF\" 
+    # "\"-DCUDA_PROPAGATE_HOST_FLAGS=OFF\"
     # "\"-DMAGMA_DIR=$ENV{EBROOTMAGMA}\" "
 
 #######################################################################
 # Setup a slurm job submission template
 # note that this is intentionally multiline
 #######################################################################
-set(PYCICLE_PBS_TEMPLATE "#!/bin/bash
+set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #PBS -S /bin/bash
 #PBS -m be
 #PBS -N DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}

@@ -12,8 +12,8 @@ set(PYCICLE_MACHINE "localhost")
 set(PYCICLE_ROOT "/home/biddisco/pycicle")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP TRUE)
-# Launch jobs using slurm rather than directly running them on the machine
-set(PYCICLE_SLURM FALSE)
+# Method used to launch jobs "slurm", "pbs" or "direct" supported
+set(PYCICLE_JOB_LAUNCH "direct")
 
 #######################################################################
 # These are settings you can use to define anything useful

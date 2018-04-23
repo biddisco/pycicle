@@ -14,9 +14,9 @@ set(PYCICLE_MACHINE "local")
 set(PYCICLE_ROOT "/Users/epd/CI/DCA")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP FALSE)
-# Launch jobs using slurm rather than directly running them on the machine
-set(PYCICLE_SLURM FALSE)
-set(PYCICLE_PBS TRUE)
+# Method used to launch jobs "slurm", "pbs" or "direct" supported
+set(PYCICLE_JOB_LAUNCH "pbs")
+
 set(PYCICLE_COMPILER_TYPE "clang")
 set(PYCICLE_BUILD_TYPE "Debug")
 

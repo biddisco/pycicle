@@ -58,24 +58,6 @@ parser.add_argument('-P', '--project', dest='project',
     help='Project name (case sensitive) used as root of config dir for settings')
 
 #----------------------------------------------
-# enable or disable slurm for Job launching
-# prefer this to be like the pbs option, just building local
-# is more sensible default
-#----------------------------------------------
-parser.add_argument('-s', '--slurm', dest='slurm', action='store_true',
-    help="Use slurm for job launching (default)")
-parser.add_argument('--no-slurm', dest='slurm', action='store_false',
-    help="Disable slurm job launching")
-parser.set_defaults(slurm=True)
-
-#----------------------------------------------
-# enable pbs for Job launching
-#----------------------------------------------
-parser.add_argument('--pbs', dest='pbs', action='store_true',
-    help="Use pbs for job launching")
-parser.set_defaults(pbs=False)
-
-#----------------------------------------------
 # pre_ctest_commands
 # imagine your host does not have cmake installed at the system
 # level. You make need to load a module or set a export a path
@@ -168,8 +150,6 @@ machine = args.machines[0]
 build_type = args.build_type
 print('-' * 30)
 print('pycicle: project     :', args.project)
-print('pycicle: slurm       :', 'enabled' if args.slurm else 'disabled')
-print('pycicle: pbs         :', 'enabled' if args.pbs else 'disabled')
 print('pycicle: debug       :',
     'enabled (no build trigger commands will be sent)' if args.debug else 'disabled')
 print('pycicle: scrape-only :', 'enabled' if args.scrape_only else 'disabled')
@@ -202,15 +182,16 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
     remote_ssh  = get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
     remote_path = get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
     remote_http = get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
-    debug_print('launching build', compiler_type, branch_id, branch_name)
+    job_type    = get_setting_for_machine(args.project, nickname, 'PYCICLE_JOB_LAUNCH')
+    debug_print('launching build', compiler_type, branch_id, branch_name, job_type)
     # we are not yet using these as 'options'
     boost = 'x.xx.x'
 
     # This is a clumsy way to do this.
-    if args.slurm:
+    if job_type=='slurm':
         debug_print("slurm build:", args.project)
         script = 'dashboard_slurm.cmake'
-    elif args.pbs:
+    elif job_type=='pbs':
         debug_print("pbs build:", args.project)
         script = 'dashboard_pbs.cmake'
     else:

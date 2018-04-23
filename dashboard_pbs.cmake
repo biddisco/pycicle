@@ -31,7 +31,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}
 # Generate a pbs job script and launch it
 # we must pass all the parms we received through to the slurm script
 #######################################################################
-set(PYCICLE_PBS_TEMPLATE ${PYCICLE_PBS_TEMPLATE}
+set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "ctest "
   "-S ${PYCICLE_ROOT}/pycicle/dashboard_script.cmake "
   "-DPYCICLE_ROOT=${PYCICLE_ROOT} "
@@ -49,7 +49,7 @@ set(PYCICLE_PBS_TEMPLATE ${PYCICLE_PBS_TEMPLATE}
 
 # write the job script into a temp file
 
-file(WRITE "${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh" ${PYCICLE_PBS_TEMPLATE})
+file(WRITE "${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh" ${PYCICLE_JOB_SCRIPT_TEMPLATE})
 
 #######################################################################
 # Launch the dashboard test using pbs
