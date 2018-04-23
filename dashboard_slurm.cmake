@@ -17,7 +17,7 @@ message("master branch is " ${PYCICLE_MASTER})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
-message("COMPILER is      " ${PYCICLE_COMPILER})
+message("COMPILER is      " ${PYCICLE_COMPILER_TYPE})
 message("BOOST is         " ${PYCICLE_BOOST})
 message("Build type is    " ${PYCICLE_BUILD_TYPE})
 

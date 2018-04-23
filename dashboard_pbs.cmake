@@ -18,7 +18,7 @@ message("master branch is " ${PYCICLE_MASTER})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
-message("COMPILER is      " ${PYCICLE_COMPILER})
+message("COMPILER is      " ${PYCICLE_COMPILER_TYPE})
 message("BOOST is         " ${PYCICLE_BOOST})
 message("Build type is    " ${PYCICLE_BUILD_TYPE})
 message( WARNING, "${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
@@ -64,6 +64,6 @@ execute_process(
   COMMAND bash "-c" "qdel $(qstat -u `whoami` | awk -e \'/DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}/ { print $1 }\') > /dev/null 2>&1;
                      qsub ${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh"
   )
-                    
+
 # wipe the temp file job script
 file(REMOVE "${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh")
