@@ -199,47 +199,38 @@ def get_setting_for_machine(project, machine, setting) :
 # launch a command that will start one build
 #--------------------------------------------------------------------------
 def launch_build(nickname, compiler_type, branch_id, branch_name) :
-    # consider import paramiko
-    # client = paramiko.SSHClient()
-    # client.load_system_host_keys()
-    # client.connect(remote_ssh)
-
     remote_ssh  = get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
     remote_path = get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
     remote_http = get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
-    debug_print("launching build", compiler_type, branch_id, branch_name)
+    debug_print('launching build', compiler_type, branch_id, branch_name)
     # we are not yet using these as 'options'
     boost = 'x.xx.x'
 
     # This is a clumsy way to do this.
     if args.slurm:
+        debug_print("slurm build:", args.project)
         script = 'dashboard_slurm.cmake'
     elif args.pbs:
-        debug_print("calling pbs build:", args.project)
+        debug_print("pbs build:", args.project)
         script = 'dashboard_pbs.cmake'
     else:
+        debug_print("direct build:", args.project)
         script = 'dashboard_script.cmake'
 
     if 'local' not in remote_ssh:
-       # We need to setup the environment on the remote machine, often even cmake comes from
-        # a module or the like.
+        # We need to setup the environment on the remote machine,
+        # often even cmake comes from a module or the like.
         org_dir = '.'
         cmd1 = []
         if args.pre_ctest_commands:
             cmd1.append(args.pre_ctest_commands)
         cmd1.append('ctest')
-
         cmd1 = ' '.join(cmd1)
-        #if not args.debug else {'echo ', ' ', 'ctest'}
-
         cmd = ['ssh', remote_ssh, cmd1, '-S',
                remote_path                      + '/pycicle/' + script ]
     else:
         # if we're local we assume the current context has the module setup
-        #org_dir = os.getcwd()
-        #os.chdir(remote_path + '/pycicle/')
-        debug_print( "Working in:", os.getcwd())
-
+        debug_print( "Local build working in:", os.getcwd())
         cmd = ['ctest','-S', "./pycicle/" + script ] #'./pycicle/'
 
     build_type = get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
@@ -278,7 +269,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
 # launch one build from a list of options
 #--------------------------------------------------------------------------
 def choose_and_launch(project, machine, branch_id, branch_name, compiler_type="gcc") :
-    debug_print("choose", project, machine, branch_id, branch_name)
+    debug_print("Begin : choose_and_launch", project, machine, branch_id, branch_name)
     if project=='hpx' and machine=='daint':
         if bool(random.getrandbits(1)):
             compiler_type = 'gcc'
@@ -427,9 +418,8 @@ def needs_update(project_name, branch_id, branch_name, branch_sha, master_sha):
     status_file   = directory + '/last_pr_sha.txt'
     update        = False
     #
-    debug_print("in needs_update", directory)
+    debug_print("Begin : needs_update", directory)
     if os.path.exists(directory) == False:
-        debug_print("yup desn't exist")
         os.makedirs(directory)
         print("Created ", directory)
         update = True
@@ -562,6 +552,7 @@ while True:
         if args.pull_request!=0:
             pr = repo.get_pull(args.pull_request)
             pull_requests = {pr}
+            debug_print('Requested PR: ', pr)
         # otherwise get all open PRs
         else:
             pull_requests = repo.get_pulls('open')
@@ -587,7 +578,6 @@ while True:
             branch_sha  = pr.head.sha
             # need details, including last commit on PR for setting status
             pr_list[branch_id] = [machine, branch_name, pr.get_commits().reversed[0]]
-
             #
             if args.pull_request!=0 and pr.number!=args.pull_request:
                 continue
