@@ -40,11 +40,10 @@ def to_unicode(s):
 # debug print
 #--------------------------------------------------------------------------
 def debug_print(*text):
-    if args.debug or args.debug_info:
-        print('debug: ', end='')
-        for txt in text:
-            print(txt, end=' ')
-        print()
+    print('debug: ', end='')
+    for txt in text:
+        print(txt, end=' ')
+    print()
 
 #--------------------------------------------------------------------------
 # Command line args
@@ -163,8 +162,16 @@ print('pycicle: build_type  :', args.build_type)
 print('pycicle: machine     :', machine, '(only 1 supported currently)')
 print('-' * 30)
 
+# Definitions:
+# args are what are passed in at the command line
+# config are what are read from file
+# params are what pycicle actually runs with
+
 # new params object to start rationalizing the config.
-pyc_p = PycicleParams(debug_print=debug_print)
+if args.debug or args.debug_info:
+    pyc_p = PycicleParams(debug_print=debug_print)
+else:
+    pyc_p = PycicleParams
 
 #--------------------------------------------------------------------------
 # launch a command that will start one build
@@ -174,20 +181,20 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
     remote_path = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
     remote_http = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
     job_type    = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_JOB_LAUNCH')
-    debug_print('launching build', compiler_type, branch_id, branch_name, job_type)
+    pyc_p.debug_print('launching build', compiler_type, branch_id, branch_name, job_type)
     # we are not yet using these as 'options'
     boost = 'x.xx.x'
 
     # This is a clumsy way to do this.
     # implies local default, should be explicit somewhere
     if job_type=='slurm':
-        debug_print("slurm build:", args.project)
+        pyc_p.debug_print("slurm build:", args.project)
         script = 'dashboard_slurm.cmake'
     elif job_type=='pbs':
-        debug_print("pbs build:", args.project)
+        pyc_p.debug_print("pbs build:", args.project)
         script = 'dashboard_pbs.cmake'
     else:
-        debug_print("direct build:", args.project)
+        pyc_p.debug_print("direct build:", args.project)
         script = 'dashboard_script.cmake'
 
     if 'local' not in remote_ssh:
@@ -203,7 +210,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
                remote_path  + '/pycicle/' + script ]
     else:
         # if we're local we assume the current context has the module setup
-        debug_print( "Local build working in:", os.getcwd())
+        pyc_p.debug_print( "Local build working in:", os.getcwd())
         cmd = ['ctest','-S', "./pycicle/" + script ] #'./pycicle/'
 ff
     build_type = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
@@ -248,7 +255,7 @@ ff
 # launch one build from a list of options
 #--------------------------------------------------------------------------
 def choose_and_launch(project, machine, branch_id, branch_name, compiler_type="gcc") :
-    debug_print("Begin : choose_and_launch", project, machine, branch_id, branch_name)
+    pyc_p.debug_print("Begin : choose_and_launch", project, machine, branch_id, branch_name)
     if project=='hpx' and machine=='daint':
         if bool(random.getrandbits(1)):
             compiler_type = 'gcc'
@@ -295,18 +302,18 @@ def find_scrape_files(project, nickname) :
                       '-path', '\'' + search_path + project + '-*' + '\'',
                       '-name', 'pycicle-TAG.txt']
 
-        debug_print('executing', cmd)
+        pyc_p.debug_print('executing', cmd)
         result = subprocess.check_output(cmd).splitlines()
-        debug_print('find pycicle-TAG using', cmd, 'gives :\n', result)
+        pyc_p.debug_print('find pycicle-TAG using', cmd, 'gives :\n', result)
         for s in result:
             tagfile = s.decode('utf-8')
             JobFiles.append(tagfile)
-            debug_print('#'*5, tagfile)
+            pyc_p.debug_print('#'*5, tagfile)
             # for each build dir, return the PR number and results file
             m = re.search(search_path + project + '-([0-9]+).*/pycicle-TAG.txt', tagfile)
             if m:
                 PR_numbers[m.group(1)] = tagfile
-                debug_print('#'*5, 'Regex search pycicle-TAG gives PR:', m.group(1))
+                pyc_p.debug_print('#'*5, 'Regex search pycicle-TAG gives PR:', m.group(1))
 
     except Exception as e:
         print("Exception", e, " : "
@@ -397,7 +404,7 @@ def needs_update(project_name, branch_id, branch_name, branch_sha, master_sha):
     status_file   = directory + '/last_pr_sha.txt'
     update        = False
     #
-    debug_print("Begin : needs_update", directory)
+    pyc_p.debug_print("Begin : needs_update", directory)
     if os.path.exists(directory) == False:
         os.makedirs(directory)
         print("Created ", directory)
@@ -441,7 +448,7 @@ def delete_old_files(nickname, path, days) :
     cmd = cmd_transport + ['find', directory,
         '-mindepth', '1', '-maxdepth', '1', '-type', 'd', '-mtime', str(days)]
 
-    debug_print('Cleanup find:', cmd)
+    pyc_p.debug_print('Cleanup find:', cmd)
     try:
         result = subprocess.check_output(cmd).split()
         for s in result:
@@ -531,7 +538,7 @@ while True:
         if args.pull_request!=0:
             pr = repo.get_pull(args.pull_request)
             pull_requests = {pr}
-            debug_print('Requested PR: ', pr)
+            pyc_p.debug_print('Requested PR: ', pr)
         # otherwise get all open PRs
         else:
             pull_requests = repo.get_pulls('open')
@@ -540,18 +547,18 @@ while True:
         #
         for pr in pull_requests:
             # find out if the PR is from a local branch or from a clone of the repo
-            debug_print('-' * 30)
-            debug_print(pr)
-            debug_print('Repo to merge from   :', pr.head.repo.owner.login)
-            debug_print('Branch to merge from :', pr.head.ref)
+            pyc_p.debug_print('-' * 30)
+            pyc_p.debug_print(pr)
+            pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
+            pyc_p.debug_print('Branch to merge from :', pr.head.ref)
             if pr.head.repo.owner.login==github_organisation:
-                debug_print('Pull request is from local repo')
-                debug_print('git pull https://github.com/' + pr.head.repo.owner.login + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
+                pyc_p.debug_print('Pull request is from local repo')
+                pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
             else:
-                debug_print('Pull request is from clone')
-                debug_print('git pull https://github.com/' + pr.head.repo.owner.login + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
+                pyc_p.debug_print('Pull request is from clone')
+                pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
             #
-            debug_print('-' * 30)
+            pyc_p.debug_print('-' * 30)
             branch_id   = str(pr.number)
             branch_name = pr.head.label.rsplit(':',1)[1]
             branch_sha  = pr.head.sha
