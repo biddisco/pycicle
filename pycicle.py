@@ -22,6 +22,7 @@ import socket
 import datetime
 import argparse
 
+from pycicle_params import PycicleParams
 #--------------------------------------------------------------------------
 # Fix unicode python 2 and python 3 problem with argument parsing
 #--------------------------------------------------------------------------
@@ -162,32 +163,23 @@ print('pycicle: build_type  :', args.build_type)
 print('pycicle: machine     :', machine, '(only 1 supported currently)')
 print('-' * 30)
 
-#--------------------------------------------------------------------------
-# read one value from the CMake config for use elsewhere
-#--------------------------------------------------------------------------
-def get_setting_for_machine(project, machine, setting) :
-    current_path = os.path.dirname(os.path.realpath(__file__))
-    debug_print('looking for setting', setting, 'in file', current_path + '/config/' + project + '/' + machine + '.cmake')
-    f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
-    for line in f:
-        m = re.findall(setting + ' *\"(.+?)\"', line)
-        if m:
-            return m[0]
-    return ''
+# new params object to start rationalizing the config.
+pyc_p = PycicleParams(debug_print=debug_print)
 
 #--------------------------------------------------------------------------
 # launch a command that will start one build
 #--------------------------------------------------------------------------
 def launch_build(nickname, compiler_type, branch_id, branch_name) :
-    remote_ssh  = get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
-    remote_path = get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
-    remote_http = get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
-    job_type    = get_setting_for_machine(args.project, nickname, 'PYCICLE_JOB_LAUNCH')
+    remote_ssh  = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
+    remote_path = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
+    remote_http = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
+    job_type    = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_JOB_LAUNCH')
     debug_print('launching build', compiler_type, branch_id, branch_name, job_type)
     # we are not yet using these as 'options'
     boost = 'x.xx.x'
 
     # This is a clumsy way to do this.
+    # implies local default, should be explicit somewhere
     if job_type=='slurm':
         debug_print("slurm build:", args.project)
         script = 'dashboard_slurm.cmake'
@@ -213,8 +205,8 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
         # if we're local we assume the current context has the module setup
         debug_print( "Local build working in:", os.getcwd())
         cmd = ['ctest','-S', "./pycicle/" + script ] #'./pycicle/'
-
-    build_type = get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
+ff
+    build_type = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
 
     cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
                   '-DPYCICLE_HOST='                + nickname,
@@ -285,8 +277,8 @@ def erase_file(remote_ssh, file):
 # that we can use to scrape results from
 #--------------------------------------------------------------------------
 def find_scrape_files(project, nickname) :
-    remote_ssh  = get_setting_for_machine(project, nickname, 'PYCICLE_MACHINE')
-    remote_path = get_setting_for_machine(project, nickname, 'PYCICLE_ROOT')
+    remote_ssh  = pyc_p.get_setting_for_machine(project, nickname, 'PYCICLE_MACHINE')
+    remote_path = pyc_p.get_setting_for_machine(project, nickname, 'PYCICLE_ROOT')
 
     JobFiles   = []
     PR_numbers = {}
@@ -325,7 +317,7 @@ def find_scrape_files(project, nickname) :
 # collect test results so that we can update github PR status
 #--------------------------------------------------------------------------
 def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_name, head_commit) :
-    remote_ssh  = get_setting_for_machine(project, nickname, 'PYCICLE_MACHINE')
+    remote_ssh  = pyc_p.get_setting_for_machine(project, nickname, 'PYCICLE_MACHINE')
 
     if 'local' not in remote_ssh:
         cmd = ['ssh', remote_ssh ]
@@ -437,8 +429,8 @@ def needs_update(project_name, branch_id, branch_name, branch_sha, master_sha):
 # Delete old build and src dirs from pycicle root
 #--------------------------------------------------------------------------
 def delete_old_files(nickname, path, days) :
-    remote_ssh  = get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
-    remote_path = get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
+    remote_ssh  = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
+    remote_path = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
     directory   = remote_path + '/' + path
     Dirs        = []
 
@@ -465,16 +457,16 @@ def delete_old_files(nickname, path, days) :
 #
 # Create a Github instance:
 #--------------------------------------------------------------------------
-github_reponame     = get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_PROJECT_NAME')
-github_organisation = get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_ORGANISATION')
-github_master       = get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_MASTER_BRANCH')
+github_reponame     = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_PROJECT_NAME')
+github_organisation = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_ORGANISATION')
+github_master       = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_MASTER_BRANCH')
 if args.cdash_server:
     cdash_server = args.cdash_server
 else:
-    cdash_server    = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_SERVER_NAME')
-cdash_project_name  = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_PROJECT_NAME')
-compiler_type       = get_setting_for_machine(args.project, args.machines[0], 'PYCICLE_COMPILER_TYPE')
-cdash_http_path     = get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_HTTP_PATH')
+    cdash_server    = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_SERVER_NAME')
+cdash_project_name  = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_PROJECT_NAME')
+compiler_type       = pyc_p.get_setting_for_machine(args.project, args.machines[0], 'PYCICLE_COMPILER_TYPE')
+cdash_http_path     = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_HTTP_PATH')
 
 print('-' * 30)
 print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
@@ -599,7 +591,7 @@ while True:
                 else:
                     # just delete the file, it is probably an old one
                     erase_file(
-                        get_setting_for_machine(args.project, machine, 'PYCICLE_MACHINE'),
+                        pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_MACHINE'),
                         builds_done.get(branch_id))
 
             # cleanup old files that need to be purged every N days
