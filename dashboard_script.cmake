@@ -92,7 +92,7 @@ endif()
 #####################################################################
 # if this is a PR to be merged with master for testing
 #####################################################################
-if (NOT PYCICLE_PR STREQUAL "master")
+if (NOT PYCICLE_PR STREQUAL "${PYCICLE_MASTER}")
   set(CTEST_SUBMISSION_TRACK "Pull_Requests")
   set(PYCICLE_BRANCH "pull/${PYCICLE_PR}/head")
   set(GIT_BRANCH "PYCICLE_PR_${PYCICLE_PR}")
@@ -137,7 +137,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
     COMMAND bash "-c" "-e" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} pull origin master;
+                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH};
@@ -158,7 +158,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
 
   set(CTEST_UPDATE_OPTIONS "${CTEST_SOURCE_DIRECTORY} ${GIT_BRANCH}")
 else()
-  set(CTEST_SUBMISSION_TRACK "Master")
+  set(CTEST_SUBMISSION_TRACK "${PYCICLE_MASTER}")
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
     COMMAND bash "-c" "-e" "${make_repo_copy_}

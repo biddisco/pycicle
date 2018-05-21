@@ -1,3 +1,8 @@
+class PycicleParamsHelper:
+    @staticmethod
+    def no_op(self, *args, **kwargs):
+        pass
+
 class PycicleParams:
     keys = ['PYCICLE_PROJECT_NAME',
             'PYCICLE_GITHUB_PROJECT_NAME',
@@ -34,12 +39,8 @@ class PycicleParams:
             'PYCICLE_PBS',
             'PYCICLE_PBS_TEMPLATE']
     config_path = None
-
-    @staticmethod
-    def no_op(self, *args, **kwargs):
-        pass
     
-    def __init__(self, config_path=None, debug_print=PycicleParams.no_op):
+    def __init__(self, config_path=None, debug_print=PycicleParamsHelper.no_op):
         self.debug_print = debug_print
 
         if config_path:

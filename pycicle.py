@@ -212,7 +212,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
         # if we're local we assume the current context has the module setup
         pyc_p.debug_print( "Local build working in:", os.getcwd())
         cmd = ['ctest','-S', "./pycicle/" + script ] #'./pycicle/'
-ff
+
     build_type = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
 
     cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
