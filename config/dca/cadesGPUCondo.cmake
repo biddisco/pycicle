@@ -1,5 +1,4 @@
-#  Copyright (c) 2018      Peter Doak
-#  Copyright (c) 2017-2018 John Biddiscombe
+#  Copyright (c) 2018 John Biddiscombe, Peter Doak
 #
 #  Distributed under the Boost Software License, Version 1.0. (See accompanying
 #  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,9 +13,9 @@ set(PYCICLE_MACHINE "local")
 set(PYCICLE_ROOT "/lustre/or-hydra/cades-cnms/epd/DCA_GPU_CI")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP TRUE)
-# Method used to launch jobs "slurm", "pbs" or "direct" supported
-set(PYCICLE_JOB_LAUNCH "pbs")
-
+# Launch jobs using slurm rather than directly running them on the machine
+set(PYCICLE_SLURM FALSE)
+set(PYCICLE_PBS TRUE)
 set(PYCICLE_COMPILER_TYPE "gcc" )
 set(PYCICLE_BUILD_TYPE "Release")
 
@@ -35,30 +34,31 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   #
   #set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
   #
-  set(CFLAGS           "-g -fPIC")
-  set(CXXFLAGS         "-g -fPIC -march=native -mtune=native -ffast-math -std=c++14")
+  set(CFLAGS           "-fPIC -march=native -mtune=native -ffast-math")
+  set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math")
   set(LDFLAGS          "-L/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/gcc/5.3.0/centos7.2_gcc4.8.5/lib64 -Wl,-rpath,/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/gcc/5.3.0/centos7.2_gcc4.8.5/lib64")
-  set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
+  set(LDCXXFLAGS       "${LDFLAGS}")
   set(FFTW_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/fftw/3.3.5/centos7.2_gnu5.3.0")
-  set(HDF5_DIR         "/software/user_tools/centos-7.2.1511/cades-cnms/spack/opt/spack/linux-centos7-x86_64/gcc-5.3.0/hdf5-1.10.1-zpabgesdnfouatl7eoaw2npw5awjmawv/")
+  set(HDF5_DIR         "/software/user_tools/centos-7.2.1511/cades-cnms/spack/opt/spack/linux-centos7-x86_64/gcc-5.3.0/hdf5-1.10.1-zpabgesdnfouatl7eoaw2npw5awjmawv")
   set(CUDA_DIR         "/software/user_tools/centos-7.2.1511/cades-cnms/spack/opt/spack/linux-centos7-x86_64/gcc-5.3.0/cuda-8.0.61-pz7ileloxiwrc7kvi4htvwo5p7t3ugvv")
   set(MAGMA_DIR        "/software/user_tools/centos-7.2.1511/cades-cnms/spack/opt/spack/linux-centos7-x86_64/gcc-5.3.0/magma-2.2.0-qy7ciibhq2avtqkddwfntzrvu5g5yh7i")
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
     #
     module load gcc/5.3.0
+    spack load git@2.12.1
     spack load cmake@3.10.1%gcc@5.3.0
     spack load openmpi@3.0.0%gcc@5.3.0
     spack load hdf5@1.10.1%gcc@5.3.0
     spack load cuda@8.0.61%gcc@5.3.0
-    spack load magma@2.2.0%gcc@5.3.0 +no_openmp
+    spack load magma@2.2.0%gcc@5.3.0
     #
     # use openmpi compiler wrappers to make MPI use easy
     export CC=mpicc
     export CXX=mpic++
     #
-    export CFLAGS=\"${CFLAGS}\"
-    export CXXFLAGS=\"${CXXFLAGS}\"
+    #export CFLAGS=\"${CFLAGS}\"
+    #export CXXFLAGS=\"${CXXFLAGS}\"
     export LDFLAGS=\"${LDFLAGS}\"
     export LDCXXFLAGS=\"${LDCXXFLAGS}\"
   ")
@@ -82,13 +82,15 @@ set(BUILD_PARALLELISM  "16")
 # The string that is used to drive cmake config step
 # ensure options (e.g.FLAGS) that have multiple args are escaped
 #######################################################################
+#  "\"-DCMAKE_C_FLAGS=${CFLAGS}\" "
+    
+
 string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
-    "\"-DCMAKE_CXX_FLAGS=${CXXFLAGS}\" "
-    "\"-DCMAKE_C_FLAGS=${CFLAGS}\" "
     "\"-DCMAKE_CXX_COMPILER=mpic++\" "
     "\"-DCMAKE_C_COMPILER=mpicc\" "
-    "\"-DCMAKE_EXE_LINKER_FLAGS=${LDCXXFLAGS}\" "
-    "\"-DDCA_THREADING_LIBRARY:STRING=STDTHREAD\" "
+    "\"-DCMAKE_C_FLAGS=${CFLAGS}\" "
+    "\"-DCMAKE_CXX_FLAGS=${CXXFLAGS}\" "
+    "\"-DCMAKE_EXE_LINKER_FLAGS=-L/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/gcc/5.3.0/centos7.2_gcc4.8.5/lib64 -Wl,-rpath,/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/gcc/5.3.0/centos7.2_gcc4.8.5/lib64\" "
     "\"-DCMAKE_BUILD_TYPE=Release\" "
     "\"-DDCA_WITH_THREADED_SOLVER:BOOL=ON\" "
     "\"-DDCA_WITH_MPI:BOOL=ON\" "
@@ -110,7 +112,7 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
 # Setup a slurm job submission template
 # note that this is intentionally multiline
 #######################################################################
-set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
+set(PYCICLE_PBS_TEMPLATE "#!/bin/bash
 #PBS -S /bin/bash
 #PBS -m be
 #PBS -N DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
