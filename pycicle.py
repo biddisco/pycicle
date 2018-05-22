@@ -220,9 +220,13 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
         print('\n' + '-' * 20, 'Executing\n', subprocess.list2cmdline(cmd), '\n')
         # if local then wait for the result
         if 'local' in remote_ssh:
-            result = subprocess.check_output(cmd).splitlines()
-            print('-' * 30)
-            print(result)
+            try:
+                result = subprocess.check_output(cmd).splitlines()
+                print('-' * 30)
+                print(result)
+            except Exception as ex:
+                print("Caught exception from subprocess.checkout:")
+                print(ex)
         else:
             p = subprocess.Popen(cmd)
         print('-' * 20 + '\n')
@@ -507,6 +511,8 @@ if __name__ == "__main__":
     scrape_time = 10*60
 
     try:
+        print("connecting to git hub with:")
+        print("github.Github({},{})".format(github_organisation, args.user_token))
         git  = github.Github(github_organisation, args.user_token)
         print("Github User   :",git.get_user().name)
         print("Github Reponame:",github_reponame)
@@ -516,18 +522,24 @@ if __name__ == "__main__":
             repo = org.get_repo(github_reponame)
         except github.UnknownObjectException as ukoe:
             print("trying to recover from organization passed as name")
-            git  = github.Github(github_organisation, args.user_token)
+            git  = github.Github(args.user_token)
             repo = git.get_repo(github_reponame)
+            print(vars(repo))
+        except Exception as ex:
+            print("unexpected exception caught in github connect:",ex)
         print("Repo Fullname :", repo.full_name)
     except Exception as e:
         print(e, 'Failed to connect to github. Network down?')
 
+    if github_master == '':
+        github_master = repo.default_branch
     #--------------------------------------------------------------------------
     # Scrape-list : machine/build that we must check for status files
     # This will need to support lots of build/machine combinations eventually
     #--------------------------------------------------------------------------
     scrape_list = {"cadesCondo":"Debug"}
 
+    pyc_p.debug_print("Before main polling routine github_master:",github_master)
     #--------------------------------------------------------------------------
     # main polling routine
     #--------------------------------------------------------------------------
@@ -549,7 +561,8 @@ if __name__ == "__main__":
             print('Checking github:', 'Time since last check:', github_tdiff.seconds, '(s)')
             print('-' * 30)
             #
-            master_branch = repo.get_branch(repo.default_branch)
+            #
+            master_branch = repo.get_branch(github_master) #should be PYCICLE_MASTER 
             master_sha    = master_branch.commit.sha
             #
             # just get a single PR if that was all that was asker for
@@ -571,10 +584,12 @@ if __name__ == "__main__":
                 pyc_p.debug_print('Branch to merge from :', pr.head.ref)
                 if pr.head.repo.owner.login==github_organisation:
                     pyc_p.debug_print('Pull request is from local repo')
-                    pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
+                    pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
+                                      + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
                 else:
                     pyc_p.debug_print('Pull request is from clone')
-                    pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
+                    pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
+                                      + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
                 #
                 pyc_p.debug_print('-' * 30)
                 branch_id   = str(pr.number)
@@ -595,9 +610,9 @@ if __name__ == "__main__":
 
             # also build the master branch if it has changed
             if not args.scrape_only and args.pull_request==0:
-                if force or needs_update(args.project, 'master', 'master', master_sha, master_sha):
-                    choose_and_launch(args.project, machine, 'master', 'master', compiler_type)
-                    pr_list['master'] = [machine, 'master', master_branch.commit, ""]
+                if force or needs_update(args.project, github_master, github_master, master_sha, master_sha):
+                    choose_and_launch(args.project, machine, github_master, github_master, compiler_type)
+                    pr_list[github_master] = [machine, github_master, master_branch.commit, ""]
 
             scrape_t2    = datetime.datetime.now()
             scrape_tdiff = scrape_t2 - scrape_t1
