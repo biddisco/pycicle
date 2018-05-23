@@ -34,7 +34,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}
 # we must pass all the parms we received through to the slurm script
 #######################################################################
 set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
-  "ctest "
+  "CXX=mpic++ ctest "
   "-S ${PYCICLE_ROOT}/pycicle/dashboard_script.cmake "
   "-DPYCICLE_ROOT=${PYCICLE_ROOT} "
   "-DPYCICLE_HOST=${PYCICLE_HOST} "
