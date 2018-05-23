@@ -200,7 +200,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
                   '-DPYCICLE_COMPILER_TYPE='       + compiler_type,
                   '-DPYCICLE_BOOST='               + boost,
                   '-DPYCICLE_BUILD_TYPE='          + build_type,
-                  '-DPYCICLE_MASTER='              + github_master,
+                  '-DPYCICLE_BASE='              + github_base,
                   # These are to quiet warnings from ctest about unset vars
                   '-DCTEST_SOURCE_DIRECTORY=.',
                   '-DCTEST_BINARY_DIRECTORY=.',
@@ -395,7 +395,7 @@ def needs_update(project_name, branch_id, branch_name, branch_sha, base_sha):
                 print(branch_id, branch_name, 'changed : trigger update')
                 update = True
             elif (lines[1].strip() != base_sha):
-                print('master changed : trigger update')
+                print('base branch changed : trigger update')
                 update = True
             f.close()
         except:
@@ -478,7 +478,7 @@ if __name__ == "__main__":
     #--------------------------------------------------------------------------
     github_reponame     = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_PROJECT_NAME')
     github_organisation = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_ORGANISATION')
-    github_master       = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_MASTER_BRANCH')
+    github_base       = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_BASE_BRANCH')
     if args.cdash_server:
         cdash_server = args.cdash_server
     else:
@@ -490,7 +490,7 @@ if __name__ == "__main__":
     print('-' * 30)
     print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
     print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
-    print('PYCICLE_GITHUB_MASTER_BRANCH =', github_master)
+    print('PYCICLE_GITHUB_BASE_BRANCH =', github_base)
     print('PYCICLE_COMPILER_TYPE        =', compiler_type)
     print('PYCICLE_CDASH_PROJECT_NAME   =', cdash_project_name)
     print('PYCICLE_CDASH_SERVER_NAME    =', cdash_server)
@@ -511,7 +511,7 @@ if __name__ == "__main__":
         print("Github Reponame:",github_reponame)
         try:
             org = git.get_organization(github_organisation)
-            print("Organisation  :", org.name)
+            print("Organisation  :", org.login, org.name)
             repo = org.get_repo(github_reponame)
         except github.UnknownObjectException as ukoe:
             print("trying to recover from organization passed as name")
@@ -524,15 +524,15 @@ if __name__ == "__main__":
     except Exception as e:
         print(e, 'Failed to connect to github. Network down?')
 
-    if github_master == '':
-        github_master = repo.default_branch
+    if github_base == '':
+        github_base = repo.default_branch
     #--------------------------------------------------------------------------
     # Scrape-list : machine/build that we must check for status files
     # This will need to support lots of build/machine combinations eventually
     #--------------------------------------------------------------------------
     scrape_list = {"cadesCondo":"Debug"}
 
-    pyc_p.debug_print("Before main polling routine github_master:",github_master)
+    pyc_p.debug_print("Before main polling routine github_base:",github_base)
     #--------------------------------------------------------------------------
     # main polling routine
     #--------------------------------------------------------------------------
@@ -555,7 +555,7 @@ if __name__ == "__main__":
             print('-' * 30)
             #
             #
-            base_branch = repo.get_branch(github_master) #should be PYCICLE_MASTER 
+            base_branch = repo.get_branch(github_base) #should be PYCICLE_BASE 
             base_sha    = base_branch.commit.sha
             #
             # just get a single PR if that was all that was asker for
@@ -576,14 +576,11 @@ if __name__ == "__main__":
                 pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
                 pyc_p.debug_print('Branch to merge from :', pr.head.ref)
                 if pr.head.repo.owner.login==github_organisation:
-                    pyc_p.debug_print('Pull request is from local repo')
-                    pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
-                                      + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
+                    pyc_p.debug_print('Pull request is from local repo')                    
                 else:
                     pyc_p.debug_print('Pull request is from clone')
-                    pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
+                pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
                                       + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
-                #
                 pyc_p.debug_print('-' * 30)
                 branch_id   = str(pr.number)
                 branch_name = pr.head.label.rsplit(':',1)[1]
@@ -601,11 +598,11 @@ if __name__ == "__main__":
                     if update:
                         choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
 
-            # also build the master branch if it has changed
+            # also build the base branch if it has changed
             if not args.scrape_only and args.pull_request==0:
-                if force or needs_update(args.project, github_master, github_master, base_sha, base_sha):
-                    choose_and_launch(args.project, machine, github_master, github_master, compiler_type)
-                    pr_list[github_master] = [machine, github_master, base_branch.commit, ""]
+                if force or needs_update(args.project, github_base, github_base, base_sha, base_sha):
+                    choose_and_launch(args.project, machine, github_base, github_base, compiler_type)
+                    pr_list[github_base] = [machine, github_base, base_branch.commit, ""]
 
             scrape_t2    = datetime.datetime.now()
             scrape_tdiff = scrape_t2 - scrape_t1
