@@ -22,6 +22,7 @@ import random
 import socket
 import datetime
 import argparse
+from pprint import pprint
 
 from pycicle_params import PycicleParams
 
@@ -146,6 +147,96 @@ def debug_print(*text):
     for txt in text:
         print(txt, end=' ')
     print()
+
+#--------------------------------------------------------------------------
+# read one value from the CMake config for use elsewhere
+#--------------------------------------------------------------------------
+def get_setting_for_machine(project, machine, setting) :
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    #debug_print('looking for setting', setting, 'in file', current_path + '/config/' + project + '/' + machine + '.cmake')
+    f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
+    for line in f:
+        m = re.findall(setting + ' *\"(.+?)\"', line)
+        if m:
+            return m[0]
+    return ''
+
+#--------------------------------------------------------------------------
+# find all the simple options that are defined for the project
+# the return from this is a MAP of options,
+# key = option name, value = list of choices
+#--------------------------------------------------------------------------
+def get_simple_options(project, machine, setting) :
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
+
+    regex = setting + '*\((.+?)\)'
+    options = {}
+    for line in f:
+        m = re.findall(regex, line)
+        if m:
+            p = re.findall('([^ ]+) +(.+)', m[0])
+            if p:
+                debug_print ('Option found', p[0][0],  '(values)', p[0][1])
+            options[p[0][0]] = p[0][1].split()
+    return options
+
+#--------------------------------------------------------------------------
+# Find options that depend on another simple option
+# Given a simple option, find all the other options that can be enabled
+# or set when the simple option has a certain value
+# returns a map values that each contains a list of lists of new options
+# so if simple_option is ON, then dependent_option_1 can be a,b,c
+# if simple_option is OFF, then dependent_option_1_or_2 can be d,e,f
+#
+# Map key         Value(list)  map of options     list of values
+# simple_option -> value_1 -> dependent_option_1 -> value_a,b,c
+#                          -> dependent_option_2 -> value_d,e,f
+#               -> value_2 -> dependent_option_3 -> value x,y,z
+#--------------------------------------------------------------------------
+def get_dependent_options(project, machine, setting, dependency) :
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
+    # "dependency" "value" "new_option" "new_option_values"
+    regex = setting + '*\(' + dependency + ' +([^ ]+) +' + '(.+?)\)'
+    #
+    dependent_options = {}
+    for line in f:
+        m = re.findall(regex, line)
+        if m:
+            value                 = m[0][0]
+            new_option_and_values = m[0][1].split()
+            new_option            = new_option_and_values[0]
+            new_option_values     = new_option_and_values[1:]
+            debug_print('Dependency', dependency, '=', value, ':', new_option, new_option_values)
+            options_map  = {}
+            options_map[new_option] = new_option_values
+
+            if dependency in dependent_options:
+                value_map = dependent_options[dependency]
+                if value in value_map:
+                    value_map[value].append(options_map)
+                else:
+                    value_map[value] = [options_map]
+            else:
+                value_map = {}
+                value_map[value] = [options_map]
+                dependent_options[dependency] = value_map
+
+    return dependent_options
+
+#--------------------------------------------------------------------------
+#
+#--------------------------------------------------------------------------
+def find_build_options(nickname) :
+    options = get_simple_options(args.project, nickname, 'PYCICLE_CONFIG_OPTION')
+    if options: debug_print('simple options', options)
+    print('-'*30)
+    for o in options:
+        dep_options = get_dependent_options(args.project, nickname, 'PYCICLE_DEPENDENT_OPTION', o)
+        if dep_options:
+            print('-'*30)
+            debug_print(dep_options)
 
 #--------------------------------------------------------------------------
 # launch a command that will start one build
@@ -496,6 +587,10 @@ if __name__ == "__main__":
     print('PYCICLE_CDASH_SERVER_NAME    =', cdash_server)
     print('PYCICLE_CDASH_HTTP_PATH      =', cdash_http_path)
     print('-' * 30)
+
+    find_build_options(args.project)
+
+    exit()
 
     # @todo make these into options
     # 60 seconds between polls.

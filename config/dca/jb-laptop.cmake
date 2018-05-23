@@ -22,18 +22,18 @@ set(PYCICLE_BUILD_TYPE    "Debug")
 #######################################################################
 # These are settings you can use to define anything useful
 #######################################################################
-set(GCC_VER      "7.3.0")
-set(INSTALL_ROOT "/home/biddisco/apps")
+set(GCC_VER           "8.1.0")
+set(INSTALL_ROOT      "/home/biddisco/apps")
 
-set(CFLAGS     "-fPIC")
-set(CXXFLAGS   "-fPIC -march native-mtune native-ffast-math-std c++14")
-set(LDFLAGS    "")
-set(LDCXXFLAGS "${LDFLAGS} -std c++14")
+set(CFLAGS            "-fPIC")
+set(CXXFLAGS          "-fPIC -march native-mtune native-ffast-math-std c++14")
+set(LDFLAGS           "")
+set(LDCXXFLAGS        "${LDFLAGS} -std c++14")
 set(BUILD_PARALLELISM "4")
 
-set(CTEST_SITE "linux(jblaptop)")
+set(CTEST_SITE            "linux(jblaptop)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT "1200")
+set(CTEST_TEST_TIMEOUT    "500")
 
 set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}")
 

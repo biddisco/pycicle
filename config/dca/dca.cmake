@@ -15,3 +15,17 @@ set(PYCICLE_CDASH_HTTP_PATH      "")
 
 # project specific target to build before running tests
 set(PYCICLE_CTEST_BUILD_TARGET   "all")
+
+# ----------------------------------------------
+# define build configuration options
+# ----------------------------------------------
+
+# build type
+PYCICLE_CONFIG_OPTION(CMAKE_BUILD_TYPE Debug Release)
+# if building release mode, allow performance tests to be on/off
+PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Release DCA_WITH_TESTS_PERFORMANCE ON OFF)
+# if building debug mode, allow fast and extensive tests (they use assert)
+PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Debug   DCA_WITH_TESTS_FAST        ON OFF)
+PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Debug   DCA_WITH_TESTS_EXTENSIVE   ON OFF)
+
+
