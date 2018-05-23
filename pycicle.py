@@ -377,7 +377,7 @@ def random_string(N):
 #--------------------------------------------------------------------------
 # Check if a PR Needs and Update
 #--------------------------------------------------------------------------
-def needs_update(project_name, branch_id, branch_name, branch_sha, master_sha):
+def needs_update(project_name, branch_id, branch_name, branch_sha, base_sha):
     directory     = args.pycicle_dir + '/src/' + project_name + '-' + branch_id
     status_file   = directory + '/last_pr_sha.txt'
     update        = False
@@ -394,7 +394,7 @@ def needs_update(project_name, branch_id, branch_name, branch_sha, master_sha):
             if lines[0].strip() != branch_sha:
                 print(branch_id, branch_name, 'changed : trigger update')
                 update = True
-            elif (lines[1].strip() != master_sha):
+            elif (lines[1].strip() != base_sha):
                 print('master changed : trigger update')
                 update = True
             f.close()
@@ -405,7 +405,7 @@ def needs_update(project_name, branch_id, branch_name, branch_sha, master_sha):
     if update:
         f = open(status_file,'w')
         f.write(branch_sha + '\n')
-        f.write(master_sha + '\n')
+        f.write(base_sha + '\n')
         f.close()
     #
     return update
@@ -555,17 +555,17 @@ if __name__ == "__main__":
             print('-' * 30)
             #
             #
-            master_branch = repo.get_branch(github_master) #should be PYCICLE_MASTER
-            master_sha    = master_branch.commit.sha
+            base_branch = repo.get_branch(github_master) #should be PYCICLE_MASTER 
+            base_sha    = base_branch.commit.sha
             #
             # just get a single PR if that was all that was asker for
             if args.pull_request!=0:
-                pr = repo.get_pull(args.pull_request)
+                pr = repo.get_pull(args.pull_request, base=base_branch.name)
                 pull_requests = {pr}
                 pyc_p.debug_print('Requested PR: ', pr)
             # otherwise get all open PRs
             else:
-                pull_requests = repo.get_pulls('open')
+                pull_requests = repo.get_pulls('open', base=base_branch.name)
 
             pr_list = {}
             #
@@ -597,15 +597,15 @@ if __name__ == "__main__":
                     continue
                 #
                 if not args.scrape_only:
-                    update = force or needs_update(args.project, branch_id, branch_name, branch_sha, master_sha)
+                    update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
                     if update:
                         choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
 
             # also build the master branch if it has changed
             if not args.scrape_only and args.pull_request==0:
-                if force or needs_update(args.project, github_master, github_master, master_sha, master_sha):
+                if force or needs_update(args.project, github_master, github_master, base_sha, base_sha):
                     choose_and_launch(args.project, machine, github_master, github_master, compiler_type)
-                    pr_list[github_master] = [machine, github_master, master_branch.commit, ""]
+                    pr_list[github_master] = [machine, github_master, base_branch.commit, ""]
 
             scrape_t2    = datetime.datetime.now()
             scrape_tdiff = scrape_t2 - scrape_t1
