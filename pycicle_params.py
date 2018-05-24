@@ -1,4 +1,5 @@
-#  Copyright (c) 2017-2018 John Biddiscombe, Peter Doak
+#  Copyright (c) 2018      Peter Doak
+#  Copyright (c) 2017-2018 John Biddiscombe
 #
 #  Distributed under the Boost Software License, Version 1.0. (See accompanying
 #  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -43,11 +44,9 @@ class PycicleParams:
             'PYCICLE_CDASH_HTTP_PATH',
             'PYCICLE_BUILD_STAMP',
             'PYCICLE_COMPILER_SETUP',
-            'PYCICLE_SLURM',
-            'PYCICLE_PBS',
             'PYCICLE_PBS_TEMPLATE']
     config_path = None
-    
+
     def __init__(self, args, config_path=None,
                  debug_print=PycicleParamsHelper.no_op):
         """Setup a pycicle params object using args
