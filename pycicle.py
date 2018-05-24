@@ -111,12 +111,6 @@ def get_command_line_args():
                         default=False, help="Only scrape results and set github status (no building)")
 
     #--------------------------------------------------------------------------
-    # CMake Build Type
-    #--------------------------------------------------------------------------
-    #parser.add_argument('-b', '--build-type', dest='build_type',
-    #                    help='Cmake Build Type', default="Release")
-
-    #--------------------------------------------------------------------------
     # CDash Server
     #--------------------------------------------------------------------------
     parser.add_argument('--cdash-server', dest='cdash_server',
