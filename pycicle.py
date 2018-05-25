@@ -553,9 +553,8 @@ if __name__ == "__main__":
             print('-' * 30)
             print('Checking github:', 'Time since last check:', github_tdiff.seconds, '(s)')
             print('-' * 30)
-            #
-            #
-            base_branch = repo.get_branch(github_base) #should be PYCICLE_BASE 
+
+            base_branch = repo.get_branch(github_base) #should be PYCICLE_BASE
             base_sha    = base_branch.commit.sha
             #
             # just get a single PR if that was all that was asker for
@@ -576,9 +575,9 @@ if __name__ == "__main__":
                 pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
                 pyc_p.debug_print('Branch to merge from :', pr.head.ref)
                 if pr.head.repo.owner.login==github_organisation:
-                    pyc_p.debug_print('Pull request is from local repo')                    
+                    pyc_p.debug_print('Pull request is from branch local to repo')
                 else:
-                    pyc_p.debug_print('Pull request is from clone')
+                    pyc_p.debug_print('Pull request is from branch of forked repo')
                 pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
                                       + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
                 pyc_p.debug_print('-' * 30)
