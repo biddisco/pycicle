@@ -159,6 +159,22 @@ $PYCICLE_ROOT/build
 and these will be populated with source trees and build trees for PRs and the master branch
 when they need to be built.
 
+### Running pycicle on cluster A login node, it submits to itself
+see:
+``` shell
+config/dca_local/condaGPUTrunk_local.cmake
+```
+#### Running on a forked repo of individual (i.e. github.get_organization() => None
+An example is in config/dca_local
+#### It submits to a CDash server reverse tunneled to a localhost port on machine B (laptop)
+* still debugging this feature *
+Assuming cdash is setup on a httpd running on localhost:8080 of machine B.
+From machine B
+``` shell
+ssh -fN -R38080:localhost:8080 you@clusterA-login-node
+```
+If you have load balancing on log in nodes make sure to explicitly raise the reverse tunnel on the login node pycicle is running on.
+
 ## Inspect
 The HPX project runs a tool called `inspect` on the code (similar to clang-format/style checks etc) to ensure
 that `#includes` are set correctly and basic format checks pass.

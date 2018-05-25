@@ -27,12 +27,14 @@ message( WARNING, "${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PY
 #######################################################################
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
+
+
 #######################################################################
 # Generate a pbs job script and launch it
 # we must pass all the parms we received through to the slurm script
 #######################################################################
 set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
-  "ctest "
+  "CXX=mpic++ ctest "
   "-S ${PYCICLE_ROOT}/pycicle/dashboard_script.cmake "
   "-DPYCICLE_ROOT=${PYCICLE_ROOT} "
   "-DPYCICLE_HOST=${PYCICLE_HOST} "
@@ -49,8 +51,11 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
 
 # write the job script into a temp file
 
-file(WRITE "${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh" ${PYCICLE_JOB_SCRIPT_TEMPLATE})
-
+if(PYCICLE_JOB_SCRIPT_TEMPLATE)
+  file(WRITE "${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh" ${PYCICLE_JOB_SCRIPT_TEMPLATE})
+else(PYCICLE_JOB_SCRIPT_TEMPLATE)
+  message(FATAL_ERROR "You must have a job template to call a PBS job for CI")
+endif(PYCICLE_JOB_SCRIPT_TEMPLATE)
 #######################################################################
 # Launch the dashboard test using pbs
 # 1 Cancel any build using the same name as this one so that multiple
@@ -61,9 +66,9 @@ message("qsub ${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh"
 )
 
 execute_process(
-  COMMAND bash "-c" "qdel $(qstat -u `whoami` | awk -e \'/DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}/ { print $1 }\') > /dev/null 2>&1;
-                     qsub ${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh"
+  #"qdel $(qstat -u `whoami` | awk -e \'/DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}/ { print $1 }\') > /dev/null 2>&1;
+  COMMAND bash "-c" "qsub ${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh"
   )
 
 # wipe the temp file job script
-file(REMOVE "${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh")
+#file(REMOVE "${PYCICLE_ROOT}/build/ctest-pbs-${PYCICLE_RANDOM}.sh")

@@ -1,5 +1,4 @@
-#  Copyright (c) 2018      Peter Doak
-#  Copyright (c) 2017-2018 John Biddiscombe
+#  Copyright (c) 2018 John Biddiscombe, Peter Doak
 #
 #  Distributed under the Boost Software License, Version 1.0. (See accompanying
 #  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -7,17 +6,17 @@
 #######################################################################
 # These settings control how jobs are launched and results collected
 #######################################################################
-message( WARNING "Cades GPU Condo is local only")
+message( WARNING "Cades gpu_trunk Condo is local only")
 # the name used to ssh into the machine
 set(PYCICLE_MACHINE "local")
 # the root location of the build/test tree on the machine
-set(PYCICLE_ROOT "/lustre/or-hydra/cades-cnms/epd/DCA_GPU_CI")
+set(PYCICLE_ROOT "/lustre/or-hydra/cades-cnms/epd/DCA_GPU_TRUNK_CI")
 # a flag that says if the machine can send http results to cdash
-set(PYCICLE_HTTP TRUE)
-# Launch jobs using pbs rather than directly running them on the machine
+# Launch jobs using slurm rather than directly running them on the machine
 set(PYCICLE_JOB_LAUNCH "pbs")
 set(PYCICLE_COMPILER_TYPE "gcc" )
 set(PYCICLE_BUILD_TYPE "Release")
+set(PYCICLE_GITHUB_MASTER_BRANCH "gpu_trunk")
 
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
@@ -112,13 +111,13 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
 # Setup a slurm job submission template
 # note that this is intentionally multiline
 #######################################################################
+
 set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #PBS -S /bin/bash
 #PBS -m be
 #PBS -N DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
-#PBS -q batch
 #PBS -l nodes=1:ppn=36:gpu_p100
-#PBS -l walltime=02:00:00
+#PBS -l walltime=01:00:00
 #PBS -A ccsd
 #PBS -W group_list=cades-ccsd
 #PBS -l qos=std

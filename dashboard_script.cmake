@@ -25,6 +25,8 @@ message("Build type is    " ${PYCICLE_BUILD_TYPE})
 # Load machine specific settings
 # This is where the main machine config file is read in and params set
 #######################################################################
+message("${CMAKE_CURRENT_LIST_DIR}")
+message("getting project settings ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake")
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
@@ -92,15 +94,17 @@ endif()
 #####################################################################
 # if this is a PR to be merged with master for testing
 #####################################################################
-if (NOT PYCICLE_PR STREQUAL "master")
+if (NOT PYCICLE_PR STREQUAL "${PYCICLE_MASTER}")
   set(CTEST_SUBMISSION_TRACK "Pull_Requests")
   set(PYCICLE_BRANCH "pull/${PYCICLE_PR}/head")
   set(GIT_BRANCH "PYCICLE_PR_${PYCICLE_PR}")
   #
-  # checkout master, merge the PR into a new branch with the PR name
-  # then checkout master again, then set the CTEST_UPDATE_OPTIONS
+  # Note: Unless configured otherwise PYCICLE_MASTER="master" or the default
+  #       branch of the repo
+  # checkout PYCICLE_MASTER, merge the PR into a new branch with the PR name
+  # then checkout PYCICLE_MASTER again, then set the CTEST_UPDATE_OPTIONS
   # to fetch the merged branch so that the update step shows the
-  # files that are different in the branch from master
+  # files that are different in the branch from PYCICLE_MASTER
   #
   # The below can partially fail without it being obvious,
   # the -e should stop that, but certain things like the PR Delete can Fail
@@ -137,7 +141,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
     COMMAND bash "-c" "-e" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} pull origin master;
+                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
                        ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH};
@@ -158,7 +162,7 @@ if (NOT PYCICLE_PR STREQUAL "master")
 
   set(CTEST_UPDATE_OPTIONS "${CTEST_SOURCE_DIRECTORY} ${GIT_BRANCH}")
 else()
-  set(CTEST_SUBMISSION_TRACK "Master")
+  set(CTEST_SUBMISSION_TRACK "${PYCICLE_MASTER}")
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
     COMMAND bash "-c" "-e" "${make_repo_copy_}
