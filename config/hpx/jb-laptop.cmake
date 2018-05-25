@@ -21,13 +21,14 @@ set(PYCICLE_COMPILER_TYPE "gcc")
 #######################################################################
 # These are settings you can use to define anything useful
 #######################################################################
-set(GCC_VER       "6.2.0")
-set(BOOST_VER     "1.65.0")
-set(HWLOC_VER     "1.11.8")
-set(JEMALLOC_VER  "5.0.1")
-set(OTF2_VER      "2.0")
-set(PAPI_VER      "5.5.1")
-set(BOOST_SUFFIX  "1_65_0")
+set(GCC_VER        "8.1.0")
+set(BOOST_VER      "1.65.0")
+set(BOOST_COMPILER "gcc81")
+set(HWLOC_VER      "1.11.8")
+set(JEMALLOC_VER   "5.0.1")
+set(OTF2_VER       "2.0")
+set(PAPI_VER       "5.5.1")
+set(BOOST_SUFFIX   "1_65_0")
 
 set(INSTALL_ROOT     "/home/biddisco/apps")
 set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${BOOST_VER}")
@@ -48,6 +49,8 @@ set(CTEST_SITE "linux(jblaptop)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT "200")
 
+set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
+
 #######################################################################
 # The string that is used to drive cmake config step
 #######################################################################
@@ -61,7 +64,7 @@ string(CONCAT CTEST_BUILD_OPTIONS
     " -DJEMALLOC_ROOT=${JEMALLOC_ROOT} "
     " -DBOOST_ROOT=${BOOST_ROOT} "
     " -DBoost_ADDITIONAL_VERSIONS=${BOOST_VER} "
-    " -DBoost_COMPILER=-gcc73 "
+    " -DBoost_COMPILER=-${BOOST_COMPILER} "
     " -DHPX_WITH_MALLOC=JEMALLOC "
     " -DHPX_WITH_EXAMPLES=ON "
     " -DHPX_WITH_TESTS=ON "
