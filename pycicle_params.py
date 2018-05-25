@@ -43,8 +43,7 @@ class PycicleParams:
             'PYCICLE_CDASH_PROJECT_NAME',
             'PYCICLE_CDASH_HTTP_PATH',
             'PYCICLE_BUILD_STAMP',
-            'PYCICLE_COMPILER_SETUP',
-            'PYCICLE_PBS_TEMPLATE']
+            'PYCICLE_COMPILER_SETUP']
     config_path = None
 
     def __init__(self, args, config_path=None,
@@ -67,12 +66,12 @@ class PycicleParams:
         if setting not in self.keys:
             raise ValueError("{} not a valid pycicle config parameter".format(setting))
         config_file = self.config_path + machine + '.cmake'
-        self.debug_print('looking for setting', setting,
+        self.debug_print('looking for setting :', setting,
                          'in file', config_file)
         with open(config_file, 'r') as f:
             for line in f:
-                m = re.findall(setting + ur"\s*\"(.+?)\"", line)
+                m = re.findall(setting + u"\s*\"(.+?)\"", line)
                 if m:
-                    print m[0]
+                    self.debug_print('found setting       :', setting, '=', m[0])
                     return m[0]
             return None

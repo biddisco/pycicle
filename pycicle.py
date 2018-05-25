@@ -232,7 +232,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
 #--------------------------------------------------------------------------
 # launch one build from a list of options
 #--------------------------------------------------------------------------
-def choose_and_launch(project, machine, branch_id, branch_name, compiler_type="gcc") :
+def choose_and_launch(project, machine, branch_id, branch_name, compiler_type) :
     pyc_p.debug_print("Begin : choose_and_launch", project, machine, branch_id, branch_name)
     if project=='hpx' and machine=='daint':
         if bool(random.getrandbits(1)):
@@ -467,14 +467,12 @@ if __name__ == "__main__":
     # new params object PycicleParams to start rationalizing
     # args vs. config. and assist reading part of config from
     # project repos themselves.
-    
+
     if args.debug or args.debug_info:
         pyc_p = PycicleParams(args, debug_print=debug_print)
     else:
         pyc_p = PycicleParams(args)
 
-
-    
     #--------------------------------------------------------------------------
     # Create a Github instance:
     #--------------------------------------------------------------------------
@@ -557,7 +555,7 @@ if __name__ == "__main__":
             print('-' * 30)
             #
             #
-            master_branch = repo.get_branch(github_master) #should be PYCICLE_MASTER 
+            master_branch = repo.get_branch(github_master) #should be PYCICLE_MASTER
             master_sha    = master_branch.commit.sha
             #
             # just get a single PR if that was all that was asker for
