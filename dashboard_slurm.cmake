@@ -13,7 +13,7 @@ message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
 message("Pull request is  " ${PYCICLE_PR})
 message("PR-Branchname is " ${PYCICLE_BRANCH})
-message("master branch is " ${PYCICLE_MASTER})
+message("base branch is " ${PYCICLE_BASE})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
@@ -43,7 +43,7 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "-DPYCICLE_COMPILER_TYPE=${PYCICLE_COMPILER_TYPE} "
   "-DPYCICLE_BOOST=${PYCICLE_BOOST} "
   "-DPYCICLE_BUILD_TYPE=${PYCICLE_BUILD_TYPE} "
-  "-DPYCICLE_MASTER=${PYCICLE_MASTER} \n"
+  "-DPYCICLE_BASE=${PYCICLE_BASE} \n"
 )
 
 # write the job script into a temp file

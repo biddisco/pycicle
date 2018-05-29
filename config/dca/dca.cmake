@@ -6,7 +6,7 @@
 # Github settings
 set(PYCICLE_GITHUB_PROJECT_NAME  "DCA")
 set(PYCICLE_GITHUB_ORGANISATION  "eth-cscs")
-set(PYCICLE_GITHUB_MASTER_BRANCH "master")
+set(PYCICLE_GITHUB_BASE_BRANCH "master")
 
 # CDash server settings
 set(PYCICLE_CDASH_PROJECT_NAME   "DCA")

@@ -2,29 +2,31 @@
   <p align="center">Python Continuous Integration Command Line Engine<p align="center">
     <img src="/pycicle-logo.png" width="128"/></p>
     
-A simple command line tool to poll github for Pull Requests on a project and trigger builds when they change,
-or when the master branch changes. Projects are assumed to be `C++`, use `CMake` for configuration and `CTest`
-for testing with results submitted to a `CDash` dasboard.
+A simple command line tool to poll github for Pull Requests on a project for a single base branch(master by default)
+and trigger builds when they change, or when the base branch of a PR changes. Projects are assumed to be `C++`,
+use `CMake` for configuration and `CTest` for testing with results submitted to a `CDash` dasboard.
 
 The project was/is created for use with [HPX](https://github.com/STEllAR-GROUP/hpx)
 and the HPX (CDash) dashboard associated with the project is [Here](http://cdash.cscs.ch/index.php?project=HPX),
 other (non HPX) projects are supported.
 
 ## What does it do and how does it work
-When running, pycicle will poll github once every N seconds and look for open pull requests using the pygithub API.
-A list of open PRs is generated, and for each that is mergeable, pycicle looks at the latest SHA on the PR
-and the latest SHA on master branch, and if either has changed since last time it looked,
+When running, pycicle will poll github once every N seconds and look for open pull requests on your base branch
+using the pygithub API. A list of open PRs is generated, and for each that is mergeable, pycicle looks at the
+latest SHA on the PR and the latest SHA on base branch, and if either has changed since last time it looked,
 it marks that PR as needing an update (rebuild).
 
-A build is triggered by ssh-ing into a remote machine and calling `ctest -S dashboard-script.cmake <args>`
-to spawn a build, or by calling `ctest -S dashboard-slurm.cmake <args>` if the machine is using slurm job control.
-The slurm version of the script does nothing more than wrap the call to the dashboard script
-inside an `SBATCH` wrapper so that the build is triggered by slurm on a compute node, rather than on the login node.
+A build is triggered either from the current shell or by ssh-ing into a remote machine and calling
+`ctest -S dashboard-script.cmake <args>` to spawn a build, or by calling `ctest -S dashboard-<scheduler>.cmake <args>`
+if the machine is using a scheduler for job control. Currently slurm and pbs are supported.
 
-The build script will checkout the latest master branch (or another on request), merge the PR (branch) into it,
-then do ctest configure/build/test with submit steps after each configure/build/test step respectively
+The scheduler version of the dashboard script does nothing more than wrap the call to the base dashboard script
+inside an job dispath script wrapper so that the build is triggered by on a compute node, rather than on the login node.
+
+The build script will checkout the latest base branch (as specified in command line arguments or config file),
+merge the PR (branch) into it, then do ctest configure/build/test with submit steps after each configure/build/test step respectively
 to produce an entry in the dashboard that is updated as the build progresses.
-Note that if a pull request is modified whilst a previous build is still going, an `scancel`
+Note that if a pull request is modified whilst a previous build is still going, a `scancel`
 of the existing job is used to terminate the first before starting the second.
 
 Every M seconds, pycicle will find (scrape) a small log file generated in each build dir that contains a summary
@@ -32,7 +34,8 @@ of config/build/test results and update the github PR status based on it so that
 flag the PR as not ready for merging.
 
 ## Why use this instead of Jenkins/other CI tool
-Running pycicle is very simple, and can be done by a user, manually or in a cron job, and uses the
+Running pycicle is relatively simple, and can be done by a user, manually or in a cron job. 
+It does not require elevated system privledges and uses the
 same permissions as the user starting it. When a build fails, the user can `ssh` into the machine, `cd` into
 the build dir, manually (re)start the build, see the errors, `cd` into the source dir and inspect the repo/branch that
 is being tested and tweak anything necessary to get it working - even fix the build/test errors and update the PR
@@ -45,6 +48,11 @@ with results from machines at each location being submitted to a single CDash da
 Machines at each location may be configured by different users and no central coordination is required -
 it is this aspect that makes it attractive to projects like HPX that have developers in several
 locations and compute resources ditributed worldwide with different architectures/hardware.
+
+Pycicle allows users to:
+  1.  contribute to more complete CI
+  1.  running CI on exactly the systems they care about
+  1.  easily run CI on forked repos
 
 ## Running pycicle
 To run locally and use machine daint for builds of the hpx project
@@ -145,7 +153,7 @@ rather than cloning - this is much faster when the repo is many GBs.
 Note that each branch being tested will still be pulled from the origin (github),
 but this is much faster than a full clone.
 (NB. Doing a shallow clone isn't a great solution because you need to go back far enough
-to ensure the merge-base between the PR and the master branch is in the history).
+to ensure the merge-base between the PR and the base branch is in the history).
 
 After using the above setup, pycicle can be started using a command like
 ```
@@ -156,7 +164,7 @@ When it runs, two directories will be created
 $PYCICLE_ROOT/src
 $PYCICLE_ROOT/build
 ```
-and these will be populated with source trees and build trees for PRs and the master branch
+and these will be populated with source trees and build trees for PRs and the base branch
 when they need to be built.
 
 ### Running pycicle on cluster A login node, it submits to itself

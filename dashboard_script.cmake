@@ -14,7 +14,7 @@ message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
 message("Pull request is  " ${PYCICLE_PR})
 message("PR-Branchname is " ${PYCICLE_BRANCH})
-message("master branch is " ${PYCICLE_MASTER})
+message("Base branch is   " ${PYCICLE_BASE})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("COMPILER type is " ${PYCICLE_COMPILER_TYPE})
@@ -54,8 +54,8 @@ set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PROJECT_NAME}-${PY
 # make sure root dir exists
 file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
 
-if (PYCICLE_PR STREQUAL "master")
-  set(CTEST_BUILD_NAME "${PYCICLE_BRANCH}-${PYCICLE_BUILD_STAMP}")
+if ((PYCICLE_PR STREQUAL "master") OR (PYCICLE_PR STREQUAL PYCICLE_BASE))
+    set(CTEST_BUILD_NAME "${PYCICLE_BRANCH}-${PYCICLE_BUILD_STAMP}")
 else()
   set(CTEST_BUILD_NAME "${PYCICLE_PR}-${PYCICLE_BRANCH}-${PYCICLE_BUILD_STAMP}")
 endif()
@@ -92,19 +92,19 @@ if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
 endif()
 
 #####################################################################
-# if this is a PR to be merged with master for testing
+# if this is a PR to be merged with base for testing
 #####################################################################
-if (NOT PYCICLE_PR STREQUAL "${PYCICLE_MASTER}")
+if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
   set(CTEST_SUBMISSION_TRACK "Pull_Requests")
   set(PYCICLE_BRANCH "pull/${PYCICLE_PR}/head")
   set(GIT_BRANCH "PYCICLE_PR_${PYCICLE_PR}")
   #
-  # Note: Unless configured otherwise PYCICLE_MASTER="master" or the default
+  # Note: Unless configured otherwise PYCICLE_BASE="master" or the default
   #       branch of the repo
-  # checkout PYCICLE_MASTER, merge the PR into a new branch with the PR name
-  # then checkout PYCICLE_MASTER again, then set the CTEST_UPDATE_OPTIONS
+  # checkout PYCICLE_BASE, merge the PR into a new branch with the PR name
+  # then checkout PYCICLE_BASE again, then set the CTEST_UPDATE_OPTIONS
   # to fetch the merged branch so that the update step shows the
-  # files that are different in the branch from PYCICLE_MASTER
+  # files that are different in the branch from PYCICLE_BASE
   #
   # The below can partially fail without it being obvious,
   # the -e should stop that, but certain things like the PR Delete can Fail
@@ -140,12 +140,12 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_MASTER}")
   execute_process(
     COMMAND bash "-c" "-e" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
-                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_MASTER};
-                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_MASTER};
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
+                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BASE};
+                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_BASE};
                        ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH};
                        ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH};
-                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
                        ${CTEST_GIT_COMMAND} clean -fd;"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
@@ -157,17 +157,17 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_MASTER}")
       "Can you access github from the build location?" )
   endif ( failed EQUAL 1 )
 
- #${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
+ #${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
  #                        ${CTEST_GIT_COMMAND} merge --no-edit -s recursive -X theirs origin/${PYCICLE_BRANCH};"
 
   set(CTEST_UPDATE_OPTIONS "${CTEST_SOURCE_DIRECTORY} ${GIT_BRANCH}")
 else()
-  set(CTEST_SUBMISSION_TRACK "${PYCICLE_MASTER}")
+  set(CTEST_SUBMISSION_TRACK "${PYCICLE_BASE}")
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
     COMMAND bash "-c" "-e" "${make_repo_copy_}
                        cd ${CTEST_SOURCE_DIRECTORY};
-                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_MASTER};
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
                        ${CTEST_GIT_COMMAND} fetch origin;
                        ${CTEST_GIT_COMMAND} reset --hard;"
     WORKING_DIRECTORY "${WORK_DIR}"

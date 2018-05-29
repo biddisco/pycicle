@@ -6,7 +6,7 @@
 # Github settings
 set(PYCICLE_GITHUB_PROJECT_NAME  "PDoakORNL/DCA")
 set(PYCICLE_GITHUB_ORGANISATION  "PDoakORNL")
-set(PYCICLE_GITHUB_MASTER_BRANCH "gpu_trunk")
+set(PYCICLE_GITHUB_BASE_BRANCH "gpu_trunk")
 set(PYCICLE_HTTP TRUE)
 
 # CDash server settings

@@ -16,7 +16,7 @@ set(PYCICLE_ROOT "/lustre/or-hydra/cades-cnms/epd/DCA_GPU_TRUNK_CI")
 set(PYCICLE_JOB_LAUNCH "pbs")
 set(PYCICLE_COMPILER_TYPE "gcc" )
 set(PYCICLE_BUILD_TYPE "Release")
-set(PYCICLE_GITHUB_MASTER_BRANCH "gpu_trunk")
+set(PYCICLE_GITHUB_BASE_BRANCH "gpu_trunk")
 
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
