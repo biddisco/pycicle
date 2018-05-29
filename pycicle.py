@@ -490,7 +490,7 @@ if __name__ == "__main__":
     print('-' * 30)
     print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
     print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
-    print('PYCICLE_GITHUB_BASE_BRANCH =', github_base)
+    print('PYCICLE_GITHUB_BASE_BRANCH   =', github_base)
     print('PYCICLE_COMPILER_TYPE        =', compiler_type)
     print('PYCICLE_CDASH_PROJECT_NAME   =', cdash_project_name)
     print('PYCICLE_CDASH_SERVER_NAME    =', cdash_server)
