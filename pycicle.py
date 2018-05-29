@@ -385,7 +385,7 @@ def needs_update(project_name, branch_id, branch_name, branch_sha, base_sha):
     pyc_p.debug_print("Begin : needs_update", directory)
     if os.path.exists(directory) == False:
         os.makedirs(directory)
-        print("Created ", directory)
+        pyc_p.debug_print("Created ", directory)
         update = True
     else:
         try:
@@ -556,11 +556,13 @@ if __name__ == "__main__":
 
             base_branch = repo.get_branch(github_base) #should be PYCICLE_BASE
             base_sha    = base_branch.commit.sha
+            pyc_p.debug_print(base_branch)
             #
-            # just get a single PR if that was all that was asker for
+            # just get a single PR if that was all that was asked for
             if args.pull_request!=0:
-                pr = repo.get_pull(args.pull_request, base=base_branch.name)
-                pull_requests = {pr}
+                pr = repo.get_pull(args.pull_request)
+                pyc_p.debug_print(pr)
+                pull_requests = [pr]
                 pyc_p.debug_print('Requested PR: ', pr)
             # otherwise get all open PRs
             else:
