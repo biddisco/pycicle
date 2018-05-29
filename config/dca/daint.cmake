@@ -15,6 +15,7 @@ set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "slurm")
 set(PYCICLE_BUILD_TYPE "Release")
+set(PYCICLE_COMPILER_TYPE "gcc" )
 
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
