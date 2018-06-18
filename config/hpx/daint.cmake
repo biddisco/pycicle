@@ -137,7 +137,9 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "  -DHPX_WITH_THREAD_IDLE_RATES=ON "
     "  -DHPX_WITH_MAX_CPU_COUNT=256 "
     "  -DHPX_WITH_MORE_THAN_64_THREADS=ON "
-)
+    "  -DHPX_PARCELPORT_LIBFABRIC_PROVIDER=gni"
+    "  -DHPX_PARCELPORT_LIBFABRIC_ENDPOINT=RDM"
+ )
 
 #######################################################################
 # Setup a slurm job submission template

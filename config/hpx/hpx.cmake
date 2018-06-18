@@ -16,35 +16,40 @@ set(PYCICLE_CDASH_HTTP_PATH      "")
 set(PYCICLE_CTEST_BUILD_TARGET   "tests")
 
 # ----------------------------------------------
+# These macros are just for syntax completeness
 # ----------------------------------------------
 macro(PYCICLE_CONFIG_OPTION option values)
-    message(${option} " with values " ${values})
+    #message(${option} " with values " ${values})
 endmacro(PYCICLE_CONFIG_OPTION)
 
-# ----------------------------------------------
-# ----------------------------------------------
 macro(PYCICLE_DEPENDENT_OPTION option values)
+    #message(${option} " with values " ${values})
 endmacro(PYCICLE_DEPENDENT_OPTION)
 
 # ----------------------------------------------
 # define build configuration options
 # ----------------------------------------------
+# ===================
 # build type
+# ===================
 PYCICLE_CONFIG_OPTION(CMAKE_BUILD_TYPE Debug Release)
-PYCICLE_CONFIG_OPTION(TEST_CONFIG wibble)
 
+# ===================
 # apex
+# ===================
 PYCICLE_CONFIG_OPTION(HPX_WITH_APEX OFF ON)
 PYCICLE_DEPENDENT_OPTION(HPX_WITH_APEX ON APEX_WITH_OTF2 OFF ON)
 
+# ===================
 # cuda
+# ===================
 PYCICLE_CONFIG_OPTION(HPX_WITH_CUDA OFF ON)
 
+# ===================
 # parcelport
+# ===================
 PYCICLE_CONFIG_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC OFF ON)
 PYCICLE_DEPENDENT_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC ON  HPX_PARCELPORT_LIBFABRIC_WITH_LOGGING OFF ON)
-PYCICLE_DEPENDENT_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC OFF HPX_PARCELPORT_LIBFABRIC_WITH_TEST_PYCICLE OFF ON)
-PYCICLE_DEPENDENT_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC ON  HPX_PARCELPORT_LIBFABRIC_PROVIDER verbs gni sockets psm2)
-PYCICLE_DEPENDENT_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC ON  HPX_PARCELPORT_LIBFABRIC_ENDPOINT RDM MSG)
 PYCICLE_DEPENDENT_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC ON  HPX_PARCELPORT_LIBFABRIC_WITH_BOOTSTRAPPING OFF ON)
 PYCICLE_DEPENDENT_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC ON  HPX_PARCELPORT_LIBFABRIC_WITH_PERFORMANCE_COUNTERS OFF ON)
+

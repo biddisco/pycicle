@@ -20,6 +20,8 @@ message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("COMPILER type is " ${PYCICLE_COMPILER_TYPE})
 message("BOOST is         " ${PYCICLE_BOOST})
 message("Build type is    " ${PYCICLE_BUILD_TYPE})
+message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
+
 
 #######################################################################
 # Load machine specific settings
@@ -238,6 +240,7 @@ ctest_start(${CTEST_MODEL}
 
 string(CONCAT CTEST_CONFIGURE_COMMAND
   " ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${PYCICLE_BUILD_TYPE} "
+  " ${PYCICLE_CMAKE_OPTIONS}"
   " ${CTEST_BUILD_OPTIONS}"
   " ${CTEST_CONFIGURE_COMMAND} \"-G${CTEST_CMAKE_GENERATOR}\""
   " ${CTEST_CONFIGURE_COMMAND} \"${CTEST_SOURCE_DIRECTORY}\"")
