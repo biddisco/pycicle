@@ -6,6 +6,7 @@
 #--------------------------------------------------------------------------
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import sys
 import re
 
 class PycicleParamsHelper:
@@ -47,26 +48,30 @@ class PycicleParams:
             'PYCICLE_COMPILER_SETUP']
     config_path = None
 
-    def __init__(self, args, config_path=None,
-                 debug_print=PycicleParamsHelper.no_op):
+    def __init__(self, args, debug_print=PycicleParamsHelper.no_op):
         """Setup a pycicle params object using args
         config_path: where the config files are if not in pycicle/config
         debug_print: function reference used for debug_print calls
         """
         self.debug_print = debug_print
 
-        if config_path:
+        # test for path relative to pycicle_params.py which we assume is in dir with pycicle.py
+        if config_path and not '.' in config_path[0]:
             self.config_path=config_path
+        elif not config_path:
+            raise DeprecationWarning("Pycicle now has the default config dir set in args.\n"
+                                     "PycicleParams should not be constructed with config_path=None")
+            sys.exit()
         else:
             current_path = os.path.dirname(os.path.realpath(__file__))
-            self.config_path = current_path + '/config/' + args.project + '/'
+            self.config_path = os.path.join(current_path, config_dir, args.project)
             self.debug_print("pycicle expects to "
                              "find configs in {}".format(self.config_path))
 
     def get_setting_for_machine(self, project, machine, setting):
         if setting not in self.keys:
             raise ValueError("{} not a valid pycicle config parameter".format(setting))
-        config_file = self.config_path + machine + '.cmake'
+        config_file = os.path.join(self.config_path, machine) + '.cmake'
         self.debug_print('looking for setting :', setting,
                          'in file', config_file)
         with open(config_file, 'r') as f:

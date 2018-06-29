@@ -27,8 +27,8 @@ message("Build type is    " ${PYCICLE_BUILD_TYPE})
 #######################################################################
 message("${CMAKE_CURRENT_LIST_DIR}")
 message("getting project settings ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake")
-include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
+include(${PYCICLE_CONFIG_DIR}/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake)
+include(${PYCICLE_CONFIG_DIR}/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
 # a function that calls ctest_submit - only used to make

@@ -105,6 +105,12 @@ def get_command_line_args():
                         default=0, help='A single PR number for limited testing')
 
     #--------------------------------------------------------------------------
+    # Config dir if not in pycicle directory
+    #--------------------------------------------------------------------------
+    parser.add_argument('--config-dir', dest='config_dir',
+                        default='./config', help='pycicle config dir')
+
+    #--------------------------------------------------------------------------
     # only enable scraping to test github status setting
     #--------------------------------------------------------------------------
     parser.add_argument('-c', '--scrape-only', dest='scrape_only', action='store_true',
@@ -128,6 +134,7 @@ def get_command_line_args():
           'enabled (no build trigger commands will be sent)' if args.debug else 'disabled')
     print('pycicle: scrape-only :', 'enabled' if args.scrape_only else 'disabled')
     print('pycicle: force       :', 'enabled' if args.force else 'disabled')
+    print('pycicle: config_dir  :', args.config_dir)
     print('pycicle: path        :', args.pycicle_dir)
     print('pycicle: token       :', args.user_token)
     print('pycicle: machines    :', args.machines)
@@ -151,6 +158,10 @@ def debug_print(*text):
 # launch a command that will start one build
 #--------------------------------------------------------------------------
 def launch_build(nickname, compiler_type, branch_id, branch_name) :
+    """ Calls the dashboard script, possibly remotely
+        pyc_p is a global PycicleParams object
+        ToDo: make pycicle runner into a class to get control of variable scope lifecycle
+    """
     remote_ssh  = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
     remote_path = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
     remote_http = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
@@ -192,6 +203,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
     cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
                   '-DPYCICLE_HOST='                + nickname,
                   '-DPYCICLE_PROJECT_NAME='        + args.project,
+                  '-DPYCICLE_CONFIG_DIR='          + pyc_p.config_dir,
                   '-DPYCICLE_GITHUB_PROJECT_NAME=' + github_reponame,
                   '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation,
                   '-DPYCICLE_PR='                  + branch_id,
@@ -469,9 +481,9 @@ if __name__ == "__main__":
     # project repos themselves.
 
     if args.debug or args.debug_info:
-        pyc_p = PycicleParams(args, debug_print=debug_print)
+        pyc_p = PycicleParams(args, config_path=args.config_dir, debug_print=debug_print)
     else:
-        pyc_p = PycicleParams(args)
+        pyc_p = PycicleParams(args, config_path=args.config_dir)
 
     #--------------------------------------------------------------------------
     # Create a Github instance:
