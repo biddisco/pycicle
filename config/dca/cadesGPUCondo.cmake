@@ -17,7 +17,6 @@ set(PYCICLE_HTTP TRUE)
 # Launch jobs using pbs rather than directly running them on the machine
 set(PYCICLE_JOB_LAUNCH "pbs")
 set(PYCICLE_COMPILER_TYPE "gcc" )
-set(PYCICLE_BUILD_TYPE "Release")
 
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
@@ -83,7 +82,7 @@ set(BUILD_PARALLELISM  "16")
 # ensure options (e.g.FLAGS) that have multiple args are escaped
 #######################################################################
 #  "\"-DCMAKE_C_FLAGS=${CFLAGS}\" "
-    
+
 
 string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DCMAKE_CXX_COMPILER=mpic++\" "
@@ -91,7 +90,6 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DCMAKE_C_FLAGS=${CFLAGS}\" "
     "\"-DCMAKE_CXX_FLAGS=${CXXFLAGS}\" "
     "\"-DCMAKE_EXE_LINKER_FLAGS=-L/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/gcc/5.3.0/centos7.2_gcc4.8.5/lib64 -Wl,-rpath,/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/gcc/5.3.0/centos7.2_gcc4.8.5/lib64\" "
-    "\"-DCMAKE_BUILD_TYPE=Release\" "
     "\"-DDCA_WITH_THREADED_SOLVER:BOOL=ON\" "
     "\"-DDCA_WITH_MPI:BOOL=ON\" "
     "\"-DDCA_WITH_TESTS_EXTENSIVE:BOOL=ON\" "

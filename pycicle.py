@@ -22,6 +22,7 @@ import random
 import socket
 import datetime
 import argparse
+import shlex
 from random import randint
 from pprint import pprint
 
@@ -95,10 +96,10 @@ def get_command_line_args():
                         default=machines, help='list of machines to use for testing')
 
     #--------------------------------------------------------------------------
-    # CMake build type
+    # CMake options
     #--------------------------------------------------------------------------
-    parser.add_argument('-b', '--build-type', dest='build_type',
-                        default='Release', help='CMake build type used for all builds')
+    parser.add_argument('-o', '--options', dest='cmake_options', type=str, nargs='+',
+                        default=None, help='CMake options to use for build (overrides random generation)')
 
     #--------------------------------------------------------------------------
     # PR - when testing, limit checks to a single PR
@@ -123,21 +124,30 @@ def get_command_line_args():
     #----------------------------------------------
     args = parser.parse_args()
     machine = args.machines[0]
-    build_type = args.build_type
-    print('-' * 30)
-    print('pycicle: project     :', args.project)
-    print('pycicle: debug       :',
-          'enabled (no build trigger commands will be sent)' if args.debug else 'disabled')
-    print('pycicle: scrape-only :', 'enabled' if args.scrape_only else 'disabled')
-    print('pycicle: force       :', 'enabled' if args.force else 'disabled')
-    print('pycicle: path        :', args.pycicle_dir)
-    print('pycicle: token       :', args.user_token)
-    print('pycicle: machines    :', args.machines)
-    print('pycicle: PR          :', args.pull_request)
-    print('pycicle: build_type  :', args.build_type)
-    print('pycicle: machine     :', machine, '(only 1 supported currently)')
-    print('-' * 30)
 
+    print('-' * 30)
+    print('pycicle: project       :', args.project)
+    print('pycicle: debug         :',
+          'enabled (no build trigger commands will be sent)' if args.debug else 'disabled')
+    print('pycicle: scrape-only   :', 'enabled' if args.scrape_only else 'disabled')
+    print('pycicle: force         :', 'enabled' if args.force else 'disabled')
+    print('pycicle: path          :', args.pycicle_dir)
+    print('pycicle: token         :', args.user_token)
+    print('pycicle: machines      :', args.machines)
+    print('pycicle: PR            :', args.pull_request)
+    print('pycicle: cmake options :', args.cmake_options)
+    if args.cmake_options==None:
+        options = {}
+    else:
+        if len(args.cmake_options)>1:
+            args.cmake_options = [segments.replace('-D','') for segments in args.cmake_options]
+        else:
+            args.cmake_options = [words.replace('-D','') for segments in args.cmake_options for words in shlex.split(segments)]
+        print('pycicle: clean options :', args.cmake_options)
+        options = dict(s.split('=') for s in args.cmake_options)
+        print('pycicle: options map   :', options)
+    print('pycicle: machine       :', machine, '(only 1 supported currently)')
+    print('-' * 30)
     return args
 
 #--------------------------------------------------------------------------
@@ -218,10 +228,11 @@ def get_dependent_options(project, machine, setting, dependency, dep_value) :
 #--------------------------------------------------------------------------
 #
 #--------------------------------------------------------------------------
-def find_build_options(nickname) :
+def find_build_options(nickname, commandline_options) :
     cmake_options = {}
     options = get_simple_options(args.project, nickname, 'PYCICLE_CONFIG_OPTION')
     pyc_p.debug_print('simple options found', options)
+    pyc_p.debug_print('commandline options found', commandline_options)
     for option in options.items():
         pyc_p.debug_print('-'*30)
         key = option[0]
@@ -278,8 +289,6 @@ def launch_build(nickname, compiler_type, branch_id, branch_name, cmake_options)
         pyc_p.debug_print("Local build working in:", os.getcwd())
         cmd = ['ctest','-S', script ] #'./pycicle/'
 
-    build_type = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
-
     cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
                   '-DPYCICLE_HOST='                + nickname,
                   '-DPYCICLE_PROJECT_NAME='        + args.project,
@@ -290,9 +299,8 @@ def launch_build(nickname, compiler_type, branch_id, branch_name, cmake_options)
                   '-DPYCICLE_RANDOM='              + random_string(10),
                   '-DPYCICLE_COMPILER_TYPE='       + compiler_type,
                   '-DPYCICLE_BOOST='               + boost,
-                  '-DPYCICLE_BUILD_TYPE='          + build_type,
                   '-DPYCICLE_BASE='                + github_base,
-                  '-DPYCICLE_CMAKE_OPTIONS='        + cmake_options,
+                  '-DPYCICLE_CMAKE_OPTIONS='       + cmake_options,
                   # These are to quiet warnings from ctest about unset vars
                   '-DCTEST_SOURCE_DIRECTORY=.',
                   '-DCTEST_BINARY_DIRECTORY=.',
@@ -549,7 +557,6 @@ if __name__ == "__main__":
 
     args = get_command_line_args()
     machine = args.machines[0]
-    build_type = args.build_type
 
     # Definitions:
     # args are what are passed in at the command line
@@ -592,7 +599,7 @@ if __name__ == "__main__":
     #--------------------------------------------------------------------------
     # get options for build
     #--------------------------------------------------------------------------
-    cmake_options_string = find_build_options(args.project)
+    cmake_options_string = find_build_options(args.project, args.cmake_options)
 
     #--------------------------------------------------------------------------
     # @todo make these into options

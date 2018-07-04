@@ -8,7 +8,9 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 #######################################################################
 # For debugging this script
 #######################################################################
-message("In ${CMAKE_CURRENT_LIST_FILE}")
+message("CMAKE_CURRENT_LIST_DIR  ${CMAKE_CURRENT_LIST_DIR}")
+message("CMAKE_CURRENT_LIST_FILE ${CMAKE_CURRENT_LIST_FILE}")
+#
 message("Project name is  " ${PYCICLE_PROJECT_NAME})
 message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
@@ -17,17 +19,16 @@ message("PR-Branchname is " ${PYCICLE_BRANCH})
 message("Base branch is   " ${PYCICLE_BASE})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
-message("COMPILER type is " ${PYCICLE_COMPILER_TYPE})
-message("BOOST is         " ${PYCICLE_BOOST})
-message("Build type is    " ${PYCICLE_BUILD_TYPE})
+message("Random string is " ${PYCICLE_RANDOM})
+message("COMPILER is      " ${PYCICLE_COMPILER_TYPE})
 message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 
 #######################################################################
 # Load machine specific settings
 # This is where the main machine config file is read in and params set
 #######################################################################
-message("${CMAKE_CURRENT_LIST_DIR}")
-message("getting project settings ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake")
+message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
+message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake")
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
@@ -52,7 +53,7 @@ set(PYCICLE_PR_ROOT          "${PYCICLE_SRC_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCI
 set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_PR_ROOT}/repo")
 set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
 
-message("Setting CTEST_SOURCE_DIRECTORY ${CTEST_SOURCE_DIRECTORY}   ${PYCICLE_PR_ROOT}/repo")
+message("CTEST_SOURCE_DIRECTORY ${CTEST_SOURCE_DIRECTORY}   ${PYCICLE_PR_ROOT}/repo")
 
 # make sure root dir exists
 file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
@@ -246,7 +247,7 @@ ctest_start(${CTEST_MODEL}
 )
 
 string(CONCAT CTEST_CONFIGURE_COMMAND
-  " ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${PYCICLE_BUILD_TYPE} "
+  " ${CMAKE_COMMAND} "
   " ${PYCICLE_CMAKE_OPTIONS}"
   " ${CTEST_BUILD_OPTIONS}"
   " ${CTEST_CONFIGURE_COMMAND} \"-G${CTEST_CMAKE_GENERATOR}\""

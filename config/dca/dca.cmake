@@ -30,7 +30,6 @@ endmacro(PYCICLE_DEPENDENT_OPTION)
 # ----------------------------------------------
 # define build configuration options
 # ----------------------------------------------
-
 # build type
 PYCICLE_CONFIG_OPTION(CMAKE_BUILD_TYPE Debug Release)
 # if building release mode, allow performance tests to be on/off

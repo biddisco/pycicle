@@ -18,7 +18,6 @@ set(PYCICLE_HTTP FALSE)
 set(PYCICLE_JOB_LAUNCH "pbs")
 
 set(PYCICLE_COMPILER_TYPE "gcc" )
-set(PYCICLE_BUILD_TYPE "Debug")
 
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
@@ -85,7 +84,6 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DCMAKE_C_COMPILER=mpicc\" "
     "\"-DCMAKE_EXE_LINKER_FLAGS=${LDCXXFLAGS}\" "
     "\"-DDCA_THREADING_LIBRARY:STRING=STDTHREAD\" "
-    "\"-DCMAKE_BUILD_TYPE=Debug\" "
     "\"-DDCA_WITH_THREADED_SOLVER:BOOL=ON\" "
     "\"-DDCA_WITH_MPI:BOOL=ON\" "
     "\"-DDCA_WITH_TESTS_EXTENSIVE:BOOL=ON\" "

@@ -14,8 +14,6 @@ set(PYCICLE_ROOT "/scratch/biddisco/pycicle")
 set(PYCICLE_HTTP "TRUE")
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "slurm")
-#
-set(PYCICLE_BUILD_TYPE "Release")
 
 #######################################################################
 # These are settings you can use to define anything useful
@@ -28,7 +26,7 @@ set(OTF2_VER      "2.0")
 set(PAPI_VER      "5.5.1")
 set(BOOST_SUFFIX  "1_65_1")
 
-set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
+set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
 
 set(INSTALL_ROOT     "/users/biddisco/apps")
 set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${BOOST_VER}")

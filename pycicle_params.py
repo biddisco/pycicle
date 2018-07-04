@@ -25,7 +25,6 @@ class PycicleParams:
             'PYCICLE_RANDOM',
             'PYCICLE_COMPILER_TYPE',
             'PYCICLE_BOOST',
-            'PYCICLE_BUILD_TYPE',
             'PYCICLE_JOB_SCRIPT_TEMPLATE',
             'PYCICLE_SRC_ROOT',
             'PYCICLE_BUILD_ROOT',
@@ -44,7 +43,8 @@ class PycicleParams:
             'PYCICLE_CDASH_PROJECT_NAME',
             'PYCICLE_CDASH_HTTP_PATH',
             'PYCICLE_BUILD_STAMP',
-            'PYCICLE_COMPILER_SETUP']
+            'PYCICLE_COMPILER_SETUP',
+            'PYCICLE_CMAKE_OPTIONS']
     config_path = None
 
     def __init__(self, args, config_path=None,

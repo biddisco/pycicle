@@ -14,8 +14,6 @@ set(PYCICLE_ROOT "/scratch/snx3000/biddisco/pycicle")
 set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "slurm")
-#
-set(PYCICLE_BUILD_TYPE "Release")
 
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
@@ -28,7 +26,7 @@ set(CMAKE_VER            "3.9.1")
 
 if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   set(GCC_VER             "6.2.0")
-  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
+  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
   #
   set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
@@ -62,7 +60,7 @@ elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
   set(CMAKE_C_COMPILER   "${CLANG_ROOT}/bin/clang")
   set(CMAKE_CXX_COMPILER "${CLANG_ROOT}/bin/clang++")
   #
-  set(PYCICLE_BUILD_STAMP "clang-6.0.0-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
+  set(PYCICLE_BUILD_STAMP "clang-6.0.0-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
   #
   set(OTF2_VER         "2.1")
   #

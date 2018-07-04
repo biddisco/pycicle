@@ -9,25 +9,26 @@ cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 #######################################################################
 # For debugging this script
 #######################################################################
+message("CMAKE_CURRENT_LIST_DIR  ${CMAKE_CURRENT_LIST_DIR}")
+message("CMAKE_CURRENT_LIST_FILE ${CMAKE_CURRENT_LIST_FILE}")
+#
 message("Project name is  " ${PYCICLE_PROJECT_NAME})
 message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
 message("Pull request is  " ${PYCICLE_PR})
 message("PR-Branchname is " ${PYCICLE_BRANCH})
-message("base branch is " ${PYCICLE_BASE})
+message("base branch is   " ${PYCICLE_BASE})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
 message("COMPILER is      " ${PYCICLE_COMPILER_TYPE})
-message("BOOST is         " ${PYCICLE_BOOST})
-message("Build type is    " ${PYCICLE_BUILD_TYPE})
-message( WARNING, "${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
+message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
+
 #######################################################################
 # Load machine specific settings
 #######################################################################
+message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
-
-
 
 #######################################################################
 # Generate a pbs job script and launch it
@@ -45,7 +46,7 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
   "-DPYCICLE_COMPILER_TYPE=${PYCICLE_COMPILER_TYPE} "
   "-DPYCICLE_BOOST=${PYCICLE_BOOST} "
-  "-DPYCICLE_BUILD_TYPE=${PYCICLE_BUILD_TYPE} "
+  "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} "
   "-DPYCICLE_BASE=${PYCICLE_BASE} \n"
 )
 

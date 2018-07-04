@@ -15,7 +15,6 @@ set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "direct")
 
-set(PYCICLE_BUILD_TYPE "Release")
 set(PYCICLE_COMPILER_TYPE "gcc")
 
 #######################################################################
@@ -49,7 +48,7 @@ set(CTEST_SITE "linux(jblaptop)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT "200")
 
-set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
+set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
 
 #######################################################################
 # The string that is used to drive cmake config step

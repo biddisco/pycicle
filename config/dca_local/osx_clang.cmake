@@ -18,7 +18,6 @@ set(PYCICLE_HTTP FALSE)
 set(PYCICLE_JOB_LAUNCH "pbs")
 
 set(PYCICLE_COMPILER_TYPE "clang")
-set(PYCICLE_BUILD_TYPE "Debug")
 
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")

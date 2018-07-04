@@ -14,7 +14,6 @@ set(PYCICLE_ROOT "/scratch/snx3000/biddisco/pycicle")
 set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "slurm")
-set(PYCICLE_BUILD_TYPE "Release")
 set(PYCICLE_COMPILER_TYPE "gcc" )
 
 # These versions are ok for gcc or clang
@@ -28,7 +27,7 @@ set(CMAKE_VER            "3.9.1")
 
 if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   set(GCC_VER             "5.3.0")
-  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
+  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
   #
   set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
@@ -81,7 +80,6 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DCUDA_PROPAGATE_HOST_FLAGS=OFF\" "
     "\"-DMAGMA_DIR=$ENV{EBROOTMAGMA}\" "
     "\"-DDCA_THREADING_LIBRARY:STRING=STDTHREAD\" "
-    "\"-DCMAKE_BUILD_TYPE:STRING=Debug\" "
     "\"-DDCA_WITH_THREADED_SOLVER:BOOL=ON\" "
     "\"-DDCA_WITH_MPI:BOOL=OFF\" "
     "\"-DHPX_DIR=$HOME/build/hpx-debug/lib/cmake/HPX\" "

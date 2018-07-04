@@ -17,7 +17,6 @@ set(PYCICLE_HTTP TRUE)
 set(PYCICLE_JOB_LAUNCH "direct")
 
 set(PYCICLE_COMPILER_TYPE "gcc")
-set(PYCICLE_BUILD_TYPE    "Debug")
 
 #######################################################################
 # These are settings you can use to define anything useful
@@ -47,7 +46,6 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     " -DFFTW_INCLUDE_DIR:PATH=/usr/include "
     " -DFFTW_LIBRARY:FILEPATH=/usr/lib/libfftw3.so "
     " -DDCA_WITH_CUDA:BOOL=ON "
-    " -DCMAKE_BUILD_TYPE:STRING=Debug "
     " -DCUDA_HOST_COMPILER:FILEPATH=/usr/bin/gcc-6 "
     " -DDCA_WITH_THREADED_SOLVER:BOOL=ON "
     " -DDCA_WITH_MPI:BOOL=OFF "
