@@ -17,15 +17,28 @@ set(PYCICLE_CDASH_HTTP_PATH      "")
 set(PYCICLE_CTEST_BUILD_TARGET   "all")
 
 # ----------------------------------------------
+# These macros are just for syntax completeness
+# ----------------------------------------------
+macro(PYCICLE_CONFIG_OPTION option values)
+    #message(${option} " with values " ${values})
+endmacro(PYCICLE_CONFIG_OPTION)
+
+macro(PYCICLE_DEPENDENT_OPTION option values)
+    #message(${option} " with values " ${values})
+endmacro(PYCICLE_DEPENDENT_OPTION)
+
+# ----------------------------------------------
 # define build configuration options
 # ----------------------------------------------
 
 # build type
 PYCICLE_CONFIG_OPTION(CMAKE_BUILD_TYPE Debug Release)
 # if building release mode, allow performance tests to be on/off
-PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Release DCA_WITH_TESTS_PERFORMANCE ON OFF)
 # if building debug mode, allow fast and extensive tests (they use assert)
+PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Release DCA_WITH_TESTS_PERFORMANCE ON)
 PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Debug   DCA_WITH_TESTS_FAST        ON OFF)
 PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Debug   DCA_WITH_TESTS_EXTENSIVE   ON OFF)
 
+# profiling
+PYCICLE_CONFIG_OPTION(DCA_PROFILER None Counting) # PAPI
 

@@ -22,7 +22,6 @@ message("BOOST is         " ${PYCICLE_BOOST})
 message("Build type is    " ${PYCICLE_BUILD_TYPE})
 message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 
-
 #######################################################################
 # Load machine specific settings
 # This is where the main machine config file is read in and params set
@@ -52,6 +51,8 @@ set(PYCICLE_LOCAL_GIT_COPY "${PYCICLE_ROOT}/repos/${PYCICLE_GITHUB_PROJECT_NAME}
 set(PYCICLE_PR_ROOT          "${PYCICLE_SRC_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}")
 set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_PR_ROOT}/repo")
 set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
+
+message("Setting CTEST_SOURCE_DIRECTORY ${CTEST_SOURCE_DIRECTORY}   ${PYCICLE_PR_ROOT}/repo")
 
 # make sure root dir exists
 file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
@@ -87,7 +88,7 @@ if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
   message("Configuring src repo copy from local repo cache")
   set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
   if (NOT EXISTS "${PYCICLE_LOCAL_GIT_COPY}/.git")
-    message("Local repo cache missing, using full clone of src repo")
+    message("Local repo cache \"${PYCICLE_LOCAL_GIT_COPY}/.git\" missing, using full clone of src repo")
     set (make_repo_copy_ "git clone git@github.com:${PYCICLE_GITHUB_ORGANISATION}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
   endif()
   message("${make_repo_copy_}")
@@ -122,7 +123,7 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
   )
   if ( failed EQUAL 1 )
     MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
-      "Could not copy local repo. "
+      "Could not copy local repo. \n"
       "Is your local repo specified properly?" )
   endif ( failed EQUAL 1 )
 
@@ -156,7 +157,7 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
   )
   if ( failed EQUAL 1 )
     MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
-      "Can you access github from the build location?" )
+        "Can you access github from the build location?" )
   endif ( failed EQUAL 1 )
 
  #${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
@@ -229,6 +230,12 @@ set(CTEST_BINARY_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}")
 file(REMOVE "${CTEST_BINARY_DIRECTORY}/pycicle-TAG.txt")
 
 #######################################################################
+# Write out a notes file with our CMake build options
+#######################################################################
+set(CTEST_NOTES_FILES "${PYCICLE_BINARY_DIRECTORY}/pycicle_notes.txt")
+file(WRITE "${CTEST_NOTES_FILES}" "${PYCICLE_CMAKE_OPTIONS}\n" )
+
+#######################################################################
 # START dashboard
 #######################################################################
 message("Initialize ${CTEST_MODEL} testing...")
@@ -257,7 +264,7 @@ message("CTEST_CONFIGURE_COMMAND is\n${CTEST_CONFIGURE_COMMAND}")
 
 message("Configure...")
 ctest_configure()
-pycicle_submit(PARTS Update Configure)
+pycicle_submit(PARTS Update Configure Notes)
 
 message("Build...")
 set(CTEST_BUILD_FLAGS "-j ${BUILD_PARALLELISM}")
