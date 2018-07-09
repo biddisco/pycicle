@@ -71,7 +71,7 @@ class PycicleParams:
                          'in file', config_file)
         with open(config_file, 'r') as f:
             for line in f:
-                m = re.findall(setting + r"\s*\"(.+?)\"", line)
+                m = re.findall(setting + r"\s*\"(.*?)\"", line)
                 if m:
                     self.debug_print('found setting       :', setting, '=', m[0])
                     return m[0]
