@@ -315,7 +315,7 @@ def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_nam
     Test_Errors   = 0
     Errors        = []
 
-    context = re.search(r'/build/'+project+'.*?-(.+)/pycicle-TAG.txt', scrape_file)
+    context = re.search(r'/build/'+project+'-.+?-(.+)/pycicle-TAG.txt', scrape_file)
     if context:
         origin = nickname + '-' + context.group(1)
     else:
