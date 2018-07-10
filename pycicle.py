@@ -22,7 +22,8 @@ import random
 import socket
 import datetime
 import argparse
-import shlex
+import shlex     # splitting strings whilst keeping quoted sections
+import hashlib   # turn a string into a hash
 from random import randint
 from pprint import pprint
 
@@ -134,19 +135,22 @@ def get_command_line_args():
     print('pycicle: path          :', args.pycicle_dir)
     print('pycicle: token         :', args.user_token)
     print('pycicle: machines      :', args.machines)
+    print('pycicle: machine       :', machine, '(only 1 supported currently)')
     print('pycicle: PR            :', args.pull_request)
     print('pycicle: cmake options :', args.cmake_options)
-    if args.cmake_options==None:
-        options = {}
-    else:
+    options = {}
+    if args.cmake_options is not None:
         if len(args.cmake_options)>1:
             args.cmake_options = [segments.replace('-D','') for segments in args.cmake_options]
         else:
             args.cmake_options = [words.replace('-D','') for segments in args.cmake_options for words in shlex.split(segments)]
         print('pycicle: clean options :', args.cmake_options)
-        options = dict(s.split('=') for s in args.cmake_options)
+        for s in args.cmake_options:
+            temp = s.split('=')
+            options[temp[0]] = [temp[1]] # make the entry into a list
         print('pycicle: options map   :', options)
-    print('pycicle: machine       :', machine, '(only 1 supported currently)')
+    # replace the args option string with the dictionary version of it
+    args.cmake_options = options
     print('-' * 30)
     return args
 
@@ -161,34 +165,118 @@ def debug_print(*text):
 
 #--------------------------------------------------------------------------
 # Pick one option at random from a list of options
+# args: option = list(option_name, list(option values))
 #--------------------------------------------------------------------------
 def generate_random_simple_options(option):
-    cmake_option = {}
-    key = option[0]
-    values = option[1]
-    randval = randint(0, len(values)-1)
-    cmake_option[key] = values[randval]
+    cmake_option      = {}
+    key               = option[0]
+    values            = option[1]
+    cmake_option[key] = values[randint(0, len(values)-1)]
     return cmake_option
 
 #--------------------------------------------------------------------------
-# find all the simple options that are defined for the project
-# the return from this is a MAP of options,
+# find all the simple options that are defined in the file
+# the return from this is a Dictionary of options,
 # key = option name, value = list of choices
 #--------------------------------------------------------------------------
-def get_simple_options(project, machine, setting) :
-    current_path = os.path.dirname(os.path.realpath(__file__))
-    f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
+def get_simple_options_file(config_file, reg_string, commandline_options) :
+    debug_print('Looking for options in', config_file)
+    f = open(config_file)
 
-    regex = setting + '*\((.+?)\)'
+    regex = reg_string + '\((.+?)\)'
     options = {}
     for line in f:
         m = re.findall(regex, line)
         if m:
             p = re.findall('([^ ]+) +(.+)', m[0])
             if p:
-                pyc_p.debug_print('Option found', p[0][0],  '(values)', p[0][1])
-            options[p[0][0]] = p[0][1].split()
+                pyc_p.debug_print('Option found {:30s} (values) {:s} '.format(p[0][0], p[0][1]))
+                options[p[0][0]] = p[0][1].split()
+                if p[0][0] in commandline_options:
+                    pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]][0]))
+                    options[p[0][0]] = commandline_options[p[0][0]]
     return options
+
+#--------------------------------------------------------------------------
+# find all the dependent options that are defined in the file
+# the return from this is a Dictionary of options,
+# key = option name, value = list of choices
+#--------------------------------------------------------------------------
+def get_dependent_options_file(config_file, reg_string, commandline_options) :
+    debug_print('Looking for dependent options in', config_file)
+    f = open(config_file)
+
+    regex = reg_string + '*\((.+?)\)'
+    options = []
+    for line in f:
+        m = re.findall(regex, line)
+        if m:
+            p = re.findall('([^ ]+) ([^ ]+) (.+)', m[0])
+            if p:
+                opt = p[0][0].strip()
+                val = p[0][1].strip()
+                sub = p[0][2].strip()
+                pyc_p.debug_print('Dependent option found {:30s} (value) {:15s} (sub-option) {:s}'.format(opt, val, sub))
+                subopt = {}
+                sub_list = sub.split()
+                subopt[val] = sub_list
+                if sub_list[0] in commandline_options:
+                    new_list = [sub_list[0], commandline_options[sub_list[0]][0]]
+                    debug_print('command-line overrides {:30s} (value) {:15s}'.format(new_list[0], new_list[1]))
+                    subopt[val] = new_list
+                options.append([opt, subopt])
+    return options
+
+#--------------------------------------------------------------------------
+# find all the simple options that are defined for the project
+# the return from this is a Dictionary of options,
+# key = option name, value = list of choices
+# load options from project file first, then override any duplicates
+# with ones from machine file (machine file outranks project file).
+#--------------------------------------------------------------------------
+def get_cmake_build_options(project, machine, commandline_options) :
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    # get options from project file first
+    pyc_p.debug_print('-'*30)
+    pyc_p.debug_print('get_simple_options #project')
+    config_file = current_path + '/config/' + project + '/' + project + '.cmake'
+    options = get_simple_options_file(config_file, 'PYCICLE_CONFIG_OPTION', commandline_options)
+
+    # if machine file overrides options, update with new ones
+    pyc_p.debug_print('-'*30)
+    pyc_p.debug_print('get_simple_options #machine')
+    config_file = current_path + '/config/' + project + '/' + machine + '.cmake'
+    options.update(get_simple_options_file(config_file, 'PYCICLE_CONFIG_OPTION', commandline_options))
+
+    # get dependent options from project file
+    pyc_p.debug_print('-'*30)
+    pyc_p.debug_print('get_dependent_options #project')
+    config_file   = current_path + '/config/' + project + '/' + project + '.cmake'
+    dep_options_p = get_dependent_options_file(config_file, 'PYCICLE_DEPENDENT_OPTION', commandline_options)
+
+    # get dependent options from machine file
+    pyc_p.debug_print('-'*30)
+    pyc_p.debug_print('get_dependent_options #machine')
+    config_file   = current_path + '/config/' + project + '/' + machine + '.cmake'
+    dep_options_m = get_dependent_options_file(config_file, 'PYCICLE_DEPENDENT_OPTION', commandline_options)
+
+    # dependent options in machine config must override those in project config
+    pyc_p.debug_print('-'*30)
+    for opt_p in dep_options_p:
+        unique = True
+        for kp, vp in opt_p[1].items():
+            debug_print('project dependent option', opt_p[0], "/", kp, "=", vp)
+            for opt_m in dep_options_m:
+                if opt_m[0] == opt_p[0]:
+                    for km,vm in opt_m[1].items():
+                        if kp == km and vp[0] == vm[0]:
+                            unique = False
+                            debug_print('machine overrides option', opt_m[0], "/", km, "=", vm)
+            if unique:
+                debug_print('adding  dependent option', opt_p[0], "/", kp, "=", vp)
+                dep_options_m.append(opt_p)
+
+    return options, dep_options_m
 
 #--------------------------------------------------------------------------
 # Find options that depend on another simple option
@@ -203,11 +291,12 @@ def get_simple_options(project, machine, setting) :
 #                          -> dependent_option_2 -> value_d,e,f
 #               -> value_2 -> dependent_option_3 -> value x,y,z
 #--------------------------------------------------------------------------
-def get_dependent_options(project, machine, setting, dependency, dep_value) :
+def get_dependent_options(project, machine, reg_string, dependency, dep_value) :
+    pyc_p.debug_print('looking for dependent option ', dependency, 'value', dep_value)
     current_path = os.path.dirname(os.path.realpath(__file__))
     f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
     # "dependency" "value" "new_option" "new_option_values"
-    regex = setting + '*\(' + dependency + ' +([^ ]+) +' + '(.+?)\)'
+    regex = reg_string + '*\(' + dependency + ' +([^ ]+) +' + '(.+?)\)'
     #
     cmake_options = {}
     for line in f:
@@ -228,35 +317,61 @@ def get_dependent_options(project, machine, setting, dependency, dep_value) :
 #--------------------------------------------------------------------------
 #
 #--------------------------------------------------------------------------
-def find_build_options(nickname, commandline_options) :
+def find_build_options(project, machine, commandline_options) :
+    # get all options from project and machine config files
+    options, dependent_options = get_cmake_build_options(project, machine, commandline_options)
+    pyc_p.debug_print('commandline options final :', commandline_options)
+    pyc_p.debug_print('simple options      final :', options)
+    pyc_p.debug_print('dependent options   final :', dependent_options)
+    # override options with ones passed on the command-line
+    dep_options = []
+    for key,value in commandline_options.items():
+        if key in options:
+            debug_print('command-line option overrides normal option', key, value)
+            options[key] = value
+        else:
+            for opt in dependent_options:
+                for k, v in opt[1].items():
+                    if v[0] == key:
+                        debug_print('command-line option overrides dependent option', key, value)
+
+    options.update(commandline_options)
+    #
+    pyc_p.debug_print('final options set', options)
+    pyc_p.debug_print('-'*30)
     cmake_options = {}
-    options = get_simple_options(args.project, nickname, 'PYCICLE_CONFIG_OPTION')
-    pyc_p.debug_print('simple options found', options)
-    pyc_p.debug_print('commandline options found', commandline_options)
     for option in options.items():
-        pyc_p.debug_print('-'*30)
         key = option[0]
         choice = generate_random_simple_options(option)
         pyc_p.debug_print('simple option choice', choice, 'from', option[1])
         cmake_options.update(choice)
-        cmake_options.update(get_dependent_options(args.project, nickname, 'PYCICLE_DEPENDENT_OPTION', key, cmake_options[key]))
+        cmake_options.update(get_dependent_options(args.project, machine, 'PYCICLE_DEPENDENT_OPTION', key, cmake_options[key]))
     pyc_p.debug_print('-'*30)
     pyc_p.debug_print('Random cmake settings :', cmake_options)
     cmake_string = ''
     for i in cmake_options.items():
         cmake_string += '-D' + i[0] + '=' + i[1] + ' '
     pyc_p.debug_print('CMake string', cmake_string)
-    pyc_p.debug_print('-'*30)
     return cmake_string
+
+#--------------------------------------------------------------------------
+# create a hash from a string to make each build unique
+#--------------------------------------------------------------------------
+def hash_options_string(cmake_options):
+    hash_object = hashlib.sha256(cmake_options.encode('utf-8'))
+    hex_dig = hash_object.hexdigest()
+    pyc_p.debug_print('options string hash', hex_dig[:16], cmake_options)
+    pyc_p.debug_print('-'*30)
+    return hex_dig[:16]
 
 #--------------------------------------------------------------------------
 # launch a command that will start one build
 #--------------------------------------------------------------------------
-def launch_build(nickname, compiler_type, branch_id, branch_name, cmake_options) :
-    remote_ssh  = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
-    remote_path = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
-    remote_http = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
-    job_type    = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_JOB_LAUNCH')
+def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) :
+    remote_ssh  = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_MACHINE')
+    remote_path = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_ROOT')
+    remote_http = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_HTTP')
+    job_type    = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_JOB_LAUNCH')
     pyc_p.debug_print('launching build', compiler_type, branch_id, branch_name, job_type, cmake_options)
     # we are not yet using these as 'options'
     boost = 'x.xx.x'
@@ -290,7 +405,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name, cmake_options)
         cmd = ['ctest','-S', script ] #'./pycicle/'
 
     cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
-                  '-DPYCICLE_HOST='                + nickname,
+                  '-DPYCICLE_HOST='                + machine,
                   '-DPYCICLE_PROJECT_NAME='        + args.project,
                   '-DPYCICLE_GITHUB_PROJECT_NAME=' + github_reponame,
                   '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation,
@@ -361,9 +476,9 @@ def erase_file(remote_ssh, file):
 # find all the PR build jobs submitted and from them the build dirs
 # that we can use to scrape results from
 #--------------------------------------------------------------------------
-def find_scrape_files(project, nickname) :
-    remote_ssh  = pyc_p.get_setting_for_machine(project, nickname, 'PYCICLE_MACHINE')
-    remote_path = pyc_p.get_setting_for_machine(project, nickname, 'PYCICLE_ROOT')
+def find_scrape_files(project, machine) :
+    remote_ssh  = pyc_p.get_setting_for_machine(project, machine, 'PYCICLE_MACHINE')
+    remote_path = pyc_p.get_setting_for_machine(project, machine, 'PYCICLE_ROOT')
 
     JobFiles   = []
     PR_numbers = {}
@@ -401,8 +516,8 @@ def find_scrape_files(project, nickname) :
 #--------------------------------------------------------------------------
 # collect test results so that we can update github PR status
 #--------------------------------------------------------------------------
-def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_name, head_commit) :
-    remote_ssh  = pyc_p.get_setting_for_machine(project, nickname, 'PYCICLE_MACHINE')
+def scrape_testing_results(project, machine, scrape_file, branch_id, branch_name, head_commit) :
+    remote_ssh  = pyc_p.get_setting_for_machine(project, machine, 'PYCICLE_MACHINE')
 
     if 'local' not in remote_ssh:
         cmd = ['ssh', remote_ssh ]
@@ -417,7 +532,7 @@ def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_nam
 
     context = re.search(r'/build/'+project+'-.+?-(.+)/pycicle-TAG.txt', scrape_file)
     if context:
-        origin = nickname + '-' + context.group(1)
+        origin = machine + '-' + context.group(1)
     else:
         origin = 'unknown'
 
@@ -513,9 +628,9 @@ def needs_update(project_name, branch_id, branch_name, branch_sha, base_sha):
 #--------------------------------------------------------------------------
 # Delete old build and src dirs from pycicle root
 #--------------------------------------------------------------------------
-def delete_old_files(nickname, path, days) :
-    remote_ssh  = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
-    remote_path = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
+def delete_old_files(machine, path, days) :
+    remote_ssh  = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_MACHINE')
+    remote_path = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_ROOT')
     directory   = remote_path + '/' + path
     Dirs        = []
 
@@ -535,7 +650,7 @@ def delete_old_files(nickname, path, days) :
             print('Deleting old/stale directory : ', temp)
             result = subprocess.check_output(cmd).split()
     except Exception as ex:
-        print('Cleanup failed for ', nickname, ex)
+        print('Cleanup failed for ', machine, ex)
 
 
 #--------------------------------------------------------------------------
@@ -575,16 +690,17 @@ if __name__ == "__main__":
     #--------------------------------------------------------------------------
     # Create a Github instance:
     #--------------------------------------------------------------------------
-    github_reponame     = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_PROJECT_NAME')
-    github_organisation = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_ORGANISATION')
-    github_base         = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_BASE_BRANCH')
+    github_reponame     = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_GITHUB_PROJECT_NAME')
+    github_organisation = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_GITHUB_ORGANISATION')
+    github_base         = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_GITHUB_BASE_BRANCH')
     if args.cdash_server:
         cdash_server = args.cdash_server
     else:
-        cdash_server    = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_SERVER_NAME')
-    cdash_project_name  = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_PROJECT_NAME')
-    cdash_http_path     = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_HTTP_PATH')
-    compiler_type       = pyc_p.get_setting_for_machine(args.project, args.machines[0], 'PYCICLE_COMPILER_TYPE')
+        cdash_server    = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_SERVER_NAME')
+    cdash_project_name  = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_PROJECT_NAME')
+    cdash_http_path     = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_HTTP_PATH')
+    compiler_type       = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_COMPILER_TYPE')
+    builds_per_pr       = pyc_p.get_setting_for_machine_project(args.project, machine, 'PYCICLE_BUILDS_PER_PR')
 
     pyc_p.debug_print('-' * 30)
     print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
@@ -594,12 +710,13 @@ if __name__ == "__main__":
     print('PYCICLE_CDASH_PROJECT_NAME   =', cdash_project_name)
     print('PYCICLE_CDASH_SERVER_NAME    =', cdash_server)
     print('PYCICLE_CDASH_HTTP_PATH      =', cdash_http_path)
-    pyc_p.debug_print('-' * 30)
+    print('PYCICLE_BUILDS_PER_PR        =', builds_per_pr)
 
     #--------------------------------------------------------------------------
     # get options for build
     #--------------------------------------------------------------------------
-    cmake_options_string = find_build_options(args.project, args.cmake_options)
+    cmake_options_string = find_build_options(args.project, machine, args.cmake_options)
+    hash_options_string(cmake_options_string)
 
     #--------------------------------------------------------------------------
     # @todo make these into options
@@ -679,6 +796,9 @@ if __name__ == "__main__":
                     pyc_p.debug_print(pr)
                     pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
                     pyc_p.debug_print('Branch to merge from :', pr.head.ref)
+                    short_name = (pr.head.ref[:14] + '..') if len(pr.head.ref) > 16 else pr.head.ref
+                    pyc_p.debug_print('Branch short name    :', short_name)
+
                     if pr.head.repo.owner.login==github_organisation:
                         pyc_p.debug_print('Pull request is from branch local to repo')
                     else:
@@ -721,7 +841,7 @@ if __name__ == "__main__":
                 print('scrape files for PRs', builds_done)
                 for branch_id in builds_done:
                     if branch_id in pr_list:
-                        # nickname, scrape_file, branch_id, branch_name, head_commit
+                        # machine, scrape_file, branch_id, branch_name, head_commit
                         scrape_testing_results(
                             args.project,
                             pr_list[branch_id][0], builds_done.get(branch_id),

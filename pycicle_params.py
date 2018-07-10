@@ -44,7 +44,8 @@ class PycicleParams:
             'PYCICLE_CDASH_HTTP_PATH',
             'PYCICLE_BUILD_STAMP',
             'PYCICLE_COMPILER_SETUP',
-            'PYCICLE_CMAKE_OPTIONS']
+            'PYCICLE_CMAKE_OPTIONS',
+            'PYCICLE_BUILDS_PER_PR']
     config_path = None
 
     def __init__(self, args, config_path=None,
@@ -63,10 +64,9 @@ class PycicleParams:
             self.debug_print("pycicle expects to "
                              "find configs in {}".format(self.config_path))
 
-    def get_setting_for_machine(self, project, machine, setting):
+    def get_setting_from_file(self, config_file, setting):
         if setting not in self.keys:
             raise ValueError("{} not a valid pycicle config parameter".format(setting))
-        config_file = self.config_path + machine + '.cmake'
         self.debug_print('looking for setting :', setting,
                          'in file', config_file)
         with open(config_file, 'r') as f:
@@ -76,3 +76,22 @@ class PycicleParams:
                     self.debug_print('found setting       :', setting, '=', m[0])
                     return m[0]
             return None
+
+    # get setting from project file
+    def get_setting_for_project(self, project, machine, setting):
+        config_file = self.config_path + project + '.cmake'
+        return self.get_setting_from_file(config_file, setting)
+
+    # get setting from machine file
+    def get_setting_for_machine(self, project, machine, setting):
+        config_file = self.config_path + machine + '.cmake'
+        return self.get_setting_from_file(config_file, setting)
+
+    # get setting from machine file if present, otherwise project file
+    def get_setting_for_machine_project(self, project, machine, setting):
+        config_file = self.config_path + machine + '.cmake'
+        val = self.get_setting_from_file(config_file, setting)
+        if val is None:
+            config_file = self.config_path + project + '.cmake'
+            val = self.get_setting_from_file(config_file, setting)
+        return val
