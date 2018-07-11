@@ -8,12 +8,10 @@
 # override project options for this machine configuration
 # =========================================================
 # only testing release
-PYCICLE_CONFIG_OPTION(CMAKE_BUILD_TYPE Release)
+PYCICLE_CONFIG_OPTION(CMAKE_BUILD_TYPE Debug)
 PYCICLE_CONFIG_OPTION(DCA_WITH_MPI     OFF)
 PYCICLE_CONFIG_OPTION(DCA_WITH_CUDA    ON)
-PYCICLE_DEPENDENT_OPTION(DCA_PROFILER None DCA_WITH_JB_TEST ON OFF)
-PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Release DCA_WITH_TESTS_PERFORMANCE OFF)
-PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Debug   DCA_WITH_TESTS_VALIDATION  OFF)
+PYCICLE_DEPENDENT_OPTION(DCA_WITH_CUDA ON CUDA_PROPAGATE_HOST_FLAGS OFF)
 
 #######################################################################
 # These settings control how jobs are launched and results collected

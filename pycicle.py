@@ -180,7 +180,7 @@ def generate_random_simple_options(option):
 # key = option name, value = list of choices
 #--------------------------------------------------------------------------
 def get_simple_options_file(config_file, reg_string, commandline_options) :
-    debug_print('Looking for options in', config_file)
+    pyc_p.debug_print('Looking for options in', config_file)
     f = open(config_file)
 
     regex = reg_string + '\((.+?)\)'
@@ -203,7 +203,7 @@ def get_simple_options_file(config_file, reg_string, commandline_options) :
 # key = option name, value = list of choices
 #--------------------------------------------------------------------------
 def get_dependent_options_file(config_file, reg_string, commandline_options) :
-    debug_print('Looking for dependent options in', config_file)
+    pyc_p.debug_print('Looking for dependent options in', config_file)
     f = open(config_file)
 
     regex = reg_string + '*\((.+?)\)'
@@ -222,7 +222,7 @@ def get_dependent_options_file(config_file, reg_string, commandline_options) :
                 subopt[val] = sub_list
                 if sub_list[0] in commandline_options:
                     new_list = [sub_list[0], commandline_options[sub_list[0]][0]]
-                    debug_print('command-line overrides {:30s} (value) {:15s}'.format(new_list[0], new_list[1]))
+                    pyc_p.debug_print('command-line overrides {:30s} (value) {:15s}'.format(new_list[0], new_list[1]))
                     subopt[val] = new_list
                 options.append([opt, subopt])
     return options
@@ -237,26 +237,22 @@ def get_dependent_options_file(config_file, reg_string, commandline_options) :
 def get_cmake_build_options(project, machine, commandline_options) :
     current_path = os.path.dirname(os.path.realpath(__file__))
     # get options from project file first
-    pyc_p.debug_print('-'*30)
-    pyc_p.debug_print('get_simple_options #project')
+    pyc_p.debug_print('-'*30, '#project get_simple_options')
     config_file = current_path + '/config/' + project + '/' + project + '.cmake'
     options = get_simple_options_file(config_file, 'PYCICLE_CONFIG_OPTION', commandline_options)
 
     # if machine file overrides options, update with new ones
-    pyc_p.debug_print('-'*30)
-    pyc_p.debug_print('get_simple_options #machine')
+    pyc_p.debug_print('-'*30, '#machine get_simple_options')
     config_file = current_path + '/config/' + project + '/' + machine + '.cmake'
     options.update(get_simple_options_file(config_file, 'PYCICLE_CONFIG_OPTION', commandline_options))
 
     # get dependent options from project file
-    pyc_p.debug_print('-'*30)
-    pyc_p.debug_print('get_dependent_options #project')
+    pyc_p.debug_print('-'*30, '#project get_dependent_options')
     config_file   = current_path + '/config/' + project + '/' + project + '.cmake'
     dep_options_p = get_dependent_options_file(config_file, 'PYCICLE_DEPENDENT_OPTION', commandline_options)
 
     # get dependent options from machine file
-    pyc_p.debug_print('-'*30)
-    pyc_p.debug_print('get_dependent_options #machine')
+    pyc_p.debug_print('-'*30, '#machine get_dependent_options')
     config_file   = current_path + '/config/' + project + '/' + machine + '.cmake'
     dep_options_m = get_dependent_options_file(config_file, 'PYCICLE_DEPENDENT_OPTION', commandline_options)
 
@@ -265,54 +261,18 @@ def get_cmake_build_options(project, machine, commandline_options) :
     for opt_p in dep_options_p:
         unique = True
         for kp, vp in opt_p[1].items():
-            debug_print('project dependent option', opt_p[0], "/", kp, "=", vp)
+            pyc_p.debug_print('project dependent option', opt_p[0], "/", kp, "=", vp)
             for opt_m in dep_options_m:
                 if opt_m[0] == opt_p[0]:
                     for km,vm in opt_m[1].items():
                         if kp == km and vp[0] == vm[0]:
                             unique = False
-                            debug_print('machine overrides option', opt_m[0], "/", km, "=", vm)
+                            pyc_p.debug_print('machine overrides option', opt_m[0], "/", km, "=", vm)
             if unique:
-                debug_print('adding  dependent option', opt_p[0], "/", kp, "=", vp)
+                pyc_p.debug_print('adding  dependent option', opt_p[0], "/", kp, "=", vp)
                 dep_options_m.append(opt_p)
 
     return options, dep_options_m
-
-#--------------------------------------------------------------------------
-# Find options that depend on another simple option
-# Given a simple option, find all the other options that can be enabled
-# or set when the simple option has a certain value
-# returns a map values that each contains a list of lists of new options
-# so if simple_option is ON, then dependent_option_1 can be a,b,c
-# if simple_option is OFF, then dependent_option_1_or_2 can be d,e,f
-#
-# Map key         Value(list)  map of options     list of values
-# simple_option -> value_1 -> dependent_option_1 -> value_a,b,c
-#                          -> dependent_option_2 -> value_d,e,f
-#               -> value_2 -> dependent_option_3 -> value x,y,z
-#--------------------------------------------------------------------------
-def get_dependent_options(project, machine, reg_string, dependency, dep_value) :
-    pyc_p.debug_print('looking for dependent option ', dependency, 'value', dep_value)
-    current_path = os.path.dirname(os.path.realpath(__file__))
-    f = open(current_path + '/config/' + project + '/' + machine + '.cmake')
-    # "dependency" "value" "new_option" "new_option_values"
-    regex = reg_string + '*\(' + dependency + ' +([^ ]+) +' + '(.+?)\)'
-    #
-    cmake_options = {}
-    for line in f:
-        m = re.findall(regex, line)
-        if m:
-            value = m[0][0]
-            new_option_and_values   = m[0][1].split()
-            new_option_and_values_l = [new_option_and_values[0], new_option_and_values[1:]]
-            # don't set a dependent value if parent option doesn't match
-            if value!=dep_value:
-                continue
-            dependent_option        = generate_random_simple_options(new_option_and_values_l)
-            pyc_p.debug_print('depend option choice', dependent_option, 'from', new_option_and_values[1:])
-            cmake_options.update(dependent_option)
-
-    return cmake_options
 
 #--------------------------------------------------------------------------
 #
@@ -323,29 +283,23 @@ def find_build_options(project, machine, commandline_options) :
     pyc_p.debug_print('commandline options final :', commandline_options)
     pyc_p.debug_print('simple options      final :', options)
     pyc_p.debug_print('dependent options   final :', dependent_options)
-    # override options with ones passed on the command-line
-    dep_options = []
-    for key,value in commandline_options.items():
-        if key in options:
-            debug_print('command-line option overrides normal option', key, value)
-            options[key] = value
-        else:
-            for opt in dependent_options:
-                for k, v in opt[1].items():
-                    if v[0] == key:
-                        debug_print('command-line option overrides dependent option', key, value)
-
-    options.update(commandline_options)
     #
     pyc_p.debug_print('final options set', options)
     pyc_p.debug_print('-'*30)
     cmake_options = {}
     for option in options.items():
-        key = option[0]
+        key    = option[0]
         choice = generate_random_simple_options(option)
-        pyc_p.debug_print('simple option choice', choice, 'from', option[1])
+        value  = choice[key]
+        pyc_p.debug_print('simple option choice', key, '=', value)
         cmake_options.update(choice)
-        cmake_options.update(get_dependent_options(args.project, machine, 'PYCICLE_DEPENDENT_OPTION', key, cmake_options[key]))
+        for dep_option in dependent_options:
+            if dep_option[0] == key and value in dep_option[1].keys():
+                dep_opt_key = dep_option[1][value][0]
+                dep_opt_val = dep_option[1][value][1]
+                pyc_p.debug_print('dependent option', dep_opt_key, '=', dep_opt_val)
+                cmake_options[dep_opt_key] = dep_opt_val
+
     pyc_p.debug_print('-'*30)
     pyc_p.debug_print('Random cmake settings :', cmake_options)
     cmake_string = ''
