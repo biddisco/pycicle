@@ -369,7 +369,7 @@ def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) 
                   '-DPYCICLE_COMPILER_TYPE='       + compiler_type,
                   '-DPYCICLE_BOOST='               + boost,
                   '-DPYCICLE_BASE='                + github_base,
-                  '-DPYCICLE_CMAKE_OPTIONS='       + cmake_options,
+                  '-DPYCICLE_CMAKE_OPTIONS=\"'     + cmake_options+'\"',
                   # These are to quiet warnings from ctest about unset vars
                   '-DCTEST_SOURCE_DIRECTORY=.',
                   '-DCTEST_BINARY_DIRECTORY=.',
