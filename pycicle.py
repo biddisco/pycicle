@@ -424,7 +424,7 @@ def delete_old_files(nickname, path, days) :
     else:
         cmd_transport = []
     cmd = cmd_transport + ['find', directory,
-        '-mindepth', '1', '-maxdepth', '1', '-type', 'd', '-mtime', str(days)]
+        '-mindepth', '1', '-maxdepth', '1', '-type', 'd', '-mtime', '+' + str(days)]
 
     pyc_p.debug_print('Cleanup find:', cmd)
     try:
