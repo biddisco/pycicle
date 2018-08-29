@@ -25,7 +25,7 @@ set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "direct")
 # for each PR do N builds
-set(PYCICLE_BUILDS_PER_PR "5")
+set(PYCICLE_BUILDS_PER_PR "1")
 
 set(PYCICLE_COMPILER_TYPE "gcc")
 

@@ -16,8 +16,8 @@ set(PYCICLE_CDASH_HTTP_PATH      "")
 # project specific target to build before running tests
 set(PYCICLE_CTEST_BUILD_TARGET   "all")
 
-# for each PR we would like 2 build using generated options
-set(PYCICLE_BUILDS_PER_PR "2")
+# for each PR we would like N builds using generated options
+set(PYCICLE_BUILDS_PER_PR        "1")
 
 # ----------------------------------------------
 # These macros are just for syntax completeness

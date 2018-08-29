@@ -402,7 +402,7 @@ def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) 
 # launch one build from a list of options
 #--------------------------------------------------------------------------
 def choose_and_launch(project, machine, branch_id, branch_name, cmake_options, num_builds, compiler_type) :
-    print('Starting builds with N=', int(num_builds))
+    print('Starting', num_builds, 'builds for PR', branch_id, branch_name)
     pyc_p.debug_print("Begin : choose_and_launch", project, machine, branch_id, branch_name, cmake_options)
 
     for build in range(0,int(num_builds)):
@@ -662,7 +662,8 @@ if __name__ == "__main__":
     cdash_project_name  = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_PROJECT_NAME')
     cdash_http_path     = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_HTTP_PATH')
     compiler_type       = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_COMPILER_TYPE')
-    builds_per_pr       = pyc_p.get_setting_for_machine_project(args.project, machine, 'PYCICLE_BUILDS_PER_PR')
+    builds_per_pr_str   = pyc_p.get_setting_for_machine_project(args.project, machine, 'PYCICLE_BUILDS_PER_PR')
+    builds_per_pr       = int(builds_per_pr_str)
 
     pyc_p.debug_print('-' * 30)
     print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
@@ -682,17 +683,17 @@ if __name__ == "__main__":
     scrape_time = 10*60
 
     try:
-        print("connecting to git hub with:")
-        print("github.Github({},{})".format(github_organisation, args.user_token))
+        print('-' * 30)
+        print("Connecting    :", "github.Github({},{})".format(github_organisation, args.user_token))
         git  = github.Github(github_organisation, args.user_token)
         print("Github User   :",git.get_user().name)
-        print("Github Reponame:",github_reponame)
+        print("Github Repo   :",github_reponame)
         try:
             org = git.get_organization(github_organisation)
             print("Organisation  :", org.login, org.name)
             repo = org.get_repo(github_reponame)
         except github.UnknownObjectException as ukoe:
-            print("trying to recover from organization passed as name")
+            print("Exception     : Trying to recover from organization passed as name")
             git  = github.Github(args.user_token)
             repo = git.get_repo(github_reponame)
             print(vars(repo))
