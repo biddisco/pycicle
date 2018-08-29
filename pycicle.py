@@ -401,14 +401,22 @@ def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) 
 #--------------------------------------------------------------------------
 # launch one build from a list of options
 #--------------------------------------------------------------------------
-def choose_and_launch(project, machine, branch_id, branch_name, compiler_type, cmake_options) :
+def choose_and_launch(project, machine, branch_id, branch_name, cmake_options, num_builds, compiler_type) :
+    print('Starting builds with N=', int(num_builds))
     pyc_p.debug_print("Begin : choose_and_launch", project, machine, branch_id, branch_name, cmake_options)
-    if project=='hpx' and machine=='daint':
-        if bool(random.getrandbits(1)):
-            compiler_type = 'gcc'
-        else:
-            compiler_type = 'clang'
-    launch_build(machine, compiler_type, branch_id, branch_name, cmake_options)
+
+    for build in range(0,int(num_builds)):
+        # get options for build
+        cmake_options_string = find_build_options(project, machine, cmake_options)
+        hash_options_string(cmake_options_string)
+
+        if project=='hpx' and machine=='daint':
+            if bool(random.getrandbits(1)):
+                compiler_type = 'gcc'
+            else:
+                compiler_type = 'clang'
+
+        launch_build(machine, compiler_type, branch_id, branch_name, cmake_options_string)
 
 #--------------------------------------------------------------------------
 # Utility function to remove a file from a remote filesystem
@@ -667,12 +675,6 @@ if __name__ == "__main__":
     print('PYCICLE_BUILDS_PER_PR        =', builds_per_pr)
 
     #--------------------------------------------------------------------------
-    # get options for build
-    #--------------------------------------------------------------------------
-    cmake_options_string = find_build_options(args.project, machine, args.cmake_options)
-    hash_options_string(cmake_options_string)
-
-    #--------------------------------------------------------------------------
     # @todo make these into options
     # 60 seconds between polls.
     poll_time   = 60
@@ -778,12 +780,12 @@ if __name__ == "__main__":
                 if not args.scrape_only:
                     update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
                     if update:
-                        choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type, cmake_options_string)
+                        choose_and_launch(args.project, machine, branch_id, branch_name, args.cmake_options, builds_per_pr, compiler_type)
 
             # also build the base branch if it has changed
             if not args.scrape_only and args.pull_request==0:
                 if force or needs_update(args.project, github_base, github_base, base_sha, base_sha):
-                    choose_and_launch(args.project, machine, github_base, github_base, compiler_type, cmake_options_string)
+                    choose_and_launch(args.project, machine, github_base, github_base, args.cmake_options, builds_per_pr, compiler_type)
                     pr_list[github_base] = [machine, github_base, base_branch.commit, ""]
 
             scrape_t2    = datetime.datetime.now()
