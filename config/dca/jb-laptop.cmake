@@ -56,7 +56,7 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     " -DMAGMA_DIR:PATH=/home/biddisco/apps/magma "
     " -DFFTW_INCLUDE_DIR:PATH=/usr/include "
     " -DFFTW_LIBRARY:FILEPATH=/usr/lib/libfftw3.so "
-    " -DLAPACK_LIBRARIES=/opt/intel/mkl/lib/intel64/libmkl_core.so;/opt/intel/mkl/lib/intel64/libmkl_sequential.so;/opt/intel/mkl/lib/intel64/libmkl_rt.so"
+    " \"-DLAPACK_LIBRARIES=/opt/intel/mkl/lib/intel64/libmkl_core.so;/opt/intel/mkl/lib/intel64/libmkl_sequential.so;/opt/intel/mkl/lib/intel64/libmkl_rt.so\""
     " -DCUDA_HOST_COMPILER:FILEPATH=/usr/bin/gcc-6 "
 #    " -DDCA_THREADING_LIBRARY:STRING=STDTHREAD "
 #    " -DHPX_DIR=$HOME/build/hpx-debug/lib/cmake/HPX "

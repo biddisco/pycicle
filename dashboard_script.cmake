@@ -246,12 +246,16 @@ ctest_start(${CTEST_MODEL}
     "${CTEST_BINARY_DIRECTORY}"
 )
 
+string(REPLACE "\"" "" UNQUOTED_CMAKE_OPTIONS ${PYCICLE_CMAKE_OPTIONS})
+
 string(CONCAT CTEST_CONFIGURE_COMMAND
   " ${CMAKE_COMMAND} "
-  " ${PYCICLE_CMAKE_OPTIONS}"
-  " ${CTEST_BUILD_OPTIONS}"
-  " ${CTEST_CONFIGURE_COMMAND} \"-G${CTEST_CMAKE_GENERATOR}\""
-  " ${CTEST_CONFIGURE_COMMAND} \"${CTEST_SOURCE_DIRECTORY}\"")
+  " ${UNQUOTED_CMAKE_OPTIONS} "
+  " ${CTEST_BUILD_OPTIONS} "
+  " \"-G${CTEST_CMAKE_GENERATOR}\" "
+  " \"${CTEST_SOURCE_DIRECTORY}\"")
+
+
 
 #######################################################################
 # Update dashboard
