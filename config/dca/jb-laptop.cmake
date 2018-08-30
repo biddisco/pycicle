@@ -32,7 +32,7 @@ set(PYCICLE_COMPILER_TYPE "gcc")
 #######################################################################
 # These are settings you can use to define anything useful
 #######################################################################
-set(GCC_VER           "8.1.0")
+set(GCC_VER           "8.2.0")
 set(INSTALL_ROOT      "/home/biddisco/apps")
 
 set(CFLAGS            "-fPIC")
@@ -41,7 +41,7 @@ set(LDFLAGS           "")
 set(LDCXXFLAGS        "${LDFLAGS} -std c++14")
 set(BUILD_PARALLELISM "4")
 
-set(CTEST_SITE            "linux(jblaptop)")
+set(CTEST_SITE            "Arch linux(jblaptop)-gcc-${GCC_VER}")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT    "500")
 
