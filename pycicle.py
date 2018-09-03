@@ -239,22 +239,22 @@ def get_cmake_build_options(project, machine, commandline_options) :
     # get options from project file first
     pyc_p.debug_print('-'*30, '#project get_simple_options')
     config_file = current_path + '/config/' + project + '/' + project + '.cmake'
-    options = get_simple_options_file(config_file, 'PYCICLE_CONFIG_OPTION', commandline_options)
+    options = get_simple_options_file(config_file, 'PYCICLE_CMAKE_OPTION', commandline_options)
 
     # if machine file overrides options, update with new ones
     pyc_p.debug_print('-'*30, '#machine get_simple_options')
     config_file = current_path + '/config/' + project + '/' + machine + '.cmake'
-    options.update(get_simple_options_file(config_file, 'PYCICLE_CONFIG_OPTION', commandline_options))
+    options.update(get_simple_options_file(config_file, 'PYCICLE_CMAKE_OPTION', commandline_options))
 
     # get dependent options from project file
     pyc_p.debug_print('-'*30, '#project get_dependent_options')
     config_file   = current_path + '/config/' + project + '/' + project + '.cmake'
-    dep_options_p = get_dependent_options_file(config_file, 'PYCICLE_DEPENDENT_OPTION', commandline_options)
+    dep_options_p = get_dependent_options_file(config_file, 'PYCICLE_CMAKE_DEPENDENT_OPTION', commandline_options)
 
     # get dependent options from machine file
     pyc_p.debug_print('-'*30, '#machine get_dependent_options')
     config_file   = current_path + '/config/' + project + '/' + machine + '.cmake'
-    dep_options_m = get_dependent_options_file(config_file, 'PYCICLE_DEPENDENT_OPTION', commandline_options)
+    dep_options_m = get_dependent_options_file(config_file, 'PYCICLE_CMAKE_DEPENDENT_OPTION', commandline_options)
 
     # dependent options in machine config must override those in project config
     pyc_p.debug_print('-'*30)

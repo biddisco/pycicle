@@ -20,40 +20,41 @@ set(PYCICLE_CTEST_BUILD_TARGET   "all")
 set(PYCICLE_BUILDS_PER_PR        "1")
 
 # ----------------------------------------------
-# These macros are just for syntax completeness
+# Dashboard build configuration options
 # ----------------------------------------------
-macro(PYCICLE_CONFIG_OPTION option values)
-endmacro(PYCICLE_CONFIG_OPTION)
 
-macro(PYCICLE_DEPENDENT_OPTION option values)
-endmacro(PYCICLE_DEPENDENT_OPTION)
-
-# ----------------------------------------------
-# define build configuration options
-# ----------------------------------------------
 # ===================
 # build type
 # ===================
-PYCICLE_CONFIG_OPTION(CMAKE_BUILD_TYPE Debug Release)
+PYCICLE_CMAKE_OPTION(CMAKE_BUILD_TYPE "Debug" "Release")
 
 # ===================
 # Testing configs
 # ===================
 # if building release mode, allow performance tests to be on/off
 # if building debug mode, allow fast and extensive tests (they use assert)
-PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Release DCA_WITH_TESTS_PERFORMANCE ON)
-PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Debug   DCA_WITH_TESTS_FAST        ON)
-PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Debug   DCA_WITH_TESTS_EXTENSIVE   ON)
-PYCICLE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE Debug   DCA_WITH_TESTS_VALIDATION  ON)
+PYCICLE_CMAKE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE "Release" DCA_WITH_TESTS_PERFORMANCE "ON")
+PYCICLE_CMAKE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE "Debug"   DCA_WITH_TESTS_FAST        "ON")
+PYCICLE_CMAKE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE "Debug"   DCA_WITH_TESTS_EXTENSIVE   "ON")
+PYCICLE_CMAKE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE "Debug"   DCA_WITH_TESTS_VALIDATION  "ON")
 
 # ===================
 # parallelism and concurrency
 # ===================
-PYCICLE_CONFIG_OPTION(DCA_WITH_THREADED_SOLVER ON OFF)
-PYCICLE_CONFIG_OPTION(DCA_WITH_MPI             ON OFF)
+PYCICLE_CMAKE_OPTION(DCA_WITH_THREADED_SOLVER "ON" "OFF")
+PYCICLE_CMAKE_OPTION(DCA_WITH_MPI             "ON" "OFF")
 
 # ===================
-# profiling
+# profiling, solver, RNG, others
 # ===================
-PYCICLE_CONFIG_OPTION(DCA_PROFILER None Counting) # PAPI
+PYCICLE_CMAKE_OPTION(DCA_PROFILER "None" "Counting") # PAPI
+PYCICLE_CMAKE_OPTION(DCA_CLUSTER_SOLVER "CT-AUX" "SS-CT-HYB")
+PYCICLE_CMAKE_OPTION(DCA_LATTICE "square" "triangular" "bilayer")
+PYCICLE_CMAKE_OPTION(DCA_POINT_GROUP "D4" "C6")
+PYCICLE_CMAKE_OPTION(DCA_RNG "std::mt19937_64" "std::ranlux48" "custom")
 
+# ===================
+# Cuda/MPI
+# ===================
+PYCICLE_CMAKE_OPTION(DCA_WITH_CUDA "ON" "OFF")
+PYCICLE_CMAKE_OPTION(DCA_WITH_MPI  "ON" "OFF")

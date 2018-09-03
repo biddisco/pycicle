@@ -27,6 +27,7 @@ message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 # Load machine specific settings
 # This is where the main machine config file is read in and params set
 #######################################################################
+include(${CMAKE_CURRENT_LIST_DIR}/dashboard_macros.cmake)
 message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
 message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake")
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake)
