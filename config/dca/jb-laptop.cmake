@@ -27,8 +27,6 @@ set(PYCICLE_JOB_LAUNCH "direct")
 # for each PR do N builds
 set(PYCICLE_BUILDS_PER_PR "1")
 
-set(PYCICLE_COMPILER_TYPE "gcc")
-
 #######################################################################
 # These are settings you can use to define anything useful
 #######################################################################

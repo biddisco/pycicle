@@ -19,29 +19,19 @@ set(PYCICLE_JOB_LAUNCH "pbs")
 
 set(PYCICLE_COMPILER_TYPE "gcc" )
 
-# These versions are ok for gcc or clang
-set(BOOST_VER            "1.65.0")
-set(HWLOC_VER            "1.11.7")
-set(JEMALLOC_VER         "5.0.1")
-set(OTF2_VER             "2.0")
-set(PAPI_VER             "5.5.1")
-set(BOOST_SUFFIX         "1_65_0")
-set(CMAKE_VER            "3.9.1")
-
-if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
-  set(GCC_VER             "5.3.0")
-  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}")
-  #
-  #set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
-  #
-  set(CFLAGS           "-g -fPIC")
-  set(CXXFLAGS         "-g -fPIC -march=native -mtune=native -ffast-math -std=c++14")
-  set(LDFLAGS          "")
-  set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
-  set(FFTW_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/fftw/3.3.5/centos7.2_gnu5.3.0")
-  set(HDF5_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/hdf5/1.8.17/centos7.2_gnu5.3.0")
-  # multiline string
-  set(PYCICLE_COMPILER_SETUP "
+set(GCC_VER             "5.3.0")
+set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}")
+#
+#set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
+#
+set(CFLAGS           "-g -fPIC")
+set(CXXFLAGS         "-g -fPIC -march=native -mtune=native -ffast-math -std=c++14")
+set(LDFLAGS          "")
+set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
+set(FFTW_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/fftw/3.3.5/centos7.2_gnu5.3.0")
+set(HDF5_DIR         "/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/hdf5/1.8.17/centos7.2_gnu5.3.0")
+# multiline string
+set(PYCICLE_COMPILER_SETUP "
     #
     module load PE-gnu
     module load fftw/3.3.5
@@ -56,17 +46,7 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
     export CXXFLAGS=\"${CXXFLAGS}\"
     export LDFLAGS=\"${LDFLAGS}\"
     export LDCXXFLAGS=\"${LDCXXFLAGS}\"
-  ")
-
-elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
-endif()
-
-# set(HWLOC_ROOT       "${INSTALL_ROOT}/hwloc/${HWLOC_VER}")
-# set(JEMALLOC_ROOT    "${INSTALL_ROOT}/jemalloc/${JEMALLOC_VER}")
-# set(OTF2_ROOT        "${INSTALL_ROOT}/otf2/${OTF2_VER}")
-# set(PAPI_ROOT        "${INSTALL_ROOT}/papi/${PAPI_VER}")
-# set(PAPI_INCLUDE_DIR "${INSTALL_ROOT}/papi/${PAPI_VER}/include")
-# set(PAPI_LIBRARY     "${INSTALL_ROOT}/papi/${PAPI_VER}/lib/libpfm.so")
+")
 
 set(CTEST_SITE "CENTOS7(cades-condo)-${PYCICLE_BUILD_STAMP}")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
