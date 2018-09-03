@@ -20,9 +20,9 @@ set(PYCICLE_COMPILER_TYPE "gcc")
 #######################################################################
 # These are settings you can use to define anything useful
 #######################################################################
-set(GCC_VER        "8.1.0")
+set(GCC_VER        "8.2.0")
 set(BOOST_VER      "1.65.0")
-set(BOOST_COMPILER "gcc81")
+set(BOOST_COMPILER "gcc82")
 set(HWLOC_VER      "1.11.8")
 set(JEMALLOC_VER   "5.0.1")
 set(OTF2_VER       "2.0")
