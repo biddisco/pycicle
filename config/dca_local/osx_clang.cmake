@@ -19,15 +19,6 @@ set(PYCICLE_JOB_LAUNCH "pbs")
 
 set(PYCICLE_COMPILER_TYPE "clang")
 
-# These versions are ok for gcc or clang
-set(BOOST_VER            "1.65.0")
-set(HWLOC_VER            "1.11.7")
-set(JEMALLOC_VER         "5.0.1")
-set(OTF2_VER             "2.0")
-set(PAPI_VER             "5.5.1")
-set(BOOST_SUFFIX         "1_65_0")
-set(CMAKE_VER            "3.9.1")
-
 if (PYCICLE_COMPILER_TYPE MATCHES "clang")
   set(CLANG_VER             "5.0.1")
   set(PYCICLE_BUILD_STAMP "clang-${CLANG_VER}")
@@ -45,14 +36,12 @@ set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT "600")
 set(BUILD_PARALLELISM  "4")
 
-
-
 #######################################################################
 # The string that is used to drive cmake config step
 # ensure options (e.g.FLAGS) that have multiple args are escaped
 #######################################################################
 
-  string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
+string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DCMAKE_C_COMPILER=/Users/epd/local/openmpi-1.10.7/bin/mpicc\" "
     "\"-DCMAKE_CXX_COMPILER=/Users/epd/local/openmpi-1.10.7/bin/mpic++\" "
     "\"-DCMAKE_C_FLAGS=-I/usr/local/opt/llvm/include -I/Users/epd/local/fftw-3.3.7/include\" "

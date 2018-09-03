@@ -16,29 +16,21 @@ set(PYCICLE_HTTP TRUE)
 set(PYCICLE_JOB_LAUNCH "slurm")
 set(PYCICLE_COMPILER_TYPE "gcc" )
 
-# These versions are ok for gcc or clang
-set(BOOST_VER            "1.65.0")
-set(HWLOC_VER            "1.11.7")
-set(JEMALLOC_VER         "5.0.1")
-set(OTF2_VER             "2.0")
-set(PAPI_VER             "5.5.1")
-set(BOOST_SUFFIX         "1_65_0")
 set(CMAKE_VER            "3.9.1")
 
-if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
-  set(GCC_VER             "5.3.0")
-  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
-  #
-  set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
-  set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
-  #
-  set(CFLAGS           "-fPIC")
-  set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math -std=c++14")
-  set(LDFLAGS          "-dynamic")
-  set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
+set(GCC_VER             "5.3.0")
+set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
+#
+set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
+set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
+#
+set(CFLAGS           "-fPIC")
+set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math -std=c++14")
+set(LDFLAGS          "-dynamic")
+set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
 
-  # multiline string
-  set(PYCICLE_COMPILER_SETUP "
+# multiline string
+set(PYCICLE_COMPILER_SETUP "
     #
     module load gcc/${GCC_VER}
     #
@@ -50,14 +42,8 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
     export CXXFLAGS=\"${CXXFLAGS}\"
     export LDFLAGS=\"${LDFLAGS}\"
     export LDCXXFLAGS=\"${LDCXXFLAGS}\"
-  ")
+")
 
-elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
-endif()
-
-set(HWLOC_ROOT       "${INSTALL_ROOT}/hwloc/${HWLOC_VER}")
-set(JEMALLOC_ROOT    "${INSTALL_ROOT}/jemalloc/${JEMALLOC_VER}")
-set(OTF2_ROOT        "${INSTALL_ROOT}/otf2/${OTF2_VER}")
 set(PAPI_ROOT        "${INSTALL_ROOT}/papi/${PAPI_VER}")
 set(PAPI_INCLUDE_DIR "${INSTALL_ROOT}/papi/${PAPI_VER}/include")
 set(PAPI_LIBRARY     "${INSTALL_ROOT}/papi/${PAPI_VER}/lib/libpfm.so")
