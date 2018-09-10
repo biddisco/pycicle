@@ -572,17 +572,22 @@ if __name__ == "__main__":
             #
             for pr in pull_requests:
                 # find out if the PR is from a local branch or from a clone of the repo
-                pyc_p.debug_print('-' * 30)
-                pyc_p.debug_print(pr)
-                pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
-                pyc_p.debug_print('Branch to merge from :', pr.head.ref)
-                if pr.head.repo.owner.login==github_organisation:
-                    pyc_p.debug_print('Pull request is from branch local to repo')
-                else:
-                    pyc_p.debug_print('Pull request is from branch of forked repo')
-                pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
+                try:
+                    pyc_p.debug_print('-' * 30)
+                    pyc_p.debug_print(pr)
+                    pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
+                    pyc_p.debug_print('Branch to merge from :', pr.head.ref)
+                    if pr.head.repo.owner.login==github_organisation:
+                        pyc_p.debug_print('Pull request is from branch local to repo')
+                    else:
+                        pyc_p.debug_print('Pull request is from branch of forked repo')
+                    pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
                                       + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
-                pyc_p.debug_print('-' * 30)
+                    pyc_p.debug_print('-' * 30)
+                except Exception as ex:
+                    pyc_p.debug_print('Could not get information about PR source repo:', ex)
+                    continue
+
                 branch_id   = str(pr.number)
                 branch_name = pr.head.label.rsplit(':',1)[1]
                 branch_sha  = pr.head.sha
