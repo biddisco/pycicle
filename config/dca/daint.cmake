@@ -16,13 +16,12 @@ set(PYCICLE_HTTP TRUE)
 set(PYCICLE_JOB_LAUNCH "slurm")
 set(PYCICLE_COMPILER_TYPE "gcc" )
 
-set(CMAKE_VER            "3.9.1")
+set(CMAKE_VER            "3.11.4")
 
 set(GCC_VER             "5.3.0")
-set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
+set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-${CMAKE_BUILD_TYPE}")
 #
 set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
-set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
 #
 set(CFLAGS           "-fPIC")
 set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math -std=c++14")
@@ -67,7 +66,7 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DMAGMA_DIR=$ENV{EBROOTMAGMA}\" "
     "\"-DDCA_THREADING_LIBRARY:STRING=STDTHREAD\" "
     "\"-DDCA_WITH_THREADED_SOLVER:BOOL=ON\" "
-    "\"-DDCA_WITH_MPI:BOOL=OFF\" "
+    "\"-DDCA_WITH_MPI:BOOL=ON\" "
     "\"-DHPX_DIR=$HOME/build/hpx-debug/lib/cmake/HPX\" "
     "\"-DDCA_WITH_TESTS_EXTENSIVE:BOOL=ON\" "
     "\"-DDCA_WITH_TESTS_FAST:BOOL=ON\" "
@@ -97,7 +96,7 @@ module load   git
 module load   CMake/${CMAKE_VER}
 module unload gcc
 module load   gcc/${GCC_VER}
-module load   cudatoolkit/9.0.103_3.7-6.0.4.1_2.1__g72b395b
+module load   cudatoolkit/8.0.61_2.4.3-6.0.4.0_3.1__gb475d12
 module load   magma/2.2.0-CrayGNU-17.08-cuda-8.0
 module load   fftw
 module load   intel
