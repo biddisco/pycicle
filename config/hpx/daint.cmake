@@ -14,6 +14,8 @@ set(PYCICLE_ROOT "/scratch/snx1600/biddisco/pycicle")
 set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "slurm")
+# Number of builds that will be triggered for each PR
+set(PYCICLE_BUILDS_PER_PR "1")
 
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
