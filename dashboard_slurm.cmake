@@ -23,6 +23,9 @@ message("Random string is " ${PYCICLE_RANDOM})
 message("COMPILER is      " ${PYCICLE_COMPILER_TYPE})
 message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 
+include(${CMAKE_CURRENT_LIST_DIR}/dashboard_macros.cmake)
+expand_pycicle_cmake_options(${PYCICLE_CMAKE_OPTIONS})
+
 #######################################################################
 # Load machine specific settings
 #######################################################################
@@ -46,7 +49,7 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "-DPYCICLE_COMPILER_TYPE=${PYCICLE_COMPILER_TYPE} "
   "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} "
   "-DPYCICLE_BASE=${PYCICLE_BASE} "
-  "-DPYCICLE_CMAKE_OPTIONS=${PYCICLE_CMAKE_OPTIONS} "
+  "-DPYCICLE_CMAKE_OPTIONS=\"${PYCICLE_CMAKE_OPTIONS}\" "
 )
 
 # write the job script into a temp file
@@ -68,4 +71,4 @@ execute_process(
 )
 
 # wipe the temp file job script
-file(REMOVE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh")
+# file(REMOVE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh")

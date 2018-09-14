@@ -6,6 +6,11 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
 #######################################################################
+# Boilerplate macros we need
+#######################################################################
+include(${CMAKE_CURRENT_LIST_DIR}/dashboard_macros.cmake)
+
+#######################################################################
 # For debugging this script
 #######################################################################
 message("CMAKE_CURRENT_LIST_DIR  ${CMAKE_CURRENT_LIST_DIR}")
@@ -23,14 +28,18 @@ message("Random string is " ${PYCICLE_RANDOM})
 message("COMPILER is      " ${PYCICLE_COMPILER_TYPE})
 message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 
+expand_pycicle_cmake_options(${PYCICLE_CMAKE_OPTIONS})
+
 #######################################################################
-# Load machine specific settings
+# Load project/machine specific settings
 # This is where the main machine config file is read in and params set
 #######################################################################
-include(${CMAKE_CURRENT_LIST_DIR}/dashboard_macros.cmake)
-message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
+# include project specific settings
 message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake")
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake)
+
+# include machine specific settings
+message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
 include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
