@@ -13,22 +13,54 @@ set(PYCICLE_ROOT "/scratch/snx1600/biddisco/pycicle")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
-set(PYCICLE_JOB_LAUNCH "slurm")
+set(PYCICLE_JOB_LAUNCH    "slurm")
 set(PYCICLE_COMPILER_TYPE "gcc" )
 
-set(CMAKE_VER            "3.11.4")
+#######################################################################
+# Vars passed to CTest
+#######################################################################
+set(CTEST_SITE "cray(daint)")
+set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
+set(CTEST_TEST_TIMEOUT "600")
+set(BUILD_PARALLELISM  "32")
 
+#######################################################################
+# Machine specific options
+#######################################################################
+# If MPI is enabled, set srun as TEST_RUNNER
+PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER "srun")
+# Path to HPX to use for the build if enabled
+PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_HPX "ON" HPX_DIR "/scratch/snx1600/biddisco/build/hpx/lib/cmake/HPX")
+
+#######################################################################
+# Machine specific variables
+#######################################################################
+set(CMAKE_VER           "3.11.4")
 set(GCC_VER             "5.3.0")
 set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-${CMAKE_BUILD_TYPE}")
-#
-set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
 #
 set(CFLAGS           "-fPIC")
 set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math -std=c++14")
 set(LDFLAGS          "-dynamic")
 set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
 
-# multiline string
+#######################################################################
+# Extra CMake variables to pass to the cmake launch command
+# ensure options (e.g.FLAGS) that have multiple args are escaped
+#######################################################################
+string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
+    "\"-DCMAKE_CXX_FLAGS=${CXXFLAGS}\" "
+    "\"-DCMAKE_C_FLAGS=${CFLAGS}\" "
+    "\"-DCMAKE_EXE_LINKER_FLAGS=${LDCXXFLAGS}\" "
+    "\"-DMKL_ROOT=$MKLROOT \" "
+    "\"-DMAGMA_DIR=$ENV{EBROOTMAGMA}\" "
+)
+
+#######################################################################
+# Setup anything compiler specific : this is only to make it easier
+# to insert compiler GCC/clang/other related options in one place
+# and could be added directly to the PYCICLE_JOB_SCRIPT_TEMPLATE
+#######################################################################
 set(PYCICLE_COMPILER_SETUP "
     #
     module load gcc/${GCC_VER}
@@ -43,44 +75,13 @@ set(PYCICLE_COMPILER_SETUP "
     export LDCXXFLAGS=\"${LDCXXFLAGS}\"
 ")
 
-set(PAPI_ROOT        "${INSTALL_ROOT}/papi/${PAPI_VER}")
-set(PAPI_INCLUDE_DIR "${INSTALL_ROOT}/papi/${PAPI_VER}/include")
-set(PAPI_LIBRARY     "${INSTALL_ROOT}/papi/${PAPI_VER}/lib/libpfm.so")
-
-set(CTEST_SITE "cray(daint)")
-set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT "600")
-set(BUILD_PARALLELISM  "32")
-
-#######################################################################
-# The string that is used to drive cmake config step
-# ensure options (e.g.FLAGS) that have multiple args are escaped
-#######################################################################
-string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
-    "\"-DCMAKE_CXX_FLAGS=${CXXFLAGS}\" "
-    "\"-DCMAKE_C_FLAGS=${CFLAGS}\" "
-    "\"-DCMAKE_EXE_LINKER_FLAGS=${LDCXXFLAGS}\" "
-    "\"-DMKL_ROOT=$MKLROOT \" "
-    "\"-DDCA_WITH_CUDA:BOOL=ON\" "
-    "\"-DCUDA_PROPAGATE_HOST_FLAGS=OFF\" "
-    "\"-DMAGMA_DIR=$ENV{EBROOTMAGMA}\" "
-    "\"-DDCA_THREADING_LIBRARY:STRING=STDTHREAD\" "
-    "\"-DDCA_WITH_THREADED_SOLVER:BOOL=ON\" "
-    "\"-DDCA_WITH_MPI:BOOL=ON\" "
-    "\"-DHPX_DIR=$HOME/build/hpx-debug/lib/cmake/HPX\" "
-    "\"-DDCA_WITH_TESTS_EXTENSIVE:BOOL=ON\" "
-    "\"-DDCA_WITH_TESTS_FAST:BOOL=ON\" "
-    "\"-DDCA_WITH_TESTS_PERFORMANCE:BOOL=ON\" "
-    "\"-DDCA_WITH_TESTS_VALIDATION:BOOL=ON\" "
-)
-
 #######################################################################
 # Setup a slurm job submission template
 # note that this is intentionally multiline
 #######################################################################
 set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --job-name=DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
-#SBATCH --time=01:00:00
+#SBATCH --time=00:30:00
 #SBATCH --nodes=1
 #SBATCH --exclusive
 #SBATCH --constraint=gpu
@@ -104,7 +105,7 @@ module load   cray-hdf5
 
 #
 # ---------------------
-# setup stuff that might differ between compilers
+# Append compiler setup (defined above)
 # ---------------------
 ${PYCICLE_COMPILER_SETUP}
 "
