@@ -328,8 +328,6 @@ def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) 
     remote_http = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_HTTP')
     job_type    = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_JOB_LAUNCH')
     pyc_p.debug_print('launching build', compiler_type, branch_id, branch_name, job_type, cmake_options)
-    # we are not yet using these as 'options'
-    boost = 'x.xx.x'
 
     # This is a clumsy way to do this.
     # implies local default, should be explicit somewhere
@@ -368,7 +366,6 @@ def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) 
                   '-DPYCICLE_BRANCH='              + branch_name,
                   '-DPYCICLE_RANDOM='              + random_string(10),
                   '-DPYCICLE_COMPILER_TYPE='       + compiler_type,
-                  '-DPYCICLE_BOOST='               + boost,
                   '-DPYCICLE_BASE='                + github_base,
                   '-DPYCICLE_CMAKE_OPTIONS=\"'     + cmake_options+'\"',
                   # These are to quiet warnings from ctest about unset vars
