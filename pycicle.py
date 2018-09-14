@@ -16,6 +16,7 @@ import ssl
 import os
 import subprocess
 import time
+import sys
 import re
 import string
 import random
@@ -385,9 +386,11 @@ def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) 
         # if local then wait for the result
         if 'local' in remote_ssh:
             try:
-                result = subprocess.check_output(cmd).splitlines()
-                print('-' * 30)
-                print(result)
+                process = subprocess.Popen(cmd, stderr=subprocess.STDOUT,
+                                                stdout=subprocess.PIPE)
+                for line in iter(process.stdout.readline, b''):
+                    sys.stdout.write(line.decode(sys.stdout.encoding))
+                print('\n', '-' * 30, 'Finished execution')
             except Exception as ex:
                 print("Caught exception from subprocess.checkout:")
                 print(ex)
