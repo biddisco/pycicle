@@ -12,6 +12,13 @@ endmacro(PYCICLE_CMAKE_OPTION)
 macro(PYCICLE_CMAKE_DEPENDENT_OPTION option values)
 endmacro(PYCICLE_CMAKE_DEPENDENT_OPTION)
 
+set(PYCICLE_DEBUG_MODE 0)
+function(pycicle_submit)
+  if(NOT PYCICLE_DEBUG_MODE)
+    ctest_submit(${ARGN})
+  endif()
+endfunction()
+
 # ----------------------------------------------
 # Remove outer quotes from string which may contain quotes
 # ----------------------------------------------
@@ -47,21 +54,35 @@ endmacro(STRING_UNQUOTE var str)
 # To convert PYCICLE_CMAKE_OPTIONS into individual options flags
 # ----------------------------------------------
 macro(expand_pycicle_cmake_options option_string)
-    #message("The option string is \n${option_string}\n")
+    message("The option string is \n${option_string}\n")
     STRING_UNQUOTE(unquoted_string ${option_string})
-    #message("The unquoted option string is \n${unquoted_string}\n")
+    if (unquoted_string STREQUAL "")
+        set(unquoted_string ${option_string})
+    endif()
+    message("The unquoted option string is \n${unquoted_string}\n")
 
-    set( option_args "${unquoted_string}" )
-    separate_arguments(option_args)
-    foreach(str ${option_args})
+    separate_arguments(separated_args UNIX_COMMAND "${unquoted_string}")
+    message("Separated args are \n${separated_args}\n")
+
+    foreach(str ${separated_args})
         # replace -DVARNAME="stuff" with VARNAME
         string(REGEX REPLACE "-D(.*)=(.*)" "\\1"  arg_name "${str}")
+        # message("Pass 1 " ${arg_name})
         # replace -DVARNAME="stuff" with "stuff"
         string(REGEX REPLACE ".*=(.*)"     "\\1"  value    "${str}")
+        # message("Pass 2 " ${value})
         # replace "val{stuff}" with "${stuff}"
         string(REGEX REPLACE "val({.*})"   "$\\1" value2   "${value}")
-        # remove quotes from final variable value
-        STRING_UNQUOTE(unquoted_value ${value2})
+        # message("Pass 3 " ${value2})
+        # remove quotes from final variable value if it doesn't have spaces
+        if (value2 MATCHES " ")
+            set(unquoted_value ${value2})
+        elseif (value2 MATCHES "\"")
+            STRING_UNQUOTE(unquoted_value ${value2})
+        else ()
+            set(unquoted_value ${value2})
+        endif()
+        # message("Pass 4 " ${unquoted_value})
         # assign the value to an actual variable of the correct name
         set(${arg_name} ${unquoted_value})
         message("The value of ${arg_name} is ${unquoted_value} (from ${value2})")

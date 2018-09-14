@@ -173,6 +173,7 @@ def generate_random_simple_options(option):
     key               = option[0]
     values            = option[1]
     cmake_option[key] = values[randint(0, len(values)-1)]
+    pyc_p.debug_print('Random choice', cmake_option, 'from', key, '=', values)
     return cmake_option
 
 #--------------------------------------------------------------------------
@@ -192,7 +193,8 @@ def get_simple_options_file(config_file, reg_string, commandline_options) :
             p = re.findall('([^ ]+) +(.+)', m[0])
             if p:
                 pyc_p.debug_print('Option found {:30s} (values) {:s} '.format(p[0][0], p[0][1]))
-                options[p[0][0]] = p[0][1].split()
+                # shlex in case string has spaces
+                options[p[0][0]] = shlex.split(p[0][1])
                 if p[0][0] in commandline_options:
                     pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]][0]))
                     options[p[0][0]] = commandline_options[p[0][0]]
@@ -212,14 +214,14 @@ def get_dependent_options_file(config_file, reg_string, commandline_options) :
     for line in f:
         m = re.findall(regex, line)
         if m:
-            p = re.findall('([^ ]+) ([^ ]+) (.+)', m[0])
+            p = re.findall('([^ ]+) +"([^"]+)" +(.+)', m[0])
             if p:
-                opt = p[0][0].strip()
-                val = p[0][1].strip()
+                opt = p[0][0].strip('"')
+                val = p[0][1].strip('"') if not ' ' in p[0][1] else p[0][1].strip()
                 sub = p[0][2].strip()
                 pyc_p.debug_print('Dependent option found {:30s} (value) {:15s} (sub-option) {:s}'.format(opt, val, sub))
                 subopt = {}
-                sub_list = sub.split()
+                sub_list = shlex.split(sub)
                 subopt[val] = sub_list
                 if sub_list[0] in commandline_options:
                     new_list = [sub_list[0], commandline_options[sub_list[0]][0]]
@@ -241,7 +243,7 @@ def get_cmake_build_options(project, machine, commandline_options) :
     pyc_p.debug_print('-'*30, '#project get_simple_options')
     config_file = current_path + '/config/' + project + '/' + project + '.cmake'
     options = get_simple_options_file(config_file, 'PYCICLE_CMAKE_OPTION', commandline_options)
-
+    print('OPTIONS ', options)
     # if machine file overrides options, update with new ones
     pyc_p.debug_print('-'*30, '#machine get_simple_options')
     config_file = current_path + '/config/' + project + '/' + machine + '.cmake'
@@ -292,20 +294,26 @@ def find_build_options(project, machine, commandline_options) :
         key    = option[0]
         choice = generate_random_simple_options(option)
         value  = choice[key]
-        pyc_p.debug_print('simple option choice', key, '=', value)
+        pyc_p.debug_print('simple choice', key, '=', value)
         cmake_options.update(choice)
         for dep_option in dependent_options:
-            if dep_option[0] == key and value in dep_option[1].keys():
-                dep_opt_key = dep_option[1][value][0]
-                dep_opt_val = dep_option[1][value][1]
-                pyc_p.debug_print('dependent option', dep_opt_key, '=', dep_opt_val)
-                cmake_options[dep_opt_key] = dep_opt_val
+            pyc_p.debug_print('Dependent Option unchosen', dep_option)
+            if (dep_option[0] == key) and (value in dep_option[1].keys()):
+                # turn list of [key, val1, val2, ...] into [key, [val1, val2, ...]]
+                dkey    = dep_option[1][value][0]
+                dchoice = generate_random_simple_options([dkey, dep_option[1][value][1:]])
+                dvalue  = dchoice[dkey]
+                pyc_p.debug_print('depend choice', dkey, '=', dvalue)
+                cmake_options[dkey] = dvalue
 
     pyc_p.debug_print('-'*30)
     pyc_p.debug_print('Random cmake settings :', cmake_options)
     cmake_string = ''
     for i in cmake_options.items():
-        cmake_string += '-D' + i[0] + '=' + i[1] + ' '
+        if (' ' in i[1]) or ('\'' in i[1]):
+            cmake_string += '-D' + i[0] + '=' + '"{}"'.format(i[1]) + ' '
+        else:
+            cmake_string += '-D' + i[0] + '=' + i[1] + ' '
     pyc_p.debug_print('CMake string', cmake_string)
     return cmake_string
 
@@ -318,6 +326,26 @@ def hash_options_string(cmake_options):
     pyc_p.debug_print('options string hash', hex_dig[:16], cmake_options)
     pyc_p.debug_print('-'*30)
     return hex_dig[:16]
+
+#--------------------------------------------------------------------------
+# Execute a shell comand and display the output as it appears
+#--------------------------------------------------------------------------
+def run_command(cmd, debug=False):
+    try:
+        if debug:
+            print('\n', '-' * 20, 'Debug\n', subprocess.list2cmdline(cmd))
+        else:
+            print('\n', '-' * 20, 'Executing\n', subprocess.list2cmdline(cmd))
+            print('\n', '-' * 30)
+            process = subprocess.Popen(cmd,
+                stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE)
+            for line in iter(process.stdout.readline, b''):
+                sys.stdout.write(line.decode(sys.stdout.encoding))
+        print('\n', '-' * 30, 'Finished execution')
+    except Exception as ex:
+        print('\n', '*' * 30, "Caught Exception from subprocess :\n", ex)
+        print('\n', '*' * 30)
 
 #--------------------------------------------------------------------------
 # launch a command that will start one build
@@ -352,10 +380,13 @@ def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) 
         cmd1 = ' '.join(cmd1)
         cmd = ['ssh', remote_ssh, cmd1, '-S',
                remote_path  + '/pycicle/' + script ]
+        # sending lists of options over SSH requires escaping them
+        cmake_options = cmake_options.replace('"','\\"')
+        cmake_options = '\"' + cmake_options + '\"'
     else:
         # if we're local we assume the current context has the module setup
         pyc_p.debug_print("Local build working in:", os.getcwd())
-        cmd = ['ctest','-S', script ] #'./pycicle/'
+        cmd = ['ctest','-S', script ]
 
     cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
                   '-DPYCICLE_HOST='                + machine,
@@ -365,37 +396,14 @@ def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) 
                   '-DPYCICLE_PR='                  + branch_id,
                   '-DPYCICLE_BRANCH='              + branch_name,
                   '-DPYCICLE_RANDOM='              + random_string(10),
-                  '-DPYCICLE_COMPILER_TYPE='       + compiler_type,
                   '-DPYCICLE_BASE='                + github_base,
-                  '-DPYCICLE_CMAKE_OPTIONS=\"'     + cmake_options+'\"',
+                  '-DPYCICLE_CMAKE_OPTIONS='       + cmake_options,
                   # These are to quiet warnings from ctest about unset vars
                   '-DCTEST_SOURCE_DIRECTORY=.',
                   '-DCTEST_BINARY_DIRECTORY=.',
                   '-DCTEST_COMMAND=":"' ]
-    if args.debug:
-        print('\n' + '-' * 20, 'Debug\n', subprocess.list2cmdline(cmd))
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        print('-' * 20 + '\n')
-        debug_out, _ = p.communicate()
-        print(debug_out)
-    else:
-        print('\n' + '-' * 20, 'Executing\n', subprocess.list2cmdline(cmd), '\n')
-        # if local then wait for the result
-        if 'local' in remote_ssh:
-            try:
-                process = subprocess.Popen(cmd, stderr=subprocess.STDOUT,
-                                                stdout=subprocess.PIPE)
-                for line in iter(process.stdout.readline, b''):
-                    sys.stdout.write(line.decode(sys.stdout.encoding))
-                print('\n', '-' * 30, 'Finished execution')
-            except Exception as ex:
-                print("Caught exception from subprocess.checkout:")
-                print(ex)
-        else:
-            p = subprocess.Popen(cmd)
-        print('-' * 20 + '\n')
 
-    # os.chdir(org_dir)
+    run_command(cmd, args.debug)
     return None
 
 #--------------------------------------------------------------------------
@@ -423,16 +431,13 @@ def choose_and_launch(project, machine, branch_id, branch_name, cmake_options, n
 #--------------------------------------------------------------------------
 def erase_file(remote_ssh, file):
     # erase the pycicle scrape file if we have set status corectly
-    try:
-        if 'local' not in remote_ssh:
-            cmd = ['ssh', remote_ssh ]
-        else:
-            cmd = []
-        cmd = cmd + [ 'rm', '-f', file]
-        result = subprocess.check_output(cmd).split()
-        print('File removed', file)
-    except Exception as ex:
-        print('File deletion failed', ex)
+    if 'local' not in remote_ssh:
+        cmd = ['ssh', remote_ssh ]
+    else:
+        cmd = []
+    cmd = cmd + [ 'rm', '-f', file]
+    run_command(cmd)
+    print('File removed', file)
 
 #--------------------------------------------------------------------------
 # find all the PR build jobs submitted and from them the build dirs
@@ -718,7 +723,7 @@ if __name__ == "__main__":
     scrape_tdiff    = 0
     force           = args.force
     #
-    random.seed(7)
+    random.seed()
     #
     while True:
         #

@@ -4,6 +4,33 @@
 #  Distributed under the Boost Software License, Version 1.0. (See accompanying
 #  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#######################################################################
+# These settings control how jobs are launched and results collected
+#######################################################################
+# the name used to ssh into the machine
+set(PYCICLE_MACHINE "localhost")
+# the root location of the build/test tree on the machine
+set(PYCICLE_ROOT "/home/biddisco/pycicle")
+# a flag that says if the machine can send http results to cdash
+set(PYCICLE_HTTP TRUE)
+# Method used to launch jobs "slurm", "pbs" or "direct" supported
+set(PYCICLE_JOB_LAUNCH "direct")
+# for each PR do N builds
+set(PYCICLE_BUILDS_PER_PR "1")
+
+#######################################################################
+# Vars passed to CTest
+#######################################################################
+execute_process(COMMAND gcc -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+string(STRIP "${GCC_VERSION}" GCC_VERSION)
+message("GCC version found ${GCC_VERSION}")
+#
+set(CTEST_SITE            "Arch linux(jblaptop)-gcc-${GCC_VERSION}")
+set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
+set(CTEST_TEST_TIMEOUT    "500")
+set(BUILD_PARALLELISM  "4")
+set(PYCICLE_BUILD_STAMP "gcc-${GCC_VERSION}")
+
 # =========================================================
 # Options that pycicle can use before invoking cmake on project
 # =========================================================
@@ -20,26 +47,12 @@ PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" MPI_C_COMPILER "/home/biddisco/
 PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER "/home/biddisco/apps/mpich/bin/mpiexec")
 PYCICLE_CMAKE_OPTION(DCA_WITH_CUDA "ON")
 
-#######################################################################
-# These settings control how jobs are launched and results collected
-#######################################################################
-# the name used to ssh into the machine
-set(PYCICLE_MACHINE "localhost")
-# the root location of the build/test tree on the machine
-set(PYCICLE_ROOT "/home/biddisco/pycicle")
-# a flag that says if the machine can send http results to cdash
-set(PYCICLE_HTTP TRUE)
-# Method used to launch jobs "slurm", "pbs" or "direct" supported
-set(PYCICLE_JOB_LAUNCH "direct")
-# for each PR do N builds
-set(PYCICLE_BUILDS_PER_PR "1")
+PYCICLE_CMAKE_DEPENDENT_OPTION(RANDOM_TESTING_OPTION  "Hard to Parse"  ANOTHER_RANDOM_TESTING_OPTION "OK 1 yes" "OK 2 yes")
+PYCICLE_CMAKE_DEPENDENT_OPTION(RANDOM_TESTING_OPTION  "Very Difficult" ANOTHER_RANDOM_TESTING_OPTION "Working ok" "Not sure yet")
 
 #######################################################################
 # These are settings you can use to define anything useful
 #######################################################################
-execute_process(COMMAND gcc -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-string(STRIP "${GCC_VERSION}" GCC_VERSION)
-message("GCC version found ${GCC_VERSION}")
 #
 set(INSTALL_ROOT      "/home/biddisco/apps")
 #
@@ -48,12 +61,6 @@ set(CXXFLAGS          "-fPIC -march native-mtune native-ffast-math-std c++14")
 set(LDFLAGS           "")
 set(LDCXXFLAGS        "${LDFLAGS} -std c++14")
 set(BUILD_PARALLELISM "4")
-#
-set(CTEST_SITE            "Arch linux(jblaptop)-gcc-${GCC_VERSION}")
-set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT    "500")
-
-set(PYCICLE_BUILD_STAMP "gcc-${GCC_VERSION}")
 
 #######################################################################
 # The string that is used to drive cmake config step
