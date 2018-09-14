@@ -46,11 +46,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}
 # a function that calls ctest_submit - only used to make
 # debugging a bit simpler by allowing us to disable submits
 #######################################################################
-function(pycicle_submit)
-#  if(NOT DEBUG_MODE)
-    ctest_submit(${ARGN})
-#  endif()
-endfunction()
 
 #######################################################################
 # All the rest below here should not need changes
@@ -256,16 +251,17 @@ ctest_start(${CTEST_MODEL}
     "${CTEST_BINARY_DIRECTORY}"
 )
 
-string(REPLACE "\"" "" UNQUOTED_CMAKE_OPTIONS ${PYCICLE_CMAKE_OPTIONS})
+STRING_UNQUOTE(UNQUOTED_CMAKE_OPTIONS ${PYCICLE_CMAKE_OPTIONS})
+if (UNQUOTED_CMAKE_OPTIONS STREQUAL "")
+    set(UNQUOTED_CMAKE_OPTIONS ${PYCICLE_CMAKE_OPTIONS})
+endif()
 
 string(CONCAT CTEST_CONFIGURE_COMMAND
   " ${CMAKE_COMMAND} "
-  " ${UNQUOTED_CMAKE_OPTIONS} "
+  " ${PYCICLE_CMAKE_OPTIONS} "
   " ${CTEST_BUILD_OPTIONS} "
   " \"-G${CTEST_CMAKE_GENERATOR}\" "
   " \"${CTEST_SOURCE_DIRECTORY}\"")
-
-
 
 #######################################################################
 # Update dashboard

@@ -14,7 +14,8 @@ set(PYCICLE_ROOT "/scratch/snx1600/biddisco/pycicle")
 set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH    "slurm")
-set(PYCICLE_COMPILER_TYPE "gcc" )
+# for each PR do N builds
+set(PYCICLE_BUILDS_PER_PR "1")
 
 #######################################################################
 # Vars passed to CTest
@@ -31,6 +32,10 @@ set(BUILD_PARALLELISM  "32")
 PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER "srun")
 # Path to HPX to use for the build if enabled
 PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_HPX "ON" HPX_DIR "/scratch/snx1600/biddisco/build/hpx/lib/cmake/HPX")
+
+# These options are for testing pycicle arg passing/handling
+PYCICLE_CMAKE_DEPENDENT_OPTION(RANDOM_TESTING_OPTION  "Hard to Parse"  ANOTHER_RANDOM_TESTING_OPTION "OK 1 yes" "OK 2 yes")
+PYCICLE_CMAKE_DEPENDENT_OPTION(RANDOM_TESTING_OPTION  "Very Difficult" ANOTHER_RANDOM_TESTING_OPTION "Working ok" "Not sure yet")
 
 #######################################################################
 # Machine specific variables
@@ -81,7 +86,7 @@ set(PYCICLE_COMPILER_SETUP "
 #######################################################################
 set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --job-name=DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
-#SBATCH --time=00:30:00
+#SBATCH --time=01:00:00
 #SBATCH --nodes=1
 #SBATCH --exclusive
 #SBATCH --constraint=gpu
