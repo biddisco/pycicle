@@ -17,7 +17,11 @@ set(PYCICLE_HTTP FALSE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "pbs")
 
-set(PYCICLE_COMPILER_TYPE "gcc" )
+# ===================
+# Compiler/Build choice
+# ===================
+PYCICLE_CMAKE_OPTION(CMAKE_BUILD_TYPE "Debug" "Release")
+PYCICLE_CMAKE_OPTION(PYCICLE_COMPILER_TYPE "gcc" "clang")
 
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")

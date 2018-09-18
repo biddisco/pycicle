@@ -17,8 +17,6 @@ set(PYCICLE_HTTP FALSE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "pbs")
 
-set(PYCICLE_COMPILER_TYPE "gcc" )
-
 set(GCC_VER             "5.3.0")
 set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}")
 #

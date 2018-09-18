@@ -23,7 +23,6 @@ class PycicleParams:
             'PYCICLE_HOST',
             'PYCICLE_ROOT',
             'PYCICLE_RANDOM',
-            'PYCICLE_COMPILER_TYPE',
             'PYCICLE_JOB_SCRIPT_TEMPLATE',
             'PYCICLE_SRC_ROOT',
             'PYCICLE_BUILD_ROOT',
