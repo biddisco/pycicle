@@ -57,7 +57,7 @@ set(PYCICLE_PR_ROOT          "${PYCICLE_SRC_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCI
 set(CTEST_SOURCE_DIRECTORY   "${PYCICLE_PR_ROOT}/repo")
 set(PYCICLE_BINARY_DIRECTORY "${PYCICLE_BUILD_ROOT}/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}")
 
-message("CTEST_SOURCE_DIRECTORY ${CTEST_SOURCE_DIRECTORY}   ${PYCICLE_PR_ROOT}/repo")
+debug_message("CTEST_SOURCE_DIRECTORY ${CTEST_SOURCE_DIRECTORY}   ${PYCICLE_PR_ROOT}/repo")
 
 # make sure root dir exists
 file(MAKE_DIRECTORY          "${PYCICLE_PR_ROOT}/")
@@ -142,7 +142,7 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
     RESULT_VARIABLE failed
   )
   if ( failed EQUAL 1 )
-    MESSAGE( "First time for ${GIT_BRANCH} update?" )
+    debug_message( "First time for ${GIT_BRANCH} update?" )
   endif ( failed EQUAL 1 )
 
   execute_process(

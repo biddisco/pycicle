@@ -40,7 +40,7 @@ string(REPLACE "\"" "\\\"" PYCICLE_CMAKE_OPTIONS_ESCAPED "${PYCICLE_CMAKE_OPTION
 # Generate a slurm job script and launch it
 # we must pass all the parms we received through to the slurm script
 #######################################################################
-set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
+string(CONCAT PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "ctest "
   "-S ${PYCICLE_ROOT}/pycicle/dashboard_script.cmake "
   "-DPYCICLE_ROOT=${PYCICLE_ROOT} "
@@ -57,10 +57,9 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
 
 # write the job script into a temp file
 file(WRITE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh"
-    ${PYCICLE_JOB_SCRIPT_TEMPLATE}
+    "${PYCICLE_JOB_SCRIPT_TEMPLATE}"
 )
-
-message("sbatch file contents\n"
+debug_message("sbatch file contents\n"
     "${PYCICLE_JOB_SCRIPT_TEMPLATE}"
 )
 

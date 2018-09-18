@@ -19,6 +19,12 @@ function(pycicle_submit)
   endif()
 endfunction()
 
+function(debug_message)
+  if(PYCICLE_DEBUG_MODE)
+    message("${ARGN}")
+  endif()
+endfunction()
+
 # ----------------------------------------------
 # Remove outer quotes from string which may contain quotes
 # ----------------------------------------------
@@ -27,9 +33,9 @@ macro(STRING_UNQUOTE var str)
     # '\' => '#B'
     # '#' => '#H'
     # ';' => '#S'
-    string(REGEX REPLACE "#" "#H" _ret "${str}")
+    string(REGEX REPLACE "#"    "#H" _ret "${str}")
     string(REGEX REPLACE "\\\\" "#B" _ret "${_ret}")
-    string(REGEX REPLACE ";" "#S" _ret "${_ret}")
+    string(REGEX REPLACE ";"    "#S" _ret "${_ret}")
 
     if(_ret MATCHES "^[ \t\r\n]+")
         string(REGEX REPLACE "^[ \t\r\n]+" "" _ret "${_ret}")
@@ -45,8 +51,8 @@ macro(STRING_UNQUOTE var str)
     endif(_ret MATCHES "^\"")
 
     # Unencoding
-    string(REGEX REPLACE "#B" "\\\\" _ret "${_ret}")
-    string(REGEX REPLACE "#H" "#" _ret "${_ret}")
+    string(REGEX REPLACE "#B" "\\\\"  _ret   "${_ret}")
+    string(REGEX REPLACE "#H" "#"     _ret   "${_ret}")
     string(REGEX REPLACE "#S" "\\\\;" ${var} "${_ret}")
 endmacro(STRING_UNQUOTE var str)
 
@@ -54,20 +60,20 @@ endmacro(STRING_UNQUOTE var str)
 # To convert PYCICLE_CMAKE_OPTIONS into individual options flags
 # ----------------------------------------------
 macro(expand_pycicle_cmake_options option_string)
-    message("The option string is \n${option_string}\n")
+    debug_message("The option string is \n${option_string}\n")
     STRING_UNQUOTE(unquoted_string ${option_string})
     if (unquoted_string STREQUAL "")
         set(unquoted_string ${option_string})
     endif()
-    message("The unquoted option string is \n${unquoted_string}\n")
+    debug_message("The unquoted option string is \n${unquoted_string}\n")
 
     separate_arguments(separated_args UNIX_COMMAND "${unquoted_string}")
-    message("Separated args are \n${separated_args}\n")
+    debug_message("Separated args are \n${separated_args}\n")
 
     foreach(str ${separated_args})
         # replace -DVARNAME="stuff" with VARNAME
         string(REGEX REPLACE "-D(.*)=(.*)" "\\1"  arg_name "${str}")
-        # message("Pass 1 " ${arg_name})
+        # debug_message("Pass 1 " ${arg_name})
         # replace -DVARNAME="stuff" with "stuff"
         string(REGEX REPLACE ".*=(.*)"     "\\1"  value    "${str}")
         # message("Pass 2 " ${value})
@@ -85,6 +91,6 @@ macro(expand_pycicle_cmake_options option_string)
         # message("Pass 4 " ${unquoted_value})
         # assign the value to an actual variable of the correct name
         set(${arg_name} ${unquoted_value})
-        message("The value of ${arg_name} is ${unquoted_value} (from ${value2})")
+        debug_message("The value of ${arg_name} is ${unquoted_value} (from ${value2})")
     endforeach()
 endmacro(expand_pycicle_cmake_options)
