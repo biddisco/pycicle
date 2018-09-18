@@ -19,6 +19,7 @@ message("PR-Branchname is " ${PYCICLE_BRANCH})
 message("base branch is   " ${PYCICLE_BASE})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
+message("Debug Mode is    " ${PYCICLE_DEBUG_MODE})
 message("Random string is " ${PYCICLE_RANDOM})
 message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 
@@ -52,6 +53,7 @@ string(CONCAT PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
   "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} "
   "-DPYCICLE_BASE=${PYCICLE_BASE} "
+  "-DPYCICLE_DEBUG_MODE=${PYCICLE_DEBUG_MODE} "
   "-DPYCICLE_CMAKE_OPTIONS=\"${PYCICLE_CMAKE_OPTIONS_ESCAPED}\" "
 )
 

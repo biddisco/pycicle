@@ -12,7 +12,6 @@ endmacro(PYCICLE_CMAKE_OPTION)
 macro(PYCICLE_CMAKE_DEPENDENT_OPTION option values)
 endmacro(PYCICLE_CMAKE_DEPENDENT_OPTION)
 
-set(PYCICLE_DEBUG_MODE 0)
 function(pycicle_submit)
   if(NOT PYCICLE_DEBUG_MODE)
     ctest_submit(${ARGN})
