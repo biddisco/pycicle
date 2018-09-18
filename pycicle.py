@@ -350,12 +350,12 @@ def run_command(cmd, debug=False):
 #--------------------------------------------------------------------------
 # launch a command that will start one build
 #--------------------------------------------------------------------------
-def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) :
+def launch_build(machine, branch_id, branch_name, cmake_options) :
     remote_ssh  = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_MACHINE')
     remote_path = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_ROOT')
     remote_http = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_HTTP')
     job_type    = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_JOB_LAUNCH')
-    pyc_p.debug_print('launching build', compiler_type, branch_id, branch_name, job_type, cmake_options)
+    pyc_p.debug_print('launching build', branch_id, branch_name, job_type, cmake_options)
 
     # This is a clumsy way to do this.
     # implies local default, should be explicit somewhere
@@ -409,7 +409,7 @@ def launch_build(machine, compiler_type, branch_id, branch_name, cmake_options) 
 #--------------------------------------------------------------------------
 # launch one build from a list of options
 #--------------------------------------------------------------------------
-def choose_and_launch(project, machine, branch_id, branch_name, cmake_options, num_builds, compiler_type) :
+def choose_and_launch(project, machine, branch_id, branch_name, cmake_options, num_builds) :
     print('Starting', num_builds, 'builds for PR', branch_id, branch_name)
     pyc_p.debug_print("Begin : choose_and_launch", project, machine, branch_id, branch_name, cmake_options)
 
@@ -418,13 +418,7 @@ def choose_and_launch(project, machine, branch_id, branch_name, cmake_options, n
         cmake_options_string = find_build_options(project, machine, cmake_options)
         hash_options_string(cmake_options_string)
 
-        if project=='hpx' and machine=='daint':
-            if bool(random.getrandbits(1)):
-                compiler_type = 'gcc'
-            else:
-                compiler_type = 'clang'
-
-        launch_build(machine, compiler_type, branch_id, branch_name, cmake_options_string)
+        launch_build(machine, branch_id, branch_name, cmake_options_string)
 
 #--------------------------------------------------------------------------
 # Utility function to remove a file from a remote filesystem
@@ -666,7 +660,6 @@ if __name__ == "__main__":
         cdash_server    = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_SERVER_NAME')
     cdash_project_name  = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_PROJECT_NAME')
     cdash_http_path     = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_HTTP_PATH')
-    compiler_type       = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_COMPILER_TYPE')
     builds_per_pr_str   = pyc_p.get_setting_for_machine_project(args.project, machine, 'PYCICLE_BUILDS_PER_PR')
     builds_per_pr       = int(builds_per_pr_str)
 
@@ -674,7 +667,6 @@ if __name__ == "__main__":
     print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
     print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
     print('PYCICLE_GITHUB_BASE_BRANCH   =', github_base)
-    print('PYCICLE_COMPILER_TYPE        =', compiler_type)
     print('PYCICLE_CDASH_PROJECT_NAME   =', cdash_project_name)
     print('PYCICLE_CDASH_SERVER_NAME    =', cdash_server)
     print('PYCICLE_CDASH_HTTP_PATH      =', cdash_http_path)
@@ -786,12 +778,12 @@ if __name__ == "__main__":
                 if not args.scrape_only:
                     update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
                     if update:
-                        choose_and_launch(args.project, machine, branch_id, branch_name, args.cmake_options, builds_per_pr, compiler_type)
+                        choose_and_launch(args.project, machine, branch_id, branch_name, args.cmake_options, builds_per_pr)
 
             # also build the base branch if it has changed
             if not args.scrape_only and args.pull_request==0:
                 if force or needs_update(args.project, github_base, github_base, base_sha, base_sha):
-                    choose_and_launch(args.project, machine, github_base, github_base, args.cmake_options, builds_per_pr, compiler_type)
+                    choose_and_launch(args.project, machine, github_base, github_base, args.cmake_options, builds_per_pr)
                     pr_list[github_base] = [machine, github_base, base_branch.commit, ""]
 
             scrape_t2    = datetime.datetime.now()

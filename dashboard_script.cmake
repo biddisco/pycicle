@@ -25,7 +25,6 @@ message("Base branch is   " ${PYCICLE_BASE})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
-message("COMPILER is      " ${PYCICLE_COMPILER_TYPE})
 message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 
 expand_pycicle_cmake_options(${PYCICLE_CMAKE_OPTIONS})

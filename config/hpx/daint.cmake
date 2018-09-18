@@ -17,6 +17,22 @@ set(PYCICLE_JOB_LAUNCH "slurm")
 # Number of builds that will be triggered for each PR
 set(PYCICLE_BUILDS_PER_PR "1")
 
+#######################################################################
+# Vars passed to CTest
+#######################################################################
+set(CTEST_SITE "cray(daint)")
+set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
+set(CTEST_TEST_TIMEOUT "600")
+set(BUILD_PARALLELISM  "32")
+
+#######################################################################
+# Machine specific options
+#######################################################################
+PYCICLE_CMAKE_OPTION(PYCICLE_COMPILER_TYPE "gcc" "clang")
+
+#######################################################################
+# Main setup of script for building
+#######################################################################
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
 set(HWLOC_VER            "1.11.7")

@@ -68,8 +68,6 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
 #######################################################################
 set(PYCICLE_COMPILER_SETUP "
     #
-    module load gcc/${GCC_VER}
-    #
     # use Cray compiler wrappers to make MPI use easy
     export  CC=/opt/cray/pe/craype/default/bin/cc
     export CXX=/opt/cray/pe/craype/default/bin/CC

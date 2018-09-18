@@ -21,7 +21,6 @@ message("base branch is   " ${PYCICLE_BASE})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
 message("Random string is " ${PYCICLE_RANDOM})
-message("COMPILER is      " ${PYCICLE_COMPILER_TYPE})
 message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 
 #######################################################################
@@ -44,7 +43,6 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "-DPYCICLE_GITHUB_ORGANISATION=${PYCICLE_GITHUB_ORGANISATION} "
   "-DPYCICLE_PR=${PYCICLE_PR} "
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
-  "-DPYCICLE_COMPILER_TYPE=${PYCICLE_COMPILER_TYPE} "
   "-DPYCICLE_BOOST=${PYCICLE_BOOST} "
   "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} "
   "-DPYCICLE_BASE=${PYCICLE_BASE} \n"

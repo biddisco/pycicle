@@ -17,19 +17,14 @@ set(PYCICLE_HTTP FALSE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
 set(PYCICLE_JOB_LAUNCH "pbs")
 
-set(PYCICLE_COMPILER_TYPE "clang")
-
-if (PYCICLE_COMPILER_TYPE MATCHES "clang")
-  set(CLANG_VER             "5.0.1")
-  set(PYCICLE_BUILD_STAMP "clang-${CLANG_VER}")
-  #
-
-  set(PYCICLE_COMPILER_SETUP "
+set(CLANG_VER             "5.0.1")
+set(PYCICLE_BUILD_STAMP "clang-${CLANG_VER}")
+#
+set(PYCICLE_COMPILER_SETUP "
     #
     a_dci_env
-    ")
-
-endif(PYCICLE_COMPILER_TYPE MATCHES "clang")
+    "
+)
 
 set(CTEST_SITE "Highsierra(mac95788)-${PYCICLE_BUILD_STAMP}")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")

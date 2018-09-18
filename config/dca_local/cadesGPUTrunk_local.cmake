@@ -14,7 +14,6 @@ set(PYCICLE_ROOT "/lustre/or-hydra/cades-cnms/epd/DCA_GPU_TRUNK_CI")
 # a flag that says if the machine can send http results to cdash
 # Launch jobs using slurm rather than directly running them on the machine
 set(PYCICLE_JOB_LAUNCH "pbs")
-set(PYCICLE_COMPILER_TYPE "gcc" )
 set(PYCICLE_GITHUB_BASE_BRANCH "gpu_trunk")
 
 set(GCC_VER             "5.3.0")
