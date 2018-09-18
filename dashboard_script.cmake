@@ -24,6 +24,7 @@ message("PR-Branchname is " ${PYCICLE_BRANCH})
 message("Base branch is   " ${PYCICLE_BASE})
 message("Machine name is  " ${PYCICLE_HOST})
 message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
+message("Debug Mode is    " ${PYCICLE_DEBUG_MODE})
 message("Random string is " ${PYCICLE_RANDOM})
 message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 

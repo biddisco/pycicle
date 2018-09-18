@@ -355,6 +355,7 @@ def launch_build(machine, branch_id, branch_name, cmake_options) :
     remote_path = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_ROOT')
     remote_http = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_HTTP')
     job_type    = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_JOB_LAUNCH')
+    debug_mode  = 'ON' if args.debug or args.debug_info else 'OFF'
     pyc_p.debug_print('launching build', branch_id, branch_name, job_type, cmake_options)
 
     # This is a clumsy way to do this.
@@ -397,6 +398,7 @@ def launch_build(machine, branch_id, branch_name, cmake_options) :
                   '-DPYCICLE_BRANCH='              + branch_name,
                   '-DPYCICLE_RANDOM='              + random_string(10),
                   '-DPYCICLE_BASE='                + github_base,
+                  '-DPYCICLE_DEBUG_MODE='          + debug_mode,
                   '-DPYCICLE_CMAKE_OPTIONS='       + cmake_options,
                   # These are to quiet warnings from ctest about unset vars
                   '-DCTEST_SOURCE_DIRECTORY=.',
