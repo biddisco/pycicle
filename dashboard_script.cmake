@@ -239,7 +239,8 @@ file(REMOVE "${CTEST_BINARY_DIRECTORY}/pycicle-TAG.txt")
 # Write out a notes file with our CMake build options
 #######################################################################
 set(CTEST_NOTES_FILES "${PYCICLE_BINARY_DIRECTORY}/pycicle_notes.txt")
-file(WRITE "${CTEST_NOTES_FILES}" "${PYCICLE_CMAKE_OPTIONS}\n" )
+string(REPLACE " -D" "\n-D" PYCICLE_CMAKE_OPTIONS_MULTILINE "${PYCICLE_CMAKE_OPTIONS}")
+file(WRITE "${CTEST_NOTES_FILES}" "${PYCICLE_CMAKE_OPTIONS_MULTILINE}\n" )
 
 #######################################################################
 # START dashboard
