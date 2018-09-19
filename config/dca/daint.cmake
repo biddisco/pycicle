@@ -28,8 +28,10 @@ set(BUILD_PARALLELISM     "16")
 #######################################################################
 # testing with MPI and Cuda needs 1 node per GPU
 #######################################################################
-if (DCA_WITH_MPI AND DCA_WITH_CUDA)
+if (DCA_WITH_MPI AND DCA_WITH_CUDA AND DCA_WITH_TESTS_STOCHASTIC)
     set(TEST_NUM_NODES 32)
+elseif (DCA_WITH_MPI AND DCA_WITH_CUDA)
+    set(TEST_NUM_NODES 8)
 else()
     set(TEST_NUM_NODES 1)
 endif()
@@ -41,6 +43,9 @@ endif()
 PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER "srun[]")
 # Path to HPX to use for the build if enabled
 PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_HPX "ON" HPX_DIR "/scratch/snx1600/biddisco/build/hpx/lib/cmake/HPX[]")
+
+# turn off stochastic tests on daint
+PYCICLE_CMAKE_OPTION(DCA_WITH_TESTS_STOCHASTIC  "OFF[]")
 
 #######################################################################
 # Machine specific variables
