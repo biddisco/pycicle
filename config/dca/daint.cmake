@@ -20,29 +20,25 @@ set(PYCICLE_BUILDS_PER_PR "1")
 #######################################################################
 # Vars passed to CTest
 #######################################################################
-set(CTEST_SITE "cray(daint)")
+set(CTEST_SITE            "cray(daint)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT "600")
-set(BUILD_PARALLELISM  "32")
+set(CTEST_TEST_TIMEOUT    "240")
+set(BUILD_PARALLELISM     "16")
 
 #######################################################################
 # Machine specific options
 #######################################################################
 # If MPI is enabled, set srun as TEST_RUNNER
-PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER "srun")
+PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER "srun[]")
 # Path to HPX to use for the build if enabled
-PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_HPX "ON" HPX_DIR "/scratch/snx1600/biddisco/build/hpx/lib/cmake/HPX")
-
-# These options are for testing pycicle arg passing/handling
-PYCICLE_CMAKE_DEPENDENT_OPTION(RANDOM_TESTING_OPTION  "Hard to Parse"  ANOTHER_RANDOM_TESTING_OPTION "OK 1 yes" "OK 2 yes")
-PYCICLE_CMAKE_DEPENDENT_OPTION(RANDOM_TESTING_OPTION  "Very Difficult" ANOTHER_RANDOM_TESTING_OPTION "Working ok" "Not sure yet")
+PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_HPX "ON" HPX_DIR "/scratch/snx1600/biddisco/build/hpx/lib/cmake/HPX[]")
 
 #######################################################################
 # Machine specific variables
 #######################################################################
 set(CMAKE_VER           "3.11.4")
 set(GCC_VER             "5.3.0")
-set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-${CMAKE_BUILD_TYPE}")
+set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-${PYCICLE_CDASH_STRING}")
 #
 set(CFLAGS           "-fPIC")
 set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math -std=c++14")

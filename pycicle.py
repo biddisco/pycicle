@@ -165,6 +165,19 @@ def debug_print(*text):
     print()
 
 #--------------------------------------------------------------------------
+# Convert a string of the form "option[opt]" into a pair [option,opt]
+# if the string has no option[...] then return [option,option]
+#--------------------------------------------------------------------------
+def get_option_symbol(option):
+    sym = re.findall('(.+)\[([^\[\]]*)\]?', option)
+    if sym:
+        pyc_p.debug_print('Searching option[symbol]: Found', option, ',', sym[0][0], ',', sym[0][1])
+        return [sym[0][0], sym[0][1]]
+    else:
+        pyc_p.debug_print('Searching option[symbol]: Subst', option)
+        return [option,option]
+
+#--------------------------------------------------------------------------
 # Pick one option at random from a list of options
 # args: option = list(option_name, list(option values))
 #--------------------------------------------------------------------------
@@ -192,12 +205,37 @@ def get_simple_options_file(config_file, reg_string, commandline_options) :
         if m:
             p = re.findall('([^ ]+) +(.+)', m[0])
             if p:
-                pyc_p.debug_print('Option found {:30s} (values) {:s} '.format(p[0][0], p[0][1]))
-                # shlex in case string has spaces
+                pyc_p.debug_print('Option found {:s} (values) {:s} '.format(p[0][0], p[0][1]))
+                # shlex split options in case strings have spaces
                 options[p[0][0]] = shlex.split(p[0][1])
                 if p[0][0] in commandline_options:
                     pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]][0]))
                     options[p[0][0]] = commandline_options[p[0][0]]
+                options_symbols = []
+                for opt in options[p[0][0]]:
+                    options_symbols += [get_option_symbol(opt)]
+                # replace original choice strings with parsed [opt,sym] pairs
+                options[p[0][0]] = options_symbols
+
+    return options
+
+def get_boolean_options_file(config_file, reg_string, commandline_options) :
+    pyc_p.debug_print('Looking for options in', config_file)
+    f = open(config_file)
+
+    regex = reg_string + '\((.+?)\)'
+    options = {}
+    for line in f:
+        m = re.findall(regex, line)
+        if m:
+            p = re.findall('([^ ]+) +"(.+)"', m[0])
+            if p:
+                pyc_p.debug_print('Boolean found {:30s} Shortcut {:s} (values) ON/OFF'.format(p[0][0], p[0][1]))
+                # shlex in case string has spaces
+                options[p[0][0]] = [['ON',p[0][1]], ['OFF','']]
+                if p[0][0] in commandline_options:
+                    pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]][0]))
+                    options[p[0][0]] = [get_option_symbol(commandline_options[p[0][0]])]
     return options
 
 #--------------------------------------------------------------------------
@@ -243,6 +281,8 @@ def get_cmake_build_options(project, machine, commandline_options) :
     pyc_p.debug_print('-'*30, '#project get_simple_options')
     config_file = current_path + '/config/' + project + '/' + project + '.cmake'
     options = get_simple_options_file(config_file, 'PYCICLE_CMAKE_OPTION', commandline_options)
+    options.update(get_boolean_options_file(config_file, 'PYCICLE_CMAKE_BOOLEAN_OPTION', commandline_options))
+
     print('OPTIONS ', options)
     # if machine file overrides options, update with new ones
     pyc_p.debug_print('-'*30, '#machine get_simple_options')
@@ -297,25 +337,35 @@ def find_build_options(project, machine, commandline_options) :
         pyc_p.debug_print('simple choice', key, '=', value)
         cmake_options.update(choice)
         for dep_option in dependent_options:
-            pyc_p.debug_print('Dependent Option unchosen', dep_option)
-            if (dep_option[0] == key) and (value in dep_option[1].keys()):
+            if (dep_option[0] == key) and (value[0] in dep_option[1].keys()):
                 # turn list of [key, val1, val2, ...] into [key, [val1, val2, ...]]
-                dkey    = dep_option[1][value][0]
-                dchoice = generate_random_simple_options([dkey, dep_option[1][value][1:]])
+                dkey    = dep_option[1][value[0]][0]
+                dchoice = generate_random_simple_options([dkey, dep_option[1][value[0]][1:]])
                 dvalue  = dchoice[dkey]
-                pyc_p.debug_print('depend choice', dkey, '=', dvalue)
-                cmake_options[dkey] = dvalue
+                pyc_p.debug_print('depend choice', dkey, '=', get_option_symbol(dvalue))
+                cmake_options[dkey] = get_option_symbol(dvalue)
 
     pyc_p.debug_print('-'*30)
     pyc_p.debug_print('Random cmake settings :', cmake_options)
     cmake_string = ''
+    cdash_string = ''
     for i in cmake_options.items():
         if (' ' in i[1]) or ('\'' in i[1]):
-            cmake_string += '-D' + i[0] + '=' + '"{}"'.format(i[1]) + ' '
+            cmake_string += '-D' + i[0] + '=' + '"{}"'.format(i[1][0]) + ' '
         else:
-            cmake_string += '-D' + i[0] + '=' + i[1] + ' '
+            cmake_string += '-D' + i[0] + '=' + i[1][0] + ' '
+        if i[1][1] is not '':
+            if cdash_string is not '':
+                cdash_string += '-'  + i[1][1]
+            else:
+                cdash_string += i[1][1]
+
+    pyc_p.debug_print('-'*30)
+    pyc_p.debug_print('CDash string', cdash_string)
+    pyc_p.debug_print('-'*30)
     pyc_p.debug_print('CMake string', cmake_string)
-    return cmake_string
+    pyc_p.debug_print('-'*30)
+    return cmake_string, cdash_string
 
 #--------------------------------------------------------------------------
 # create a hash from a string to make each build unique
@@ -350,13 +400,16 @@ def run_command(cmd, debug=False):
 #--------------------------------------------------------------------------
 # launch a command that will start one build
 #--------------------------------------------------------------------------
-def launch_build(machine, branch_id, branch_name, cmake_options) :
+def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
     remote_ssh  = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_MACHINE')
     remote_path = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_ROOT')
     remote_http = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_HTTP')
     job_type    = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_JOB_LAUNCH')
     debug_mode  = 'ON' if args.debug or args.debug_info else 'OFF'
     pyc_p.debug_print('launching build', branch_id, branch_name, job_type, cmake_options)
+
+    options_hash = hash_options_string(cmake_options)
+    print('Options hash :', options_hash)
 
     # This is a clumsy way to do this.
     # implies local default, should be explicit somewhere
@@ -400,6 +453,7 @@ def launch_build(machine, branch_id, branch_name, cmake_options) :
                   '-DPYCICLE_BASE='                + github_base,
                   '-DPYCICLE_DEBUG_MODE='          + debug_mode,
                   '-DPYCICLE_CMAKE_OPTIONS='       + cmake_options,
+                  '-DPYCICLE_CDASH_STRING='        + cdash_string,
                   # These are to quiet warnings from ctest about unset vars
                   '-DCTEST_SOURCE_DIRECTORY=.',
                   '-DCTEST_BINARY_DIRECTORY=.',
@@ -417,10 +471,8 @@ def choose_and_launch(project, machine, branch_id, branch_name, cmake_options, n
 
     for build in range(0,int(num_builds)):
         # get options for build
-        cmake_options_string = find_build_options(project, machine, cmake_options)
-        hash_options_string(cmake_options_string)
-
-        launch_build(machine, branch_id, branch_name, cmake_options_string)
+        cmake_options_string, cdash_string = find_build_options(project, machine, cmake_options)
+        launch_build(machine, branch_id, branch_name, cmake_options_string, cdash_string)
 
 #--------------------------------------------------------------------------
 # Utility function to remove a file from a remote filesystem
