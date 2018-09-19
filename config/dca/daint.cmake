@@ -22,8 +22,17 @@ set(PYCICLE_BUILDS_PER_PR "1")
 #######################################################################
 set(CTEST_SITE            "cray(daint)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT    "240")
+set(CTEST_TEST_TIMEOUT    "600")
 set(BUILD_PARALLELISM     "16")
+
+#######################################################################
+# testing with MPI and Cuda needs 1 node per GPU
+#######################################################################
+if (DCA_WITH_MPI AND DCA_WITH_CUDA)
+    set(TEST_NUM_NODES 32)
+else()
+    set(TEST_NUM_NODES 1)
+endif()
 
 #######################################################################
 # Machine specific options
@@ -81,7 +90,7 @@ set(PYCICLE_COMPILER_SETUP "
 set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --job-name=DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
 #SBATCH --time=01:00:00
-#SBATCH --nodes=1
+#SBATCH --nodes=${TEST_NUM_NODES}
 #SBATCH --exclusive
 #SBATCH --constraint=gpu
 #SBATCH --partition=normal
