@@ -232,7 +232,7 @@ def get_boolean_options_file(config_file, reg_string, commandline_options) :
             if p:
                 pyc_p.debug_print('Boolean found {:30s} Shortcut {:s} (values) ON/OFF'.format(p[0][0], p[0][1]))
                 # shlex in case string has spaces
-                options[p[0][0]] = [['ON',p[0][1]], ['OFF','']]
+                options[p[0][0]] = [[str('ON'),p[0][1]], [str('OFF'),str('')]]
                 if p[0][0] in commandline_options:
                     pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]][0]))
                     options[p[0][0]] = [get_option_symbol(commandline_options[p[0][0]])]
@@ -324,8 +324,11 @@ def find_build_options(project, machine, commandline_options) :
     # get all options from project and machine config files
     options, dependent_options = get_cmake_build_options(project, machine, commandline_options)
     pyc_p.debug_print('commandline options final :', commandline_options)
+    pyc_p.debug_print('-'*30)
     pyc_p.debug_print('simple options      final :', options)
+    pyc_p.debug_print('-'*30)
     pyc_p.debug_print('dependent options   final :', dependent_options)
+    pyc_p.debug_print('-'*30)
     #
     pyc_p.debug_print('final options set', options)
     pyc_p.debug_print('-'*30)
@@ -354,8 +357,8 @@ def find_build_options(project, machine, commandline_options) :
             cmake_string += '-D' + i[0] + '=' + '"{}"'.format(i[1][0]) + ' '
         else:
             cmake_string += '-D' + i[0] + '=' + i[1][0] + ' '
-        if i[1][1] is not '':
-            if cdash_string is not '':
+        if i[1][1]:
+            if cdash_string:
                 cdash_string += '-'  + i[1][1]
             else:
                 cdash_string += i[1][1]
