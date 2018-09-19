@@ -807,8 +807,6 @@ if __name__ == "__main__":
                     pyc_p.debug_print(pr)
                     pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
                     pyc_p.debug_print('Branch to merge from :', pr.head.ref)
-                    short_name = (pr.head.ref[:14] + '..') if len(pr.head.ref) > 16 else pr.head.ref
-                    pyc_p.debug_print('Branch short name    :', short_name)
 
                     if pr.head.repo.owner.login==github_organisation:
                         pyc_p.debug_print('Pull request is from branch local to repo')
@@ -823,6 +821,8 @@ if __name__ == "__main__":
 
                 branch_id   = str(pr.number)
                 branch_name = pr.head.label.rsplit(':',1)[1]
+                short_name  = (branch_name[:14] + '..') if len(branch_name) > 16 else branch_name
+                pyc_p.debug_print('Branch short name    :', short_name)
                 branch_sha  = pr.head.sha
                 # need details, including last commit on PR for setting status
                 pr_list[branch_id] = [machine, branch_name, pr.get_commits().reversed[0]]
@@ -835,7 +835,7 @@ if __name__ == "__main__":
                 if not args.scrape_only:
                     update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
                     if update:
-                        choose_and_launch(args.project, machine, branch_id, branch_name, args.cmake_options, builds_per_pr)
+                        choose_and_launch(args.project, machine, branch_id, short_name, args.cmake_options, builds_per_pr)
 
             # also build the base branch if it has changed
             if not args.scrape_only and args.pull_request==0:
