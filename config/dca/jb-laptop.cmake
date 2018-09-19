@@ -25,30 +25,19 @@ execute_process(COMMAND gcc -dumpversion OUTPUT_VARIABLE GCC_VERSION)
 string(STRIP "${GCC_VERSION}" GCC_VERSION)
 message("GCC version found ${GCC_VERSION}")
 #
-set(CTEST_SITE            "Arch linux(jblaptop)-gcc-${GCC_VERSION}")
+set(CTEST_SITE            "Arch linux(jblaptop)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT    "500")
-set(BUILD_PARALLELISM  "4")
-set(PYCICLE_BUILD_STAMP "gcc-${GCC_VERSION}")
-
-# =========================================================
-# Options that pycicle can use before invoking cmake on project
-# =========================================================
-##PYCICLE_ CMAKE_ OPTION(PYCICLE_COMPILER_TYPE "gcc" "clang")
-##PYCICLE_ CMAKE_ DEPENDENT_OPTION(PYCICLE_COMPILER_TYPE "gcc" GCC_VERSION "5" "6" "7")
+set(BUILD_PARALLELISM     "4")
+set(PYCICLE_BUILD_STAMP   "gcc-${GCC_VERSION}-${PYCICLE_CDASH_STRING}")
 
 # =========================================================
 # override project options for this machine configuration
 # =========================================================
-##PYCICLE_ CMAKE_ OPTION(CMAKE_CXX_COMPILER "/usr/bin/gcc-5" "/usr/bin/gcc-6" "/usr/bin/gcc-7" "/usr/bin/gcc")
-##PYCICLE_ CMAKE_ OPTION(CMAKE_C_COMPILER   "val{CMAKE_CXX_COMPILER}")
-PYCICLE_CMAKE_OPTION(CMAKE_BUILD_TYPE   "Release")
-PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" MPI_C_COMPILER "/home/biddisco/apps/mpich/bin/mpicc")
-PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER "/home/biddisco/apps/mpich/bin/mpiexec")
-PYCICLE_CMAKE_OPTION(DCA_WITH_CUDA "ON")
-
-PYCICLE_CMAKE_DEPENDENT_OPTION(RANDOM_TESTING_OPTION  "Hard to Parse"  ANOTHER_RANDOM_TESTING_OPTION "OK 1 yes" "OK 2 yes")
-PYCICLE_CMAKE_DEPENDENT_OPTION(RANDOM_TESTING_OPTION  "Very Difficult" ANOTHER_RANDOM_TESTING_OPTION "Working ok" "Not sure yet")
+PYCICLE_CMAKE_OPTION(CMAKE_BUILD_TYPE "Release[R]")
+PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" MPI_C_COMPILER "/home/biddisco/apps/mpich/bin/mpicc[]")
+PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER "/home/biddisco/apps/mpich/bin/mpiexec[]")
+PYCICLE_CMAKE_OPTION(DCA_WITH_CUDA "ON[Cuda]")
 
 #######################################################################
 # These are settings you can use to define anything useful

@@ -36,17 +36,17 @@ set(PAPI_ROOT        "${INSTALL_ROOT}/papi/${PAPI_VER}")
 set(PAPI_INCLUDE_DIR "${INSTALL_ROOT}/papi/${PAPI_VER}/include")
 set(PAPI_LIBRARY     "${INSTALL_ROOT}/papi/${PAPI_VER}/lib/libpfm.so")
 
-set(CFLAGS     "-fPIC")
-set(CXXFLAGS   "-fPIC -march native-mtune native-ffast-math-std c++14")
-set(LDFLAGS    "")
-set(LDCXXFLAGS "${LDFLAGS} -std c++14")
-set(BUILD_PARALLELISM "8")
+set(CFLAGS                "-fPIC")
+set(CXXFLAGS              "-fPIC -march native-mtune native-ffast-math-std c++14")
+set(LDFLAGS               "")
+set(LDCXXFLAGS            "${LDFLAGS} -std c++14")
+set(BUILD_PARALLELISM     "8")
 
-set(CTEST_SITE "linux(jblaptop)")
+set(CTEST_SITE            "linux(jblaptop)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT "200")
+set(CTEST_TEST_TIMEOUT    "200")
 
-set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
+set(PYCICLE_BUILD_STAMP   "gcc${GCC_VER}-B${BOOST_VER}-${PYCICLE_CDASH_STRING}")
 
 #######################################################################
 # The string that is used to drive cmake config step

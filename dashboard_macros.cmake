@@ -12,12 +12,21 @@ endmacro(PYCICLE_CMAKE_OPTION)
 macro(PYCICLE_CMAKE_DEPENDENT_OPTION option values)
 endmacro(PYCICLE_CMAKE_DEPENDENT_OPTION)
 
+macro(PYCICLE_CMAKE_BOOLEAN_OPTION)
+endmacro(PYCICLE_CMAKE_BOOLEAN_OPTION)
+
+# ----------------------------------------------
+# Submit to the dashboard unless in debug mode
+# ----------------------------------------------
 function(pycicle_submit)
   if(NOT PYCICLE_DEBUG_MODE)
     ctest_submit(${ARGN})
   endif()
 endfunction()
 
+# ----------------------------------------------
+# Print message if in debug mode
+# ----------------------------------------------
 function(debug_message)
   if(PYCICLE_DEBUG_MODE)
     message("${ARGN}")

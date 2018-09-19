@@ -20,15 +20,15 @@ set(PYCICLE_BUILDS_PER_PR "1")
 #######################################################################
 # Vars passed to CTest
 #######################################################################
-set(CTEST_SITE "cray(daint)")
+set(CTEST_SITE            "cray(daint)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT "600")
-set(BUILD_PARALLELISM  "32")
+set(CTEST_TEST_TIMEOUT    "240")
+set(BUILD_PARALLELISM     "16")
 
 #######################################################################
 # Machine specific options
 #######################################################################
-PYCICLE_CMAKE_OPTION(PYCICLE_COMPILER_TYPE "gcc" "clang")
+PYCICLE_CMAKE_OPTION(PYCICLE_COMPILER_TYPE "gcc[]" "clang[]")
 
 #######################################################################
 # Main setup of script for building
@@ -44,7 +44,7 @@ set(CMAKE_VER            "3.9.1")
 
 if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   set(GCC_VER             "6.2.0")
-  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
+  set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-B${BOOST_VER}-${PYCICLE_CDASH_STRING}")
   #
   set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
@@ -78,7 +78,7 @@ elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
   set(CMAKE_C_COMPILER   "${CLANG_ROOT}/bin/clang")
   set(CMAKE_CXX_COMPILER "${CLANG_ROOT}/bin/clang++")
   #
-  set(PYCICLE_BUILD_STAMP "clang-6.0.0-Boost-${BOOST_VER}-${CMAKE_BUILD_TYPE}")
+  set(PYCICLE_BUILD_STAMP "clang-6.0.0-Boost-${BOOST_VER}-${PYCICLE_CDASH_STRING}")
   #
   set(OTF2_VER         "2.1")
   #
