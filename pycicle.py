@@ -148,7 +148,7 @@ def get_command_line_args():
         print('pycicle: clean options :', args.cmake_options)
         for s in args.cmake_options:
             temp = s.split('=')
-            options[temp[0]] = [temp[1]] # make the entry into a list
+            options[temp[0]] = temp[1]
         print('pycicle: options map   :', options)
     # replace the args option string with the dictionary version of it
     args.cmake_options = options
