@@ -408,8 +408,12 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
     remote_path = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_ROOT')
     remote_http = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_HTTP')
     job_type    = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_JOB_LAUNCH')
-    debug_mode  = 'ON' if args.debug or args.debug_info else 'OFF'
-    pyc_p.debug_print('launching build', branch_id, branch_name, job_type, cmake_options)
+    debug_mode  = 'ON' if (args.debug or args.debug_info) else 'OFF'
+    pyc_p.debug_print('-'*30)
+    pyc_p.debug_print('launching build', branch_id, branch_name, job_type)
+    pyc_p.debug_print('-'*30)
+    pyc_p.debug_print(cmake_options)
+    pyc_p.debug_print('-'*30)
 
     options_hash = hash_options_string(cmake_options)
     print('Options hash :', options_hash)
@@ -422,6 +426,9 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
     elif job_type=='pbs':
         pyc_p.debug_print("pbs build:", args.project)
         script = 'dashboard_pbs.cmake'
+    elif job_type=='debug':
+        pyc_p.debug_print("debug :", args.project)
+        script = 'dashboard_debug.cmake'
     else:
         pyc_p.debug_print("direct build:", args.project)
         script = 'dashboard_script.cmake'

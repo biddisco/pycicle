@@ -7,13 +7,15 @@
 # These settings control how jobs are launched and results collected
 #######################################################################
 # the name used to ssh into the machine
-set(PYCICLE_MACHINE "localhost")
+set(PYCICLE_MACHINE "127.0.0.1")
 # the root location of the build/test tree on the machine
 set(PYCICLE_ROOT "/home/biddisco/pycicle")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
-set(PYCICLE_JOB_LAUNCH "direct")
+set(PYCICLE_JOB_LAUNCH "debug")
+# Number of builds that will be triggered for each PR
+set(PYCICLE_BUILDS_PER_PR "1")
 
 #######################################################################
 # These are settings you can use to define anything useful
