@@ -48,11 +48,14 @@ set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT "200")
 
 #######################################################################
+# Machine specific options
+#######################################################################
+PYCICLE_CMAKE_OPTION(HPX_WITH_PARCELPORT_MPI "OFF[]")
+
+#######################################################################
 # The string that is used to drive cmake config step
 #######################################################################
 string(CONCAT CTEST_BUILD_OPTIONS
-    " -DHPX_WITH_CXX14=ON "
-    " -DHPX_WITH_NATIVE_TLS=ON "
     " -DCMAKE_CXX_FLAGS=${CXXFLAGS} "
     " -DCMAKE_C_FLAGS=${CFLAGS} "
     " -DCMAKE_EXE_LINKER_FLAGS=${LDCXXFLAGS} "
@@ -65,15 +68,6 @@ string(CONCAT CTEST_BUILD_OPTIONS
 #    " -DPAPI_INCLUDE_DIR=${PAPI_INCLUDE_DIR} "
 #    " -DPAPI_LIBRARY=${PAPI_LIBRARY} "
     " -DHPX_WITH_MALLOC=JEMALLOC "
-    " -DHPX_WITH_EXAMPLES=ON "
-    " -DHPX_WITH_TESTS=ON "
-    " -DHPX_WITH_TESTS_BENCHMARKS=ON "
-    " -DHPX_WITH_TESTS_EXTERNAL_BUILD=OFF "
-    " -DHPX_WITH_TESTS_HEADERS=OFF "
-    " -DHPX_WITH_TESTS_REGRESSIONS=ON "
-    " -DHPX_WITH_TESTS_UNIT=ON "
-    " -DHPX_WITH_PARCELPORT_MPI=OFF "
-    " -DHPX_WITH_THREAD_IDLE_RATES=ON "
 )
 
 #######################################################################

@@ -42,7 +42,7 @@ set(LDFLAGS               "")
 set(LDCXXFLAGS            "${LDFLAGS} -std c++14")
 set(BUILD_PARALLELISM     "8")
 
-set(CTEST_SITE            "linux(jblaptop)")
+set(CTEST_SITE            "Arch linux(jblaptop)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT    "200")
 
@@ -52,8 +52,6 @@ set(PYCICLE_BUILD_STAMP   "gcc${GCC_VER}-B${BOOST_VER}-${PYCICLE_CDASH_STRING}")
 # The string that is used to drive cmake config step
 #######################################################################
 string(CONCAT CTEST_BUILD_OPTIONS
-    " -DHPX_WITH_CXX14=ON "
-    " -DHPX_WITH_NATIVE_TLS=ON "
     " -DCMAKE_CXX_FLAGS=${CXXFLAGS} "
     " -DCMAKE_C_FLAGS=${CFLAGS} "
     " -DCMAKE_EXE_LINKER_FLAGS=${LDCXXFLAGS} "
@@ -63,17 +61,6 @@ string(CONCAT CTEST_BUILD_OPTIONS
     " -DBoost_ADDITIONAL_VERSIONS=${BOOST_VER} "
     " -DBoost_COMPILER=-${BOOST_COMPILER} "
     " -DHPX_WITH_MALLOC=JEMALLOC "
-    " -DHPX_WITH_EXAMPLES=ON "
-    " -DHPX_WITH_TESTS=ON "
-    " -DHPX_WITH_TESTS_BENCHMARKS=ON "
-    " -DHPX_WITH_TESTS_EXTERNAL_BUILD=OFF "
-    " -DHPX_WITH_TESTS_HEADERS=OFF "
-    " -DHPX_WITH_TESTS_REGRESSIONS=ON "
-    " -DHPX_WITH_TESTS_UNIT=ON "
-    " -DHPX_WITH_PARCELPORT_MPI=OFF "
-    " -DHPX_WITH_THREAD_IDLE_RATES=ON "
-    " -DHPX_PARCELPORT_LIBFABRIC_PROVIDER=sockets"
-    " -DHPX_PARCELPORT_LIBFABRIC_ENDPOINT=RDM"
 )
 
 #    " -DOTF2_ROOT=${OTF2_ROOT} "
