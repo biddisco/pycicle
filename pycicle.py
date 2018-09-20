@@ -209,8 +209,8 @@ def get_simple_options_file(config_file, reg_string, commandline_options) :
                 # shlex split options in case strings have spaces
                 options[p[0][0]] = shlex.split(p[0][1])
                 if p[0][0] in commandline_options:
-                    pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]][0]))
-                    options[p[0][0]] = commandline_options[p[0][0]]
+                    pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]]))
+                    options[p[0][0]] = [commandline_options[p[0][0]]]
                 options_symbols = []
                 for opt in options[p[0][0]]:
                     options_symbols += [get_option_symbol(opt)]
@@ -262,7 +262,7 @@ def get_dependent_options_file(config_file, reg_string, commandline_options) :
                 sub_list = shlex.split(sub)
                 subopt[val] = sub_list
                 if sub_list[0] in commandline_options:
-                    new_list = [sub_list[0], commandline_options[sub_list[0]][0]]
+                    new_list = [sub_list[0], commandline_options[sub_list[0]]]
                     pyc_p.debug_print('command-line overrides {:30s} (value) {:15s}'.format(new_list[0], new_list[1]))
                     subopt[val] = new_list
                 options.append([opt, subopt])
