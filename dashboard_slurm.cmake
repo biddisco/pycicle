@@ -6,6 +6,11 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
 #######################################################################
+# Boilerplate macros we need
+#######################################################################
+include(${CMAKE_CURRENT_LIST_DIR}/dashboard_macros.cmake)
+
+#######################################################################
 # For debugging this script
 #######################################################################
 message("CMAKE_CURRENT_LIST_DIR  ${CMAKE_CURRENT_LIST_DIR}")
@@ -16,7 +21,7 @@ message("Github name      " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org       " ${PYCICLE_GITHUB_ORGANISATION})
 message("Pull request     " ${PYCICLE_PR})
 message("PR-Branchname    " ${PYCICLE_BRANCH})
-message("base branch      " ${PYCICLE_BASE})
+message("Base branch      " ${PYCICLE_BASE})
 message("Machine name     " ${PYCICLE_HOST})
 message("PYCICLE_ROOT     " ${PYCICLE_ROOT})
 message("Debug Mode       " ${PYCICLE_DEBUG_MODE})
@@ -24,8 +29,6 @@ message("Random string    " ${PYCICLE_RANDOM})
 message("CDash string     " ${PYCICLE_CDASH_STRING})
 message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 
-
-include(${CMAKE_CURRENT_LIST_DIR}/dashboard_macros.cmake)
 expand_pycicle_cmake_options(${PYCICLE_CMAKE_OPTIONS})
 
 #######################################################################
@@ -41,7 +44,7 @@ string(REPLACE "\"" "\\\"" PYCICLE_CMAKE_OPTIONS_ESCAPED "${PYCICLE_CMAKE_OPTION
 
 #######################################################################
 # Generate a slurm job script and launch it
-# we must pass all the parms we received through to the slurm script
+# we must pass all the parms we received through to the script
 #######################################################################
 string(CONCAT PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "ctest "
@@ -84,4 +87,6 @@ execute_process(
 )
 
 # wipe the temp file job script
-file(REMOVE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh")
+if(NOT PYCICLE_DEBUG_MODE)
+  file(REMOVE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh")
+endif()
