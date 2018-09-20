@@ -29,6 +29,16 @@ set(BUILD_PARALLELISM     "16")
 # Machine specific options
 #######################################################################
 PYCICLE_CMAKE_OPTION(PYCICLE_COMPILER_TYPE "gcc[]" "clang[]")
+PYCICLE_CMAKE_DEPENDENT_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC "ON" HPX_PARCELPORT_LIBFABRIC_PROVIDER "gni[LFg]")
+PYCICLE_CMAKE_OPTION(HPX_WITH_MAX_CPU_COUNT        "256[]")
+PYCICLE_CMAKE_OPTION(HPX_WITH_MORE_THAN_64_THREADS "ON[]")
+PYCICLE_CMAKE_OPTION(HPX_WITH_MALLOC               "JEMALLOC[]")
+
+# gcc boost is c++14
+PYCICLE_CMAKE_DEPENDENT_OPTION(PYCICLE_COMPILER_TYPE "gcc"   HPX_CXX_STANDARD "14")
+# clang boost is c++17
+PYCICLE_CMAKE_DEPENDENT_OPTION(PYCICLE_COMPILER_TYPE "clang" HPX_CXX_STANDARD "17")
+PYCICLE_CMAKE_DEPENDENT_OPTION(PYCICLE_COMPILER_TYPE "clang" HPX_WITH_PARCELPORT_MPI "OFF[]")
 
 #######################################################################
 # Main setup of script for building
@@ -69,18 +79,14 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
     export LDCXXFLAGS=\"${LDCXXFLAGS}\"
   ")
 
-  string(CONCAT CTEST_BUILD_OPTIONS
-    "  -DHPX_WITH_CXX14=ON "
-  )
-
 elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
   set(CLANG_ROOT         "/users/biddisco/apps/daint/llvm")
   set(CMAKE_C_COMPILER   "${CLANG_ROOT}/bin/clang")
   set(CMAKE_CXX_COMPILER "${CLANG_ROOT}/bin/clang++")
   #
-  set(PYCICLE_BUILD_STAMP "clang-6.0.0-Boost-${BOOST_VER}-${PYCICLE_CDASH_STRING}")
+  set(PYCICLE_BUILD_STAMP "clang-6.0.0-B${BOOST_VER}-${PYCICLE_CDASH_STRING}")
   #
-  set(OTF2_VER         "2.1")
+  set(OTF2_VER         "2.0")
   #
   set(INSTALL_ROOT     "/users/biddisco/apps/daint/clang")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${BOOST_VER}")
@@ -110,11 +116,13 @@ elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
   ")
 
   string(CONCAT CTEST_BUILD_OPTIONS
-    "  -DHPX_WITH_CXX17=ON "
     "  -DBoost_COMPILER=-clang60 "
   )
 endif()
 
+#######################################################################
+# INSTALL_ROOT depends on compiler setup so put these after
+#######################################################################
 set(HWLOC_ROOT       "${INSTALL_ROOT}/hwloc/${HWLOC_VER}")
 set(JEMALLOC_ROOT    "${INSTALL_ROOT}/jemalloc/${JEMALLOC_VER}")
 set(OTF2_ROOT        "${INSTALL_ROOT}/otf2/${OTF2_VER}")
@@ -122,40 +130,26 @@ set(PAPI_ROOT        "${INSTALL_ROOT}/papi/${PAPI_VER}")
 set(PAPI_INCLUDE_DIR "${INSTALL_ROOT}/papi/${PAPI_VER}/include")
 set(PAPI_LIBRARY     "${INSTALL_ROOT}/papi/${PAPI_VER}/lib/libpfm.so")
 
-set(CTEST_SITE "cray(daint)")
-set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_TEST_TIMEOUT "200")
-set(BUILD_PARALLELISM  "32")
-
 #######################################################################
-# The string that is used to drive cmake config step
+# Extra options used to drive cmake config step
 # ensure options (e.g.FLAGS) that have multiple args are escaped
 #######################################################################
 string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DCMAKE_CXX_FLAGS=${CXXFLAGS}\" "
     "\"-DCMAKE_C_FLAGS=${CFLAGS}\" "
     "\"-DCMAKE_EXE_LINKER_FLAGS=${LDCXXFLAGS}\" "
-    "  -DHPX_WITH_NATIVE_TLS=ON "
     "  -DHWLOC_ROOT=${HWLOC_ROOT} "
     "  -DJEMALLOC_ROOT=${JEMALLOC_ROOT} "
     "  -DBOOST_ROOT=${BOOST_ROOT} "
     "  -DBoost_ADDITIONAL_VERSIONS=${BOOST_VER} "
-    "  -DHPX_WITH_MALLOC=JEMALLOC "
-    "  -DHPX_WITH_EXAMPLES=ON "
-    "  -DHPX_WITH_TESTS=ON "
-    "  -DHPX_WITH_TESTS_BENCHMARKS=ON "
-    "  -DHPX_WITH_TESTS_EXTERNAL_BUILD=OFF "
-    "  -DHPX_WITH_TESTS_HEADERS=OFF "
-    "  -DHPX_WITH_TESTS_REGRESSIONS=ON "
-    "  -DHPX_WITH_TESTS_UNIT=ON "
-    "  -DHPX_WITH_PARCELPORT_MPI=OFF "
-    "  -DHPX_WITH_PARCELPORT_MPI_MULTITHREADED=OFF "
-    "  -DHPX_WITH_THREAD_IDLE_RATES=ON "
-    "  -DHPX_WITH_MAX_CPU_COUNT=256 "
-    "  -DHPX_WITH_MORE_THAN_64_THREADS=ON "
-    "  -DHPX_PARCELPORT_LIBFABRIC_PROVIDER=gni"
-    "  -DHPX_PARCELPORT_LIBFABRIC_ENDPOINT=RDM"
- )
+)
+
+if (APEX_WITH_OTF2)
+  string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
+    "  -DOTF2_ROOT=${OTF2_ROOT} "
+  )
+endif()
+
 
 #######################################################################
 # Setup a slurm job submission template
