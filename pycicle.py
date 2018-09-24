@@ -24,7 +24,7 @@ import socket
 import datetime
 import argparse
 import shlex     # splitting strings whilst keeping quoted sections
-import hashlib   # turn a string into a hash
+import copy
 from random import randint
 from pprint import pprint
 
@@ -77,18 +77,35 @@ class option_type:
     def override(self, new_value):
         if new_value in self._values:
             index = self._values.index(new_value)
+            pyc_p.debug_print('overriding with', new_value, 'index', index)
+            self._values  = [self._values[index]]
+            self._symbols = [self._symbols[index]]
         else:
-            print('Overriding option with invalid value')
-            return
-        pyc_p.debug_print('overriding with', new_value, 'index', index)
-        self._values  = [self._values[index]]
-        self._symbols = [self._symbols[index]]
+            opt_sym = get_option_symbol(new_value)
+            self._values  = [opt_sym[0]]
+            self._symbols = [opt_sym[1]]
+
+    def add_choices(self, new_values):
+        for new_value in new_values:
+            if new_value not in self._values:
+                opt_sym = get_option_symbol(new_value)
+                self._values.append(opt_sym[0])
+                self._symbols.append(opt_sym[1])
 
     def add_dependency(self, val, option, options):
         if val in self._dependencies:
             self._dependencies[val].append(option)
         else:
             self._dependencies[val] = [option]
+        self.print_option()
+
+    def add_dependency_inverse(self, val, option, options):
+        for value in self._values:
+            if val != value:
+                if value in self._dependencies:
+                    self._dependencies[value].append(option)
+                else:
+                    self._dependencies[value] = [option]
         self.print_option()
 
     def random_choice(self):
@@ -270,12 +287,20 @@ def get_options_from_file(config_file, options, commandline_options) :
                 val  = p3[0][1].strip('"') if not ' ' in p3[0][1] else p3[0][1].strip()
                 sub  = shlex.split(p3[0][2].strip())
                 pyc_p.debug_print('Dependent option found if', name, '==', val, '(sub-option)', sub)
-                if sub[0] in options:
-                    del options[sub[0]]
-                new_option = option_type(sub[0], sub[1:])
                 if name in options:
-                    options[name].add_dependency(val, new_option, options)
-                new_option.can_override(commandline_options)
+                    if sub[0] in options:
+                        old_option = options.pop(sub[0], None)
+                        new_option = copy.deepcopy(old_option)
+                        new_option.override(sub[1])
+                        pyc_p.debug_print('Adding inverse dependency')
+                        options[name].add_dependency_inverse(val, old_option, options)
+                        pyc_p.debug_print('Adding dependency')
+                        options[name].add_dependency(val, new_option, options)
+                        pyc_p.debug_print('Done dependency')
+                    else:
+                        new_option = option_type(sub[0], sub[1:])
+                        options[name].add_dependency(val, new_option, options)
+                    new_option.can_override(commandline_options)
         else:
             continue
         # see if commandline options override the value
