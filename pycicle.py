@@ -30,10 +30,82 @@ from pprint import pprint
 
 from pycicle_params import PycicleParams
 
+#--------------------------------------------------------------------------
+# Convert a string of the form "option[opt]" into a pair [option,opt]
+# if the string has no option[...] then return [option,option]
+#--------------------------------------------------------------------------
+def get_option_symbol(option):
+    sym = re.findall('(.+)\[([^\[\]]*)\]?', option)
+    if sym:
+        pyc_p.debug_print('Searching option[symbol]: Found', option, ',', sym[0][0], ',', sym[0][1])
+        return [sym[0][0], sym[0][1]]
+    else:
+        pyc_p.debug_print('Searching option[symbol]: Subst', option)
+        return [option,option]
+
+#--------------------------------------------------------------------------
+# Class holder for an Option type
+#--------------------------------------------------------------------------
+class option_type:
+    def __init__(self, name, values):
+        self._name    = name
+        self._values  = []
+        self._symbols = []
+        for val in values:
+            opt_sym = get_option_symbol(val)
+            self._values.append(opt_sym[0])
+            self._symbols.append(opt_sym[1])
+        self._dependencies = {}
+        self.print_option()
+
+    def print_option(self):
+        pyc_p.debug_print('Option object:', self._name, 'values:', self._values,
+            'symbols:', self._symbols,
+            'dependencies:', self._dependencies)
+
+    def __repr__(self):
+        return 'Option object: ' + str(self._name) + ' values: ' \
+        + str(self._values) + ' symbols: ' + str(self._symbols) \
+        + ' dependencies: ' + str(self._dependencies)
+
+    def can_override(self, commandline_options):
+        if self._name in commandline_options:
+            pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(self._name, commandline_options[self._name]))
+            self.override(commandline_options[self._name])
+            self.print_option()
+
+    def override(self, new_value):
+        if new_value in self._values:
+            index = self._values.index(new_value)
+        else:
+            print('Overriding option with invalid value')
+            return
+        pyc_p.debug_print('overriding with', new_value, 'index', index)
+        self._values  = [self._values[index]]
+        self._symbols = [self._symbols[index]]
+
+    def add_dependency(self, val, option, options):
+        if val in self._dependencies:
+            self._dependencies[val].append(option)
+        else:
+            self._dependencies[val] = [option]
+        self.print_option()
+
+    def random_choice(self):
+        cmake_option = {}
+        index = randint(0, len(self._values)-1)
+        cmake_option[self._name] = [self._values[index], self._symbols[index]]
+        pyc_p.debug_print('Random choice', cmake_option[self._name], 'from', self._name, '=', self._values)
+        for value in self._dependencies:
+            if cmake_option[self._name][0] == value:
+                for dependent in self._dependencies[value]:
+                    cmake_option.update(dependent.random_choice())
+        return cmake_option
+
+#--------------------------------------------------------------------------
+# Command line args
+#--------------------------------------------------------------------------
 def get_command_line_args():
-    #--------------------------------------------------------------------------
-    # Command line args
-    #--------------------------------------------------------------------------
     parser = argparse.ArgumentParser()
 
     #----------------------------------------------
@@ -165,107 +237,50 @@ def debug_print(*text):
     print()
 
 #--------------------------------------------------------------------------
-# Convert a string of the form "option[opt]" into a pair [option,opt]
-# if the string has no option[...] then return [option,option]
-#--------------------------------------------------------------------------
-def get_option_symbol(option):
-    sym = re.findall('(.+)\[([^\[\]]*)\]?', option)
-    if sym:
-        pyc_p.debug_print('Searching option[symbol]: Found', option, ',', sym[0][0], ',', sym[0][1])
-        return [sym[0][0], sym[0][1]]
-    else:
-        pyc_p.debug_print('Searching option[symbol]: Subst', option)
-        return [option,option]
-
-#--------------------------------------------------------------------------
-# Pick one option at random from a list of options
-# args: option = list(option_name, list(option values))
-#--------------------------------------------------------------------------
-def generate_random_simple_options(option):
-    cmake_option      = {}
-    key               = option[0]
-    values            = option[1]
-    cmake_option[key] = values[randint(0, len(values)-1)]
-    pyc_p.debug_print('Random choice', cmake_option, 'from', key, '=', values)
-    return cmake_option
-
-#--------------------------------------------------------------------------
 # find all the simple options that are defined in the file
 # the return from this is a Dictionary of options,
 # key = option name, value = list of choices
 #--------------------------------------------------------------------------
-def get_simple_options_file(config_file, reg_string, commandline_options) :
+def get_options_from_file(config_file, options, commandline_options) :
     pyc_p.debug_print('Looking for options in', config_file)
-    f = open(config_file)
-
-    regex = reg_string + '\((.+?)\)'
-    options = {}
-    for line in f:
-        m = re.findall(regex, line)
+    for line in open(config_file):
+        m = re.findall('PYCICLE_CMAKE_OPTION' + '\((.+?)\)', line)
+        n = re.findall('PYCICLE_CMAKE_BOOLEAN_OPTION' + '\((.+?)\)', line)
+        o = re.findall('PYCICLE_CMAKE_DEPENDENT_OPTION\((.+?)\)', line)
         if m:
-            p = re.findall('([^ ]+) +(.+)', m[0])
-            if p:
-                pyc_p.debug_print('Option found {:s} (values) {:s} '.format(p[0][0], p[0][1]))
+            pyc_p.debug_print('-'*30)
+            p1 = re.findall('([^ ]+) +(.+)',   m[0]) # normal option
+            if p1:
+                name = p1[0][0]
+                pyc_p.debug_print('Option found', name, '(values)', p1[0][1])
                 # shlex split options in case strings have spaces
-                options[p[0][0]] = shlex.split(p[0][1])
-                if p[0][0] in commandline_options:
-                    pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]]))
-                    options[p[0][0]] = [commandline_options[p[0][0]]]
-                options_symbols = []
-                for opt in options[p[0][0]]:
-                    options_symbols += [get_option_symbol(opt)]
-                # replace original choice strings with parsed [opt,sym] pairs
-                options[p[0][0]] = options_symbols
-
-    return options
-
-def get_boolean_options_file(config_file, reg_string, commandline_options) :
-    pyc_p.debug_print('Looking for options in', config_file)
-    f = open(config_file)
-
-    regex = reg_string + '\((.+?)\)'
-    options = {}
-    for line in f:
-        m = re.findall(regex, line)
-        if m:
-            p = re.findall('([^ ]+) +"(.+)"', m[0])
-            if p:
-                pyc_p.debug_print('Boolean found {:30s} Shortcut {:s} (values) ON/OFF'.format(p[0][0], p[0][1]))
-                # shlex in case string has spaces
-                options[p[0][0]] = [[str('ON'),p[0][1]], [str('OFF'),str('')]]
-                if p[0][0] in commandline_options:
-                    pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]][0]))
-                    options[p[0][0]] = [get_option_symbol(commandline_options[p[0][0]])]
-    return options
-
-#--------------------------------------------------------------------------
-# find all the dependent options that are defined in the file
-# the return from this is a Dictionary of options,
-# key = option name, value = list of choices
-#--------------------------------------------------------------------------
-def get_dependent_options_file(config_file, reg_string, commandline_options) :
-    pyc_p.debug_print('Looking for dependent options in', config_file)
-    f = open(config_file)
-
-    regex = reg_string + '*\((.+?)\)'
-    options = []
-    for line in f:
-        m = re.findall(regex, line)
-        if m:
-            p = re.findall('([^ ]+) +"([^"]+)" +(.+)', m[0])
-            if p:
-                opt = p[0][0].strip('"')
-                val = p[0][1].strip('"') if not ' ' in p[0][1] else p[0][1].strip()
-                sub = p[0][2].strip()
-                pyc_p.debug_print('Dependent option found {:30s} (value) {:15s} (sub-option) {:s}'.format(opt, val, sub))
-                subopt = {}
-                sub_list = shlex.split(sub)
-                subopt[val] = sub_list
-                if sub_list[0] in commandline_options:
-                    new_list = [sub_list[0], commandline_options[sub_list[0]]]
-                    pyc_p.debug_print('command-line overrides {:30s} (value) {:15s}'.format(new_list[0], new_list[1]))
-                    subopt[val] = new_list
-                options.append([opt, subopt])
+                options[name] = option_type(name, shlex.split(p1[0][1]))
+        elif n:
+            pyc_p.debug_print('-'*30)
+            p2 = re.findall('([^ ]+) +"(.+)"', n[0]) # boolean option
+            if p2:
+                name = p2[0][0]
+                pyc_p.debug_print('Boolean found', name, 'Shortcut', p2[0][1], '(values) ON/OFF')
+                options[name] = option_type(name, ['ON['+p2[0][1]+']', 'OFF[]'])
+        elif o:
+            pyc_p.debug_print('-'*30)
+            p3 = re.findall('([^ ]+) +"([^"]+)" +(.+)', o[0])
+            if p3:
+                name = p3[0][0].strip('"')
+                val  = p3[0][1].strip('"') if not ' ' in p3[0][1] else p3[0][1].strip()
+                sub  = shlex.split(p3[0][2].strip())
+                pyc_p.debug_print('Dependent option found if', name, '==', val, '(sub-option)', sub)
+                if sub[0] in options:
+                    del options[sub[0]]
+                new_option = option_type(sub[0], sub[1:])
+                if name in options:
+                    options[name].add_dependency(val, new_option, options)
+                new_option.can_override(commandline_options)
+        else:
+            continue
+        # see if commandline options override the value
+        if name in options:
+            options[name].can_override(commandline_options)
     return options
 
 #--------------------------------------------------------------------------
@@ -276,80 +291,37 @@ def get_dependent_options_file(config_file, reg_string, commandline_options) :
 # with ones from machine file (machine file outranks project file).
 #--------------------------------------------------------------------------
 def get_cmake_build_options(project, machine, commandline_options) :
+    options = {}
     current_path = os.path.dirname(os.path.realpath(__file__))
     # get options from project file first
     pyc_p.debug_print('-'*30, '#project get_simple_options')
     config_file = current_path + '/config/' + project + '/' + project + '.cmake'
-    options = get_simple_options_file(config_file, 'PYCICLE_CMAKE_OPTION', commandline_options)
-    options.update(get_boolean_options_file(config_file, 'PYCICLE_CMAKE_BOOLEAN_OPTION', commandline_options))
+    get_options_from_file(config_file, options, commandline_options)
 
-    print('OPTIONS ', options)
     # if machine file overrides options, update with new ones
     pyc_p.debug_print('-'*30, '#machine get_simple_options')
     config_file = current_path + '/config/' + project + '/' + machine + '.cmake'
-    options.update(get_simple_options_file(config_file, 'PYCICLE_CMAKE_OPTION', commandline_options))
+    get_options_from_file(config_file, options, commandline_options)
 
-    # get dependent options from project file
-    pyc_p.debug_print('-'*30, '#project get_dependent_options')
-    config_file   = current_path + '/config/' + project + '/' + project + '.cmake'
-    dep_options_p = get_dependent_options_file(config_file, 'PYCICLE_CMAKE_DEPENDENT_OPTION', commandline_options)
-
-    # get dependent options from machine file
-    pyc_p.debug_print('-'*30, '#machine get_dependent_options')
-    config_file   = current_path + '/config/' + project + '/' + machine + '.cmake'
-    dep_options_m = get_dependent_options_file(config_file, 'PYCICLE_CMAKE_DEPENDENT_OPTION', commandline_options)
-
-    # dependent options in machine config must override those in project config
-    pyc_p.debug_print('-'*30)
-    for opt_p in dep_options_p:
-        unique = True
-        for kp, vp in opt_p[1].items():
-            pyc_p.debug_print('project dependent option', opt_p[0], "/", kp, "=", vp)
-            for opt_m in dep_options_m:
-                if opt_m[0] == opt_p[0]:
-                    for km,vm in opt_m[1].items():
-                        if kp == km and vp[0] == vm[0]:
-                            unique = False
-                            pyc_p.debug_print('machine overrides option', opt_m[0], "/", km, "=", vm)
-            if unique:
-                pyc_p.debug_print('adding  dependent option', opt_p[0], "/", kp, "=", vp)
-                dep_options_m.append(opt_p)
-
-    return options, dep_options_m
+    return options
 
 #--------------------------------------------------------------------------
 #
 #--------------------------------------------------------------------------
 def find_build_options(project, machine, commandline_options) :
     # get all options from project and machine config files
-    options, dependent_options = get_cmake_build_options(project, machine, commandline_options)
-    pyc_p.debug_print('commandline options final :', commandline_options)
+    options = get_cmake_build_options(project, machine, commandline_options)
+    pyc_p.debug_print('Commandline options :', commandline_options)
     pyc_p.debug_print('-'*30)
-    pyc_p.debug_print('simple options      final :', options)
+    pyc_p.debug_print('CMake options       :', options)
     pyc_p.debug_print('-'*30)
-    pyc_p.debug_print('dependent options   final :', dependent_options)
-    pyc_p.debug_print('-'*30)
-    #
-    pyc_p.debug_print('final options set', options)
-    pyc_p.debug_print('-'*30)
+    # choose random settings
     cmake_options = {}
     for option in options.items():
-        key    = option[0]
-        choice = generate_random_simple_options(option)
-        value  = choice[key]
-        pyc_p.debug_print('simple choice', key, '=', value)
-        cmake_options.update(choice)
-        for dep_option in dependent_options:
-            if (dep_option[0] == key) and (value[0] in dep_option[1].keys()):
-                # turn list of [key, val1, val2, ...] into [key, [val1, val2, ...]]
-                dkey    = dep_option[1][value[0]][0]
-                dchoice = generate_random_simple_options([dkey, dep_option[1][value[0]][1:]])
-                dvalue  = dchoice[dkey]
-                pyc_p.debug_print('depend choice', dkey, '=', get_option_symbol(dvalue))
-                cmake_options[dkey] = get_option_symbol(dvalue)
-
+        cmake_options.update(option[1].random_choice())
     pyc_p.debug_print('-'*30)
     pyc_p.debug_print('Random cmake settings :', cmake_options)
+    #
     cmake_string = ''
     cdash_string = ''
     for i in cmake_options.items():
@@ -369,16 +341,6 @@ def find_build_options(project, machine, commandline_options) :
     pyc_p.debug_print('CMake string', cmake_string)
     pyc_p.debug_print('-'*30)
     return cmake_string, cdash_string
-
-#--------------------------------------------------------------------------
-# create a hash from a string to make each build unique
-#--------------------------------------------------------------------------
-def hash_options_string(cmake_options):
-    hash_object = hashlib.sha256(cmake_options.encode('utf-8'))
-    hex_dig = hash_object.hexdigest()
-    pyc_p.debug_print('options string hash', hex_dig[:16], cmake_options)
-    pyc_p.debug_print('-'*30)
-    return hex_dig[:16]
 
 #--------------------------------------------------------------------------
 # Execute a shell comand and display the output as it appears
@@ -412,11 +374,6 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
     pyc_p.debug_print('-'*30)
     pyc_p.debug_print('launching build', branch_id, branch_name, job_type)
     pyc_p.debug_print('-'*30)
-    pyc_p.debug_print(cmake_options)
-    pyc_p.debug_print('-'*30)
-
-    options_hash = hash_options_string(cmake_options)
-    print('Options hash :', options_hash)
 
     # This is a clumsy way to do this.
     # implies local default, should be explicit somewhere
@@ -742,7 +699,9 @@ if __name__ == "__main__":
     poll_time   = 60
     # 10 mins between checks for results and cleanups.
     scrape_time = 10*60
-
+    #
+    random.seed()
+    #
     try:
         print('-' * 30)
         print("Connecting    :", "github.Github({},{})".format(github_organisation, args.user_token))
@@ -778,8 +737,6 @@ if __name__ == "__main__":
     scrape_t1       = github_t1 + datetime.timedelta(hours=-1)
     scrape_tdiff    = 0
     force           = args.force
-    #
-    random.seed()
     #
     while True:
         #
