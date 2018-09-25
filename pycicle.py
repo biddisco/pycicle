@@ -26,7 +26,6 @@ import argparse
 import shlex     # splitting strings whilst keeping quoted sections
 import copy
 from random import randint
-from pprint import pprint
 
 from pycicle_params import PycicleParams
 
@@ -58,15 +57,20 @@ class option_type:
         self._dependencies = {}
         self.print_option()
 
-    def print_option(self):
-        pyc_p.debug_print('Option object:', self._name, 'values:', self._values,
-            'symbols:', self._symbols,
-            'dependencies:', self._dependencies)
+    def string_repr(self, indent=0):
+        indt    = ' '*indent
+        string_ = 'Option object: ' + str(self._name) + ' values: ' \
+        + str(self._values) + ' symbols: ' + str(self._symbols)
+        for k,v in self._dependencies.items():
+            for v in self._dependencies[k]:
+                string_ += '\n' + indt + str(k) + ' : ' + v.string_repr(indent+4)
+        return string_
+
+    def print_option(self, indent=4):
+        pyc_p.debug_print(self.string_repr(4))
 
     def __repr__(self):
-        return 'Option object: ' + str(self._name) + ' values: ' \
-        + str(self._values) + ' symbols: ' + str(self._symbols) \
-        + ' dependencies: ' + str(self._dependencies)
+        return self.string_repr(4)
 
     def can_override(self, commandline_options):
         if self._name in commandline_options:
@@ -77,10 +81,11 @@ class option_type:
     def override(self, new_value):
         if new_value in self._values:
             index = self._values.index(new_value)
-            pyc_p.debug_print('overriding with', new_value, 'index', index)
+            pyc_p.debug_print('Overriding', new_value, 'using index', index)
             self._values  = [self._values[index]]
             self._symbols = [self._symbols[index]]
         else:
+            pyc_p.debug_print('Replacing', new_value)
             opt_sym = get_option_symbol(new_value)
             self._values  = [opt_sym[0]]
             self._symbols = [opt_sym[1]]
@@ -291,10 +296,10 @@ def get_options_from_file(config_file, options, commandline_options) :
                     if sub[0] in options:
                         old_option = options.pop(sub[0], None)
                         new_option = copy.deepcopy(old_option)
-                        new_option.override(sub[1])
                         pyc_p.debug_print('Adding inverse dependency')
                         options[name].add_dependency_inverse(val, old_option, options)
                         pyc_p.debug_print('Adding dependency')
+                        new_option.override(sub[1])
                         options[name].add_dependency(val, new_option, options)
                         pyc_p.debug_print('Done dependency')
                     else:
