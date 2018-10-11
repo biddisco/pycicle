@@ -206,7 +206,7 @@ set(CTEST_MODEL Experimental)
 #######################################################################
 # INSPECT : START a fake dashboard using only configure to run inspect
 #######################################################################
-if (PYCICLE_PROJECT_NAME MATCHES "hpx")
+if (0 AND PYCICLE_PROJECT_NAME MATCHES "hpx")
   message("Initialize dashboard : ${CTEST_MODEL} ...")
   set(CTEST_BINARY_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}/inspect")
   ctest_start(${CTEST_MODEL}

@@ -47,23 +47,23 @@ PYCICLE_CMAKE_DEPENDENT_OPTION(PYCICLE_COMPILER_TYPE "clang" HPX_WITH_PARCELPORT
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
 set(HWLOC_VER            "1.11.7")
-set(JEMALLOC_VER         "5.0.1")
+set(JEMALLOC_VER         "5.1.0")
 set(OTF2_VER             "2.0")
 set(PAPI_VER             "5.5.1")
 set(BOOST_SUFFIX         "1_65_0")
-set(CMAKE_VER            "3.9.1")
+set(CMAKE_VER            "3.12.0")
 
 if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
-  set(GCC_VER             "6.2.0")
+  set(GCC_VER             "7.3.0")
   set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-B${BOOST_VER}-${PYCICLE_CDASH_STRING}")
   #
-  set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
+  set(INSTALL_ROOT     "/apps/daint/UES/biddisco/gcc/${GCC_VER}")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
   #
   set(CFLAGS           "-fPIC")
-  set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math -std=c++14")
-  set(LDFLAGS          "-dynamic")
-  set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
+  set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math")
+  #  set(LDFLAGS          "-latomic")
+  set(LDCXXFLAGS       "${LDFLAGS}")
 
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
@@ -143,6 +143,7 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "  -DJEMALLOC_ROOT=${JEMALLOC_ROOT} "
     "  -DBOOST_ROOT=${BOOST_ROOT} "
     "  -DBoost_ADDITIONAL_VERSIONS=${BOOST_VER} "
+    "  -DBoost_DEBUG=On "
 )
 
 if (APEX_WITH_OTF2)
@@ -163,12 +164,17 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --exclusive
 #SBATCH --constraint=mc
 #SBATCH --partition=normal
+#SBATCH --output=${PYCICLE_ROOT}/build/job-%A.out
+
+module unload PrgEnv-cray
+module load   PrgEnv-gnu
 
 # ---------------------
 # unload or load modules that differ from the defaults on the system
 # ---------------------
 module load   slurm
 module load   git
+module load   daint-mc
 module load   CMake/${CMAKE_VER}
 module unload gcc
 
@@ -177,6 +183,10 @@ module unload gcc
 # setup stuff that might differ between compilers
 # ---------------------
 ${PYCICLE_COMPILER_SETUP}
+
+echo =============================================
+module list
+echo =============================================
 
 # ---------------------
 # This is used by the hpx test runner
