@@ -48,7 +48,7 @@ PYCICLE_CMAKE_DEPENDENT_OPTION(PYCICLE_COMPILER_TYPE "clang" HPX_WITH_PARCELPORT
 set(BOOST_VER            "1.65.0")
 set(HWLOC_VER            "1.11.7")
 set(JEMALLOC_VER         "5.1.0")
-set(OTF2_VER             "2.0")
+set(OTF2_VER             "2.1.1")
 set(PAPI_VER             "5.5.1")
 set(BOOST_SUFFIX         "1_65_0")
 set(CMAKE_VER            "3.12.0")
@@ -62,22 +62,22 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   #
   set(CFLAGS           "-fPIC")
   set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math")
-  #  set(LDFLAGS          "-latomic")
+  set(LDFLAGS          "-latomic")
   set(LDCXXFLAGS       "${LDFLAGS}")
 
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
-    #
-    module load gcc/${GCC_VER}
-    #
-    # use Cray compiler wrappers to make MPI use easy
-    export  CC=/opt/cray/pe/craype/default/bin/cc
-    export CXX=/opt/cray/pe/craype/default/bin/CC
-    #
-    export CFLAGS=\"${CFLAGS}\"
-    export CXXFLAGS=\"${CXXFLAGS}\"
-    export LDFLAGS=\"${LDFLAGS}\"
-    export LDCXXFLAGS=\"${LDCXXFLAGS}\"
+#
+module load gcc/${GCC_VER}
+#
+# use Cray compiler wrappers to make MPI use easy
+export  CC=/opt/cray/pe/craype/default/bin/cc
+export CXX=/opt/cray/pe/craype/default/bin/CC
+#
+export CFLAGS=\"${CFLAGS}\"
+export CXXFLAGS=\"${CXXFLAGS}\"
+export LDFLAGS=\"${LDFLAGS}\"
+export LDCXXFLAGS=\"${LDCXXFLAGS}\"
   ")
 
 elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
@@ -99,21 +99,21 @@ elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
 
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
-    #
-    export PATH=${CLANG_ROOT}/bin:$PATH
-    export LD_LIBRARY_PATH=${CLANG_ROOT}/lib:$LD_LIBRARY_PATH
-    export PATH=${CLANG_ROOT}/bin:$PATH
-    export LD_LIBRARY_PATH=${CLANG_ROOT}/lib:$LD_LIBRARY_PATH
-    #
-    export CFLAGS=\"${CFLAGS}\"
-    export CXXFLAGS=\"${CXXFLAGS}\"
-    export LDFLAGS=\"${LDFLAGS}\"
-    export LDCXXFLAGS=\"${LDCXXFLAGS}\"
-    #
-    export CC=${CLANG_ROOT}/bin/clang
-    export CXX=${CLANG_ROOT}/bin/clang++
-    export CPP=${CLANG_ROOT}/bin/clang-cpp
-    #
+#
+export PATH=${CLANG_ROOT}/bin:$PATH
+export LD_LIBRARY_PATH=${CLANG_ROOT}/lib:$LD_LIBRARY_PATH
+export PATH=${CLANG_ROOT}/bin:$PATH
+export LD_LIBRARY_PATH=${CLANG_ROOT}/lib:$LD_LIBRARY_PATH
+#
+export CFLAGS=\"${CFLAGS}\"
+export CXXFLAGS=\"${CXXFLAGS}\"
+export LDFLAGS=\"${LDFLAGS}\"
+export LDCXXFLAGS=\"${LDCXXFLAGS}\"
+#
+export CC=${CLANG_ROOT}/bin/clang
+export CXX=${CLANG_ROOT}/bin/clang++
+export CPP=${CLANG_ROOT}/bin/clang-cpp
+#
   ")
 
   string(CONCAT CTEST_BUILD_OPTIONS
@@ -143,7 +143,6 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "  -DJEMALLOC_ROOT=${JEMALLOC_ROOT} "
     "  -DBOOST_ROOT=${BOOST_ROOT} "
     "  -DBoost_ADDITIONAL_VERSIONS=${BOOST_VER} "
-    "  -DBoost_DEBUG=On "
 )
 
 if (APEX_WITH_OTF2)
@@ -159,26 +158,24 @@ endif()
 #######################################################################
 set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --job-name=hpx-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
-#SBATCH --time=04:00:00
+#SBATCH --time=05:00:00
 #SBATCH --nodes=1
 #SBATCH --exclusive
 #SBATCH --constraint=mc
 #SBATCH --partition=normal
 #SBATCH --output=${PYCICLE_ROOT}/build/job-%A.out
 
-module unload PrgEnv-cray
-module load   PrgEnv-gnu
+export CRAYPE_LINK_TYPE=dynamic
 
 # ---------------------
 # unload or load modules that differ from the defaults on the system
 # ---------------------
-module load   slurm
-module load   git
-module load   daint-mc
-module load   CMake/${CMAKE_VER}
-module unload gcc
 
-#
+module load   daint-mc
+module switch PrgEnv-cray PrgEnv-gnu
+module switch gcc gcc/${GCC_VER}
+module load   CMake/${CMAKE_VER}
+
 # ---------------------
 # setup stuff that might differ between compilers
 # ---------------------
