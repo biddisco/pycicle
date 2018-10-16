@@ -210,6 +210,12 @@ def get_command_line_args():
                         default=False, help="Only scrape results and set github status (no building)")
 
     #--------------------------------------------------------------------------
+    # Disable setting of github status on PR's - useful when testing pycicle
+    #--------------------------------------------------------------------------
+    parser.add_argument('-n', '--no-status', dest='no_status', action='store_true',
+                        default=False, help="Disable setting github status")
+
+    #--------------------------------------------------------------------------
     # CDash Server
     #--------------------------------------------------------------------------
     parser.add_argument('--cdash-server', dest='cdash_server',
@@ -570,6 +576,8 @@ def scrape_testing_results(project, machine, scrape_file, branch_id, branch_name
             print("URL:", URL)
             if args.debug:
                 print('Debug github PR status', URL)
+            elif args.no_status:
+                print('Disabled github PR status setting', URL)
             else:
                 head_commit.create_status(
                     'success' if Config_Errors==0 else 'failure',
