@@ -765,7 +765,7 @@ if __name__ == "__main__":
         github_base = repo.default_branch
 
     #--------------------------------------------------------------------------
-    pyc_p.debug_print("Before main polling routine github_base:",github_base)
+    pyc_p.debug_print("Before main polling routine github_base:", github_base)
 
     #--------------------------------------------------------------------------
     # main polling routine
@@ -792,7 +792,12 @@ if __name__ == "__main__":
             #
             # just get a single PR if that was all that was asked for
             if args.pull_request!=0:
-                pr = repo.get_pull(args.pull_request)
+                pyc_p.debug_print('Getting PR', args.pull_request)
+                try:
+                    pr = repo.get_pull(args.pull_request)
+                except Exception as ex:
+                    pyc_p.debug_print('Could not get PR - is it valid?:', ex)
+                    break
                 pyc_p.debug_print(pr)
                 pull_requests = [pr]
                 pyc_p.debug_print('Requested PR: ', pr)
@@ -832,6 +837,7 @@ if __name__ == "__main__":
                 if args.pull_request!=0 and pr.number!=args.pull_request:
                     continue
                 if not pr.mergeable:
+                    pyc_p.debug_print('Skipping PR - not mergeable')
                     continue
                 #
                 if not args.scrape_only:
