@@ -9,7 +9,7 @@
 # the name used to ssh into the machine
 set(PYCICLE_MACHINE "daint.cscs.ch")
 # the root location of the build/test tree on the machine
-set(PYCICLE_ROOT "/scratch/snx1600/biddisco/pycicle")
+set(PYCICLE_ROOT "/scratch/snx3000/biddisco/pycicle")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
@@ -28,7 +28,8 @@ set(BUILD_PARALLELISM     "16")
 #######################################################################
 # Machine specific options
 #######################################################################
-PYCICLE_CMAKE_OPTION(PYCICLE_COMPILER_TYPE "gcc[]" "clang[]")
+PYCICLE_CMAKE_OPTION(PYCICLE_COMPILER_TYPE "gcc[]")
+#"clang[]")
 PYCICLE_CMAKE_DEPENDENT_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC "ON" HPX_PARCELPORT_LIBFABRIC_PROVIDER "gni[LFg]")
 PYCICLE_CMAKE_OPTION(HPX_WITH_MAX_CPU_COUNT        "256[]")
 PYCICLE_CMAKE_OPTION(HPX_WITH_MORE_THAN_64_THREADS "ON[]")
@@ -163,7 +164,7 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --exclusive
 #SBATCH --constraint=mc
 #SBATCH --partition=normal
-#SBATCH --output=${PYCICLE_ROOT}/build/job-%A.out
+#SBATCH --output=${PYCICLE_ROOT}/build/hpx-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}-%A.out
 
 export CRAYPE_LINK_TYPE=dynamic
 
