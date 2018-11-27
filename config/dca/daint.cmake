@@ -9,7 +9,7 @@
 # the name used to ssh into the machine
 set(PYCICLE_MACHINE "daint.cscs.ch")
 # the root location of the build/test tree on the machine
-set(PYCICLE_ROOT "/scratch/snx1600/biddisco/pycicle")
+set(PYCICLE_ROOT "/scratch/snx3000/biddisco/pycicle")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
