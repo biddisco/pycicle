@@ -100,6 +100,8 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --constraint=gpu
 #SBATCH --partition=normal
 
+export CRAYPE_LINK_TYPE=dynamic
+
 # ---------------------
 # unload or load modules that differ from the defaults on the system
 # ---------------------
@@ -110,7 +112,7 @@ module load   git
 module load   CMake/${CMAKE_VER}
 module unload gcc
 module load   gcc/${GCC_VER}
-module load   cudatoolkit/8.0.61_2.4.3-6.0.4.0_3.1__gb475d12
+module load   cudatoolkit/9.2.148_3.19-6.0.7.1_2.1__g3d9acc8
 module load   magma/2.2.0-CrayGNU-17.08-cuda-8.0
 module load   fftw
 module load   intel
