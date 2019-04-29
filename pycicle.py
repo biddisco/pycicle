@@ -107,8 +107,8 @@ def get_command_line_args():
     #--------------------------------------------------------------------------
     # Config dir if not in pycicle directory
     #--------------------------------------------------------------------------
-    parser.add_argument('--config-dir', dest='config_dir',
-                        default='./config', help='pycicle config dir')
+    parser.add_argument('--config-path', dest='config_path',
+                        default='...', help='pycicle config path if not pycicle/config')
 
     #--------------------------------------------------------------------------
     # only enable scraping to test github status setting
@@ -128,13 +128,15 @@ def get_command_line_args():
     args = parser.parse_args()
     machine = args.machines[0]
     build_type = args.build_type
+    if args.config_path == '...':
+        args.config_path = './config/' + args.project_name
     print('-' * 30)
     print('pycicle: project     :', args.project)
     print('pycicle: debug       :',
           'enabled (no build trigger commands will be sent)' if args.debug else 'disabled')
     print('pycicle: scrape-only :', 'enabled' if args.scrape_only else 'disabled')
     print('pycicle: force       :', 'enabled' if args.force else 'disabled')
-    print('pycicle: config_dir  :', args.config_dir)
+    print('pycicle: config_path  :', args.config_path)
     print('pycicle: path        :', args.pycicle_dir)
     print('pycicle: token       :', args.user_token)
     print('pycicle: machines    :', args.machines)
@@ -200,12 +202,16 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
 
     build_type = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
 
+    if github_organisation:
+       cmd = cmd + [ '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation ]
+    if github_username:
+       cmd = cmd + [ '-DPYCICLE_GITHUB_USER_NAME=' + github_username ]
+
     cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
                   '-DPYCICLE_HOST='                + nickname,
                   '-DPYCICLE_PROJECT_NAME='        + args.project,
-                  '-DPYCICLE_CONFIG_DIR='          + pyc_p.config_dir,
+                  '-DPYCICLE_CONFIG_PATH='          + pyc_p.config_path,
                   '-DPYCICLE_GITHUB_PROJECT_NAME=' + github_reponame,
-                  '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation,
                   '-DPYCICLE_PR='                  + branch_id,
                   '-DPYCICLE_BRANCH='              + branch_name,
                   '-DPYCICLE_RANDOM='              + random_string(10),
@@ -217,6 +223,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
                   '-DCTEST_SOURCE_DIRECTORY=.',
                   '-DCTEST_BINARY_DIRECTORY=.',
                   '-DCTEST_COMMAND=":"' ]
+
     if args.debug:
         print('\n' + '-' * 20, 'Debug\n', subprocess.list2cmdline(cmd))
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -481,15 +488,16 @@ if __name__ == "__main__":
     # project repos themselves.
 
     if args.debug or args.debug_info:
-        pyc_p = PycicleParams(args, config_path=args.config_dir, debug_print=debug_print)
+        pyc_p = PycicleParams(args, debug_print=debug_print)
     else:
-        pyc_p = PycicleParams(args, config_path=args.config_dir)
+        pyc_p = PycicleParams(args)
 
     #--------------------------------------------------------------------------
     # Create a Github instance:
     #--------------------------------------------------------------------------
     github_reponame     = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_PROJECT_NAME')
     github_organisation = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_ORGANISATION')
+    github_username = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_USER_NAME')
     github_base       = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_BASE_BRANCH')
     if args.cdash_server:
         cdash_server = args.cdash_server
@@ -501,7 +509,10 @@ if __name__ == "__main__":
 
     print('-' * 30)
     print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
-    print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
+    if github_organisation:
+        print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
+    else:
+        print('PYCICLE_GITHUB_USER_NAME  =', github_username)
     print('PYCICLE_GITHUB_BASE_BRANCH   =', github_base)
     print('PYCICLE_COMPILER_TYPE        =', compiler_type)
     print('PYCICLE_CDASH_PROJECT_NAME   =', cdash_project_name)
@@ -517,14 +528,23 @@ if __name__ == "__main__":
 
     try:
         print("connecting to git hub with:")
-        print("github.Github({},{})".format(github_organisation, args.user_token))
-        git  = github.Github(github_organisation, args.user_token)
+        if github_organisation:
+            print("github.Github({},{})".format(github_organisation, args.user_token))
+            git  = github.Github(github_organisation, args.user_token)
+        else:
+            print("github.Github({})".format(args.user_token))
+            git = github.Github(args.user_token)
+        if not github_username:
+            github_username = git.get_user().name
         print("Github User   :",git.get_user().name)
         print("Github Reponame:",github_reponame)
         try:
-            org = git.get_organization(github_organisation)
-            print("Organisation  :", org.login, org.name)
-            repo = org.get_repo(github_reponame)
+            if github_organisation:
+                org = git.get_organization(github_organisation)
+                print("Organisation  :", org.login, org.name)
+                repo = org.get_repo(github_reponame)
+            else:
+                repo = git.get_repo(github_username + '/' + github_reponame)
         except github.UnknownObjectException as ukoe:
             print("trying to recover from organization passed as name")
             git  = github.Github(args.user_token)
