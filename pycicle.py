@@ -294,6 +294,7 @@ def find_scrape_files(project, nickname) :
             cmd = []
 
         search_path = remote_path + '/build/'
+        print("Scraping in {}.".format(search_path))
         cmd = cmd + [ 'find', search_path,
                       '-maxdepth',  '2',
                       '-path', '\'' + search_path + project + '-*' + '\'',
@@ -529,6 +530,8 @@ if __name__ == "__main__":
     # 10 mins between checks for results and cleanups.
     scrape_time = 10*60
 
+    org = None
+
     try:
         print("connecting to git hub with:")
         if github_organisation:
@@ -601,6 +604,7 @@ if __name__ == "__main__":
                 pyc_p.debug_print('Requested PR: ', pr)
             # otherwise get all open PRs
             else:
+                print("Getting open PR's for ",base_branch.name)
                 pull_requests = repo.get_pulls('open', base=base_branch.name)
 
             pr_list = {}
@@ -611,18 +615,19 @@ if __name__ == "__main__":
                 pyc_p.debug_print(pr)
                 pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
                 pyc_p.debug_print('Branch to merge from :', pr.head.ref)
-                if pr.head.repo.owner.login==github_organisation:
-                    pyc_p.debug_print('Pull request is from branch local to repo')
-                else:
-                    pyc_p.debug_print('Pull request is from branch of forked repo')
-                pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
-                                      + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
-                pyc_p.debug_print('-' * 30)
+                # if pr.head.repo.owner.login==github_organisation:
+                #     pyc_p.debug_print('Pull request is from branch local to repo')
+                # else:
+                #     pyc_p.debug_print('Pull request is from branch of forked repo')
+                # pyc_p.debug_print('git pull https://github.com/' + pr.head.repo.owner.login
+                #                       + '/' + github_reponame + '.git' + ' ' + pr.head.ref)
+                # pyc_p.debug_print('-' * 30)
                 branch_id   = str(pr.number)
                 branch_name = pr.head.label.rsplit(':',1)[1]
                 branch_sha  = pr.head.sha
                 # need details, including last commit on PR for setting status
-                pr_list[branch_id] = [machine, branch_name, pr.get_commits().reversed[0]]
+                last_pr_commit = pr.get_commits().reversed[0]
+                pr_list[branch_id] = [machine, branch_name, last_pr_commit]
                 #
                 if args.pull_request!=0 and pr.number!=args.pull_request:
                     continue
@@ -630,10 +635,22 @@ if __name__ == "__main__":
                     continue
                 #
                 if not args.scrape_only:
-                    update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
-                    if update:
-                        choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
+                    #minimal security, only if last commit by group members is it updated or built.
+                    commit_author = last_pr_commit.author
+                    if org:
+                        if org.has_in_members(commit_author):
+                            update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
+                            if update:
+                                choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
+                    else:
+                        user = git.get_user();
+                        if user.login == commit_author.login:
+                            update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
+                            if update:
+                                choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
 
+            print("The Open PRs:")
+            print(pr_list)
             # also build the base branch if it has changed
             if not args.scrape_only and args.pull_request==0:
                 if force or needs_update(args.project, github_base, github_base, base_sha, base_sha):
