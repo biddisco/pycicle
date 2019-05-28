@@ -354,7 +354,7 @@ def scrape_testing_results(project, nickname, scrape_file, branch_id, branch_nam
             DateURL   = DateStamp[0:4]+'-'+DateStamp[4:6]+'-'+DateStamp[6:8]
             print('Extracted date as', DateURL)
 
-            URL = ('http://{}/{}/index.php?project='.format(cdash_server, cdash_http_path) + cdash_project_name +
+            URL = ('{}://{}/{}/index.php?project='.format(cdash_drop_method, cdash_server, cdash_http_path) + cdash_project_name +
                    '&date=' + DateURL +
                    '&filtercount=1' +
                    '&field1=buildname/string&compare1=63&value1=' +
@@ -504,6 +504,9 @@ if __name__ == "__main__":
     else:
         cdash_server    = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_SERVER_NAME')
     cdash_project_name  = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_PROJECT_NAME')
+    cdash_drop_method  = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_DROP_METHOD')
+    if not cdash_drop_method:
+        cdash_drop_method = "http"
     compiler_type       = pyc_p.get_setting_for_machine(args.project, args.machines[0], 'PYCICLE_COMPILER_TYPE')
     cdash_http_path     = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_CDASH_HTTP_PATH')
 

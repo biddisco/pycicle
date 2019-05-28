@@ -46,6 +46,7 @@ class PycicleParams:
             'PYCICLE_CDASH_SERVER_NAME',
             'PYCICLE_CDASH_PROJECT_NAME',
             'PYCICLE_CDASH_HTTP_PATH',
+            'PYCICLE_CDASH_DROP_METHOD',
             'PYCICLE_BUILD_STAMP',
             'PYCICLE_COMPILER_SETUP']
     config_path = None
