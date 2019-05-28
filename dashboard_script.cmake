@@ -85,7 +85,7 @@ set(CTEST_GIT_COMMAND "${GIT_EXECUTABLE}")
 set (make_repo_copy_ "")
 #if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
   message("Configuring src repo copy from local repo cache")
-  set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
+  set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY}")
   if (NOT EXISTS "${PYCICLE_LOCAL_GIT_COPY}/.git")
     message("Local repo cache missing, using full clone of src repo")
     if (PYCICLE_GITHUB_ORGANISATION)
@@ -118,7 +118,7 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
 
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
-    COMMAND bash "-c" "-e" "${make_repo_copy_}"
+    COMMAND bash "-c" "-e" "${make_repo_copy_};"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
     ERROR_VARIABLE  output
@@ -145,7 +145,8 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
 
   MESSAGE("${make_repo_copy_}")
   execute_process(
-    COMMAND bash "-c" "-e" "${make_repo_copy_}
+    COMMAND bash "-c" "-e"
+                       "${make_repo_copy_};
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
                        ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BASE};
@@ -173,9 +174,10 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
 else()
   set(CTEST_SUBMISSION_TRACK "${PYCICLE_BASE}")
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
-  MESSAGE("${make_repo_copy_}")
+  MESSAGE("just before command\n ${make_repo_copy_}")
   execute_process(
-    COMMAND bash "-c" "-e" "${make_repo_copy_}
+    COMMAND bash "-c" "-e"
+                      "${make_repo_copy_};
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
                        ${CTEST_GIT_COMMAND} fetch origin;
@@ -187,6 +189,14 @@ else()
   )
   if ( failed EQUAL 1 )
     MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
+      "Command:"
+      "${make_repo_copy_};
+                       cd ${CTEST_SOURCE_DIRECTORY};
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
+                       ${CTEST_GIT_COMMAND} fetch origin;
+                       ${CTEST_GIT_COMMAND} reset --hard;"
+      "${OUTPUT_VARIABLE}"
+      "${ERROR_VARIABLE}"
       "Can you access github from the build location?" )
   endif ( failed EQUAL 1 )
 endif()
