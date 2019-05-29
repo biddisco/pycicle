@@ -113,7 +113,7 @@ module load   git
 module load   CMake/${CMAKE_VER}
 module unload gcc
 module load   gcc/${GCC_VER}
-module load   cudatoolkit
+module load   cudatoolkit/9.0.103_3.7-6.0.4.1_2.1__g72b395b
 module load   magma/2.2.0-CrayGNU-17.08-cuda-8.0
 module load   fftw
 module load   intel
