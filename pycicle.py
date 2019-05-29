@@ -204,8 +204,8 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
 
     if github_organisation:
        cmd = cmd + [ '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation ]
-    if github_username:
-       cmd = cmd + [ '-DPYCICLE_GITHUB_USER_NAME=' + github_username ]
+    if github_userlogin:
+       cmd = cmd + [ '-DPYCICLE_GITHUB_USER_LOGIN=' + github_userlogin ]
 
     cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
                   '-DPYCICLE_HOST='                + nickname,
@@ -498,7 +498,7 @@ if __name__ == "__main__":
     #--------------------------------------------------------------------------
     github_reponame     = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_PROJECT_NAME')
     github_organisation = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_ORGANISATION')
-    github_username = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_USER_NAME')
+    github_userlogin = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_USER_LOGIN')
     github_base       = pyc_p.get_setting_for_machine(args.project, args.project, 'PYCICLE_GITHUB_BASE_BRANCH')
     if args.cdash_server:
         cdash_server = args.cdash_server
@@ -516,7 +516,7 @@ if __name__ == "__main__":
     if github_organisation:
         print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
     else:
-        print('PYCICLE_GITHUB_USER_NAME  =', github_username)
+        print('PYCICLE_GITHUB_USER_LOGIN  =', github_userlogin)
     print('PYCICLE_GITHUB_BASE_BRANCH   =', github_base)
     print('PYCICLE_COMPILER_TYPE        =', compiler_type)
     print('PYCICLE_CDASH_PROJECT_NAME   =', cdash_project_name)
@@ -540,9 +540,9 @@ if __name__ == "__main__":
         else:
             print("github.Github({})".format(args.user_token))
             git = github.Github(args.user_token)
-        if not github_username:
-            github_username = git.get_user().name
-        print("Github User   :",git.get_user().name)
+        if not github_userlogin:
+            github_userlogin = git.get_user().login
+        print("Github Login   :",git.get_user().login)
         print("Github Reponame:",github_reponame)
         try:
             if github_organisation:
@@ -550,7 +550,7 @@ if __name__ == "__main__":
                 print("Organisation  :", org.login, org.name)
                 repo = org.get_repo(github_reponame)
             else:
-                repo = git.get_repo(github_username + '/' + github_reponame)
+                repo = git.get_repo(github_userlogin + '/' + github_reponame)
         except github.UnknownObjectException as ukoe:
             print("trying to recover from organization passed as name")
             git  = github.Github(args.user_token)
@@ -616,7 +616,7 @@ if __name__ == "__main__":
                     pyc_p.debug_print(pr)
                     pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
                     pyc_p.debug_print('Branch to merge from :', pr.head.ref)
-                    if pr.head.repo.owner.login==github_organisation:
+                    if pr.head.repo.owner.login==github_organisation or pr.head.repo.owner.login==github_user:
                         pyc_p.debug_print('Pull request is from branch local to repo')
                     else:
                         pyc_p.debug_print('Pull request is from branch of forked repo')

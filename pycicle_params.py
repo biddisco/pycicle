@@ -18,7 +18,7 @@ class PycicleParams:
     keys = ['PYCICLE_PROJECT_NAME',
             'PYCICLE_GITHUB_PROJECT_NAME',
             'PYCICLE_GITHUB_ORGANISATION',
-            'PYCICLE_GITHUB_USER_NAME',
+            'PYCICLE_GITHUB_USER_LOGIN',
             'PYCICLE_PR',
             'PYCICLE_BRANCH',
             'PYCICLE_BASE',
