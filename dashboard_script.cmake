@@ -83,7 +83,7 @@ set(CTEST_GIT_COMMAND "${GIT_EXECUTABLE}")
 # full checkout
 #######################################################################
 set (make_repo_copy_ "")
-#if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
+if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
   message("Configuring src repo copy from local repo cache")
   set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY}")
   if (NOT EXISTS "${PYCICLE_LOCAL_GIT_COPY}/.git")
@@ -95,7 +95,7 @@ set (make_repo_copy_ "")
     endif(DEFINED PYCICLE_GITHUB_ORGANISATION)
   endif()
   message("${make_repo_copy_}")
-#endif()
+endif()
 
 #####################################################################
 # if this is a PR to be merged with base for testing
