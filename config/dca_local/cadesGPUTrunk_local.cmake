@@ -122,7 +122,7 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #PBS -W group_list=cades-ccsd
 #PBS -l qos=std
 #PBS -l naccesspolicy=singlejob
-
+#PBS -q gpu_p100
 # ---------------------
 # unload or load modules that differ from the defaults on the system
 # ---------------------
