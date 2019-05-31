@@ -129,7 +129,7 @@ def get_command_line_args():
     machine = args.machines[0]
     build_type = args.build_type
     if args.config_path == '...':
-        args.config_path = './config/' + args.project_name
+        args.config_path = './config/'
     print('-' * 30)
     print('pycicle: project     :', args.project)
     print('pycicle: debug       :',
