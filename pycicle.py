@@ -62,7 +62,13 @@ def get_command_line_args():
     # force rebuild mode
     #----------------------------------------------
     parser.add_argument('-f', '--force', dest='force', action='store_true',
-                        default=False, help="Force rebuild of active PRs on next check")
+                        help="Force rebuild of active PRs on next check")
+
+    #----------------------------------------------
+    # basic access control
+    #----------------------------------------------
+    parser.add_argument('-a', '--access-control', dest='access_control', action='store_true',
+                        help="On PRs whose last commit was authored by a org member or the user themselves will be built and tested.")
 
     #----------------------------------------------
     # set default path for pycicle work dir
@@ -134,8 +140,9 @@ def get_command_line_args():
     print('pycicle: project     :', args.project)
     print('pycicle: debug       :',
           'enabled (no build trigger commands will be sent)' if args.debug else 'disabled')
-    print('pycicle: scrape-only :', 'enabled' if args.scrape_only else 'disabled')
-    print('pycicle: force       :', 'enabled' if args.force else 'disabled')
+    print('pycicle: scrape-only :', ('enabled' if args.scrape_only else 'disabled'))
+    print('pycicle: force       :', ('enabled' if args.force else 'disabled'))
+    print('pycicle: access_control :', args.access_control )
     print('pycicle: config_path  :', args.config_path)
     print('pycicle: path        :', args.pycicle_dir)
     print('pycicle: token       :', args.user_token)
@@ -616,7 +623,7 @@ if __name__ == "__main__":
                     pyc_p.debug_print(pr)
                     pyc_p.debug_print('Repo to merge from   :', pr.head.repo.owner.login)
                     pyc_p.debug_print('Branch to merge from :', pr.head.ref)
-                    if pr.head.repo.owner.login==github_organisation or pr.head.repo.owner.login==github_user:
+                    if pr.head.repo.owner.login==github_organisation:
                         pyc_p.debug_print('Pull request is from branch local to repo')
                     else:
                         pyc_p.debug_print('Pull request is from branch of forked repo')
@@ -640,19 +647,25 @@ if __name__ == "__main__":
                     continue
                 #
                 if not args.scrape_only:
-                    #minimal security, only if last commit by group members is it updated or built.
+                    #minimal security, only if last commit by org members or owner is it updated or built.   
                     commit_author = last_pr_commit.author
-                    if org:
-                        if org.has_in_members(commit_author):
-                            update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
-                            if update:
-                                choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
+                    update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
+                    if args.access_control:
+                        if org:
+                            if org.has_in_members(commit_author):
+                                if update:
+                                    choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
+                            else:
+                                print("{} is not a member of the organisation, PR will not be built.".format(commit_author.login))
+                        else:
+                            permission = repo.get_collaborator_permission(commit_author)
+                            if 'push' in permission:
+                                if update:
+                                    choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
+                            else:
+                                print("{} does not have push access, PR will not be built.".format(commit_author.login))
                     else:
-                        user = git.get_user();
-                        if user.login == commit_author.login:
-                            update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
-                            if update:
-                                choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
+                        choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
 
             print("The Open PRs:")
             print(pr_list)
