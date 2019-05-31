@@ -49,10 +49,10 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
     spack load gcc/egooyqw
     spack load git@2.12.1
     spack load fftw/kpdartc
-    spack load cmake/q76ndqk
+    spack load openssl@1.0.2o%gcc@5.3.0
+    spack load cmake@3.11.3%gcc@5.3.0
     spack load mpich/6zgajlw
     spack load hdf5/4gmsnjn
-    spack load openssl@1.1.1b%gcc@6.50
     module load cuda/9.2
     module load magma/ndhxaft
     #
