@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 message("Project name is  " ${PYCICLE_PROJECT_NAME})
 message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
-message("Github user name is    " ${PYCICLE_GITHUB_USER_NAME})
+message("Github user login is    " ${PYCICLE_GITHUB_USER_LOGIN})
 message("Pull request is  " ${PYCICLE_PR})
 message("PR-Branchname is " ${PYCICLE_BRANCH})
 message("base branch is " ${PYCICLE_BASE})
@@ -22,7 +22,7 @@ message("Random string is " ${PYCICLE_RANDOM})
 message("COMPILER is      " ${PYCICLE_COMPILER_TYPE})
 message("BOOST is         " ${PYCICLE_BOOST})
 message("Build type is    " ${PYCICLE_BUILD_TYPE})
-message( WARNING, "${PYCICLE_CONFIG_PATH}/${PYCICLE_HOST}.cmake")
+message("Using config: ${PYCICLE_CONFIG_PATH}/${PYCICLE_HOST}.cmake")
 #######################################################################
 # Load machine specific settings
 #######################################################################
@@ -43,7 +43,7 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "-DPYCICLE_CONFIG_PATH=${PYCICLE_CONFIG_PATH} "
   "-DPYCICLE_GITHUB_PROJECT_NAME=${PYCICLE_GITHUB_PROJECT_NAME} "
   "-DPYCICLE_GITHUB_ORGANISATION=${PYCICLE_GITHUB_ORGANISATION} "
-  "-DPYCICLE_GITHUB_USER_NAME=${PYCICLE_GITHUB_USER_NAME} "
+  "-DPYCICLE_GITHUB_USER_LOGIN=${PYCICLE_GITHUB_USER_LOGIN} "
   "-DPYCICLE_PR=${PYCICLE_PR} "
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
   "-DPYCICLE_COMPILER_TYPE=${PYCICLE_COMPILER_TYPE} "

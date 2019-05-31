@@ -11,6 +11,7 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 message("Project name is  " ${PYCICLE_PROJECT_NAME})
 message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
+message("Github user login is    " ${PYCICLE_GITHUB_USER_LOGIN})
 message("Pull request is  " ${PYCICLE_PR})
 message("PR-Branchname is " ${PYCICLE_BRANCH})
 message("base branch is " ${PYCICLE_BASE})
@@ -24,7 +25,7 @@ message("Build type is    " ${PYCICLE_BUILD_TYPE})
 #######################################################################
 # Load machine specific settings
 #######################################################################
-include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
+include(${PYCICLE_CONFIG_PATH}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
 # Generate a slurm job script and launch it
@@ -38,6 +39,7 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "-DPYCICLE_PROJECT_NAME=${PYCICLE_PROJECT_NAME} "
   "-DPYCICLE_GITHUB_PROJECT_NAME=${PYCICLE_GITHUB_PROJECT_NAME} "
   "-DPYCICLE_GITHUB_ORGANISATION=${PYCICLE_GITHUB_ORGANISATION} "
+  "-DPYCICLE_GITHUB_USER_LOGIN=${PYCICLE_GITHUB_USER_LOGIN} "
   "-DPYCICLE_PR=${PYCICLE_PR} "
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
   "-DPYCICLE_COMPILER_TYPE=${PYCICLE_COMPILER_TYPE} "

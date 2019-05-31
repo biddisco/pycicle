@@ -54,7 +54,7 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
     spack load mpich/6zgajlw
     spack load hdf5/4gmsnjn
     module load cuda/9.2
-    module load magma/ndhxaft
+    spack load magma/ndhxaft
     #
     # use openmpi compiler wrappers to make MPI use easy
     export CC=mpicc
@@ -98,11 +98,11 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
     "\"-DCMAKE_BUILD_TYPE=Release\" "
     "\"-DDCA_WITH_THREADED_SOLVER:BOOL=ON\" "
     "\"-DDCA_WITH_MPI:BOOL=ON\" "
-    "\"-DDCA_WITH_TESTS_EXTENSIVE:BOOL=ON\" "
     "\"-DDCA_WITH_TESTS_FAST:BOOL=ON\" "
     "\"-DDCA_WITH_TESTS_PERFORMANCE:BOOL=ON\" "
     "\"-DTEST_RUNNER=mpirun\" "
-        "\"-DFFTW_INCLUDE_DIR=${FFTW_DIR}/include\" "
+    "\"-DMPIEXEC_PREFLAGS='-launcher fork -rmk pbs'\" "
+    "\"-DFFTW_INCLUDE_DIR=${FFTW_DIR}/include\" "
     "\"-DFFTW_LIBRARY=${FFTW_DIR}/lib/libfftw3.a\" "
     "\"-DHDF5_ROOT=${HDF5_DIR}\" "
     "\"-DMPIEXEC_NUMPROC_FLAG=-np\" "
@@ -118,7 +118,6 @@ string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
 #######################################################################
 set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #PBS -S /bin/bash
-#PBS -m be
 #PBS -N DCA-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
 #PBS -l nodes=1:ppn=36:gpu_p100
 #PBS -l walltime=02:00:00
