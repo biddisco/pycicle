@@ -121,13 +121,15 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
     COMMAND bash "-c" "-e" "${make_repo_copy_};"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
-    ERROR_VARIABLE  output
+    ERROR_VARIABLE  error
     RESULT_VARIABLE failed
   )
   if ( failed EQUAL 1 )
     MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
-      "Could not copy local repo. "
-      "Is your local repo specified properly?" )
+      "Could not copy local repo."
+      "Is your local repo specified properly?"
+      "Output is ${output}"
+      "Error is ${error}")
   endif ( failed EQUAL 1 )
 
   execute_process(
@@ -136,11 +138,13 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
                       ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
-    ERROR_VARIABLE  output
+    ERROR_VARIABLE  error
     RESULT_VARIABLE failed
   )
   if ( failed EQUAL 1 )
-    MESSAGE( "First time for ${GIT_BRANCH} update?" )
+    MESSAGE( "First time for ${GIT_BRANCH} update? \n"
+        "Output is ${output} \n"
+        "Error is ${error}")
   endif ( failed EQUAL 1 )
 
   MESSAGE("${make_repo_copy_}")
@@ -157,14 +161,14 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
                        ${CTEST_GIT_COMMAND} clean -fd;"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
-    ERROR_VARIABLE  output
+    ERROR_VARIABLE  error
     RESULT_VARIABLE failed
   )
   if ( failed EQUAL 1 )
     MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
-      "${OUTPUT_VARIABLE}"
-      "${ERROR_VARIABLE}"
-      "Can you access github from the build location?" )
+        "Can you access github from the build location?"
+        "Output is ${output}"
+        "Error is ${error}")
   endif ( failed EQUAL 1 )
 
  #${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
@@ -184,7 +188,7 @@ else()
                        ${CTEST_GIT_COMMAND} reset --hard;"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
-    ERROR_VARIABLE  output
+    ERROR_VARIABLE  error
     RESULT_VARIABLE failed
   )
   if ( failed EQUAL 1 )
@@ -195,9 +199,10 @@ else()
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
                        ${CTEST_GIT_COMMAND} fetch origin;
                        ${CTEST_GIT_COMMAND} reset --hard;"
-      "${OUTPUT_VARIABLE}"
-      "${ERROR_VARIABLE}"
-      "Can you access github from the build location?" )
+      "Typical reasons : no access to github from the build location"
+      "                  Some dirty files in the source tree prevents merge"
+      "Output is ${output}"
+      "Error is ${error}")
   endif ( failed EQUAL 1 )
 endif()
 
@@ -307,6 +312,6 @@ execute_process(
     } > ${PYCICLE_BINARY_DIRECTORY}/pycicle-TAG.txt"
   WORKING_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}"
   OUTPUT_VARIABLE output
-  ERROR_VARIABLE  output
+  ERROR_VARIABLE  error
   RESULT_VARIABLE failed
 )
