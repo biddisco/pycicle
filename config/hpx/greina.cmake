@@ -63,6 +63,11 @@ set(LDFLAGS    "-dynamic")
 set(LDCXXFLAGS "${LDFLAGS}")
 
 #######################################################################
+# Machine specific options
+#######################################################################
+PYCICLE_CMAKE_OPTION(HPX_WITH_PARCELPORT_MPI "OFF[]")
+
+#######################################################################
 # The string that is used to drive cmake config step
 #######################################################################
 string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}

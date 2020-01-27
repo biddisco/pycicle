@@ -282,6 +282,7 @@ def get_options_from_file(config_file, options, commandline_options) :
                 name = p1[0][0]
                 pyc_p.debug_print('Option found', name, '(values)', p1[0][1])
                 # shlex split options in case strings have spaces
+<<<<<<< Updated upstream
                 options[name] = option_type(name, shlex.split(p1[0][1]))
         elif n:
             pyc_p.debug_print('-'*30)
@@ -317,6 +318,67 @@ def get_options_from_file(config_file, options, commandline_options) :
         # see if commandline options override the value
         if name in options:
             options[name].can_override(commandline_options)
+=======
+                options[p[0][0]] = shlex.split(p[0][1])
+                if p[0][0] in commandline_options:
+                    pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]][0]))
+                    options[p[0][0]] = commandline_options[p[0][0]]
+                options_symbols = []
+                for opt in options[p[0][0]]:
+                    options_symbols += [get_option_symbol(opt)]
+                # replace original choice strings with parsed [opt,sym] pairs
+                options[p[0][0]] = options_symbols
+
+    return options
+
+def get_boolean_options_file(config_file, reg_string, commandline_options) :
+    pyc_p.debug_print('Looking for options in', config_file)
+    f = open(config_file)
+
+    regex = reg_string + '\((.+?)\)'
+    options = {}
+    for line in f:
+        m = re.findall(regex, line)
+        if m:
+            p = re.findall('([^ ]+) +"(.+)"', m[0])
+            if p:
+                pyc_p.debug_print('Boolean found {:30s} Shortcut {:s} (values) ON/OFF'.format(p[0][0], p[0][1]))
+                # shlex in case string has spaces
+                options[p[0][0]] = [[str('ON'),p[0][1]], [str('OFF'),str('')]]
+                if p[0][0] in commandline_options:
+                    pyc_p.debug_print('command-line {:30s} (override) {:s} '.format(p[0][0], commandline_options[p[0][0]][0]))
+                    options[p[0][0]] = [get_option_symbol(commandline_options[p[0][0]])]
+    return options
+
+#--------------------------------------------------------------------------
+# find all the dependent options that are defined in the file
+# the return from this is a Dictionary of options,
+# key = option name, value = list of choices
+#--------------------------------------------------------------------------
+def get_dependent_options_file(config_file, reg_string, commandline_options) :
+    pyc_p.debug_print('Looking for dependent options in', config_file)
+    f = open(config_file)
+
+    regex = reg_string + '*\((.+?)\)'
+    options = []
+    for line in f:
+        m = re.findall(regex, line)
+        if m:
+            p = re.findall('([^ ]+) +"([^"]+)" +(.+)', m[0])
+            if p:
+                opt = p[0][0].strip('"')
+                val = p[0][1].strip('"') if not ' ' in p[0][1] else p[0][1].strip()
+                sub = p[0][2].strip()
+                pyc_p.debug_print('Dependent option found {:30s} (value) {:15s} (sub-option) {:s}'.format(opt, val, sub))
+                subopt = {}
+                sub_list = shlex.split(sub)
+                subopt[val] = sub_list
+                if sub_list[0] in commandline_options:
+                    new_list = [sub_list[0], commandline_options[sub_list[0]]]
+                    pyc_p.debug_print('command-line overrides {:30s} (value) {:15s}'.format(new_list[0], new_list[1]))
+                    subopt[val] = new_list
+                options.append([opt, subopt])
+>>>>>>> Stashed changes
     return options
 
 #--------------------------------------------------------------------------
@@ -410,6 +472,14 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
     pyc_p.debug_print('-'*30)
     pyc_p.debug_print('launching build', branch_id, branch_name, job_type)
     pyc_p.debug_print('-'*30)
+<<<<<<< Updated upstream
+=======
+    pyc_p.debug_print(cmake_options)
+    pyc_p.debug_print('-'*30)
+
+    options_hash = hash_options_string(cmake_options)
+    print('Options hash :', options_hash)
+>>>>>>> Stashed changes
 
     # This is a clumsy way to do this.
     # implies local default, should be explicit somewhere

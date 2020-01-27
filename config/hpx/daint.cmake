@@ -62,9 +62,9 @@ if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
   #
   set(CFLAGS           "-fPIC")
-  set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math")
-  set(LDFLAGS          "-latomic")
-  set(LDCXXFLAGS       "${LDFLAGS}")
+  set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math -std=c++14")
+  set(LDFLAGS          "-dynamic")
+  set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
 
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
@@ -88,7 +88,7 @@ elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
   #
   set(PYCICLE_BUILD_STAMP "clang-6.0.0-B${BOOST_VER}-${PYCICLE_CDASH_STRING}")
   #
-  set(OTF2_VER         "2.0")
+  set(OTF2_VER         "2.1")
   #
   set(INSTALL_ROOT     "/users/biddisco/apps/daint/clang")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${BOOST_VER}")
