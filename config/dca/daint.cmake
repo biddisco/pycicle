@@ -18,19 +18,19 @@ set(PYCICLE_BUILD_TYPE "Release")
 set(PYCICLE_COMPILER_TYPE "gcc" )
 
 # These versions are ok for gcc or clang
-set(BOOST_VER            "1.65.0")
+set(BOOST_VER            "1.68.0")
 set(HWLOC_VER            "1.11.7")
 set(JEMALLOC_VER         "5.0.1")
 set(OTF2_VER             "2.0")
 set(PAPI_VER             "5.5.1")
-set(BOOST_SUFFIX         "1_65_0")
-set(CMAKE_VER            "3.9.1")
+set(BOOST_SUFFIX         "1_68_0")
+set(CMAKE_VER            "3.14.5")
 
 if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
-  set(GCC_VER             "5.3.0")
+  set(GCC_VER             "7.3.0")
   set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-Boost-${BOOST_VER}-${PYCICLE_BUILD_TYPE}")
   #
-  set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
+  set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/DCA")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
   #
   set(CFLAGS           "-fPIC")
@@ -113,8 +113,8 @@ module load   git
 module load   CMake/${CMAKE_VER}
 module unload gcc
 module load   gcc/${GCC_VER}
-module load   cudatoolkit/9.0.103_3.7-6.0.4.1_2.1__g72b395b
-module load   magma/2.2.0-CrayGNU-17.08-cuda-8.0
+module load   cudatoolkit
+module load   magma
 module load   fftw
 module load   intel
 module load   cray-hdf5
