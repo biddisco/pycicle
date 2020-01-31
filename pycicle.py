@@ -171,10 +171,10 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
         pyc_p is a global PycicleParams object
         ToDo: make pycicle runner into a class to get control of variable scope lifecycle
     """
-    remote_ssh  = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
-    remote_path = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
-    remote_http = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
-    job_type    = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_JOB_LAUNCH')
+    remote_ssh   = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_MACHINE')
+    pycicle_path = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_ROOT')
+    remote_http  = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_HTTP')
+    job_type     = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_JOB_LAUNCH')
     pyc_p.debug_print('launching build', compiler_type, branch_id, branch_name, job_type)
     # we are not yet using these as 'options'
     boost = 'x.xx.x'
@@ -201,11 +201,11 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
         cmd1.append('ctest')
         cmd1 = ' '.join(cmd1)
         cmd = ['ssh', remote_ssh, cmd1, '-S',
-               remote_path  + '/pycicle/' + script ]
+               pycicle_path  + '/pycicle/' + script ]
     else:
         # if we're local we assume the current context has the module setup
         pyc_p.debug_print( "Local build working in:", os.getcwd())
-        cmd = ['ctest','-S', "./pycicle/" + script ] #'./pycicle/'
+        cmd = ['ctest','-S', pycicle_path  + '/pycicle/' + script  ] #'./pycicle/'
 
     build_type = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
 
@@ -214,7 +214,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
     if github_userlogin:
        cmd = cmd + [ '-DPYCICLE_GITHUB_USER_LOGIN=' + github_userlogin ]
 
-    cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
+    cmd = cmd + [ '-DPYCICLE_ROOT='                + pycicle_path,
                   '-DPYCICLE_HOST='                + nickname,
                   '-DPYCICLE_PROJECT_NAME='        + args.project,
                   '-DPYCICLE_CONFIG_PATH='          + pyc_p.config_path,
