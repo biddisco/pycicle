@@ -191,6 +191,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
         pyc_p.debug_print("direct build:", args.project)
         script = 'dashboard_script.cmake'
 
+    config_path = 'unset_value_for_testing_only'
     if 'local' not in remote_ssh:
         # We need to setup the environment on the remote machine,
         # often even cmake comes from a module or the like.
@@ -202,10 +203,13 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
         cmd1 = ' '.join(cmd1)
         cmd = ['ssh', remote_ssh, cmd1, '-S',
                pycicle_path  + '/pycicle/' + script ]
+        print("HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE ")
+        config_path = pycicle_path + pyc_p.remote_config_path
     else:
         # if we're local we assume the current context has the module setup
         pyc_p.debug_print( "Local build working in:", os.getcwd())
         cmd = ['ctest','-S', pycicle_path  + '/pycicle/' + script  ] #'./pycicle/'
+        config_path = pyc_p.config_path
 
     build_type = pyc_p.get_setting_for_machine(args.project, nickname, 'PYCICLE_BUILD_TYPE')
 
@@ -217,7 +221,7 @@ def launch_build(nickname, compiler_type, branch_id, branch_name) :
     cmd = cmd + [ '-DPYCICLE_ROOT='                + pycicle_path,
                   '-DPYCICLE_HOST='                + nickname,
                   '-DPYCICLE_PROJECT_NAME='        + args.project,
-                  '-DPYCICLE_CONFIG_PATH='          + pyc_p.config_path,
+                  '-DPYCICLE_CONFIG_PATH='         + config_path,
                   '-DPYCICLE_GITHUB_PROJECT_NAME=' + github_reponame,
                   '-DPYCICLE_PR='                  + branch_id,
                   '-DPYCICLE_BRANCH='              + branch_name,

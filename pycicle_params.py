@@ -50,10 +50,11 @@ class PycicleParams:
             'PYCICLE_BUILD_STAMP',
             'PYCICLE_COMPILER_SETUP']
     config_path = None
+    remote_config_path = None
 
     def __init__(self, args, debug_print=PycicleParamsHelper.no_op):
         """Setup a pycicle params object using args
-        config_path: where the config files are if not in pycicle/config
+        config_path: where the local config files are if not in pycicle/config
         debug_print: function reference used for debug_print calls
         """
         self.debug_print = debug_print
@@ -70,7 +71,10 @@ class PycicleParams:
             current_path = os.path.dirname(os.path.realpath(__file__))
             self.config_path = os.path.join(current_path, config_path, args.project)
             self.debug_print("pycicle expects to "
-                             "find configs in {}".format(self.config_path))
+                "find local configs in {}".format(self.config_path))
+            self.remote_config_path = os.path.join('/pycicle/config/' , args.project)
+            self.debug_print("pycicle expects to "
+                "remote configs in {}".format(self.remote_config_path))
 
     def get_setting_for_machine(self, project, machine, setting):
         if setting not in self.keys:
