@@ -9,26 +9,28 @@ cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 # For debugging this script
 #######################################################################
 message("In ${CMAKE_CURRENT_LIST_FILE}")
-message("Project name is  " ${PYCICLE_PROJECT_NAME})
-message("Github name is   " ${PYCICLE_GITHUB_PROJECT_NAME})
-message("Github org is    " ${PYCICLE_GITHUB_ORGANISATION})
-message("Pull request is  " ${PYCICLE_PR})
-message("PR-Branchname is " ${PYCICLE_BRANCH})
-message("Base branch is   " ${PYCICLE_BASE})
-message("Machine name is  " ${PYCICLE_HOST})
-message("PYCICLE_ROOT is  " ${PYCICLE_ROOT})
-message("COMPILER type is " ${PYCICLE_COMPILER_TYPE})
-message("BOOST is         " ${PYCICLE_BOOST})
-message("Build type is    " ${PYCICLE_BUILD_TYPE})
+message("Project name is        : " ${PYCICLE_PROJECT_NAME})
+message("Github name is         : " ${PYCICLE_GITHUB_PROJECT_NAME})
+message("Github org is          : " ${PYCICLE_GITHUB_ORGANISATION})
+message("Github user name is    : " ${PYCICLE_GITHUB_USER_LOGIN})
+message("Pull request is        : " ${PYCICLE_PR})
+message("PR-Branchname is       : " ${PYCICLE_BRANCH})
+message("Base branch is         : " ${PYCICLE_BASE})
+message("Machine name is        : " ${PYCICLE_HOST})
+message("PYCICLE_ROOT is        : " ${PYCICLE_ROOT})
+message("PYCICLE_CONFIG_PATH is : " ${PYCICLE_CONFIG_PATH})
+message("COMPILER type is       : " ${PYCICLE_COMPILER_TYPE})
+message("BOOST is               : " ${PYCICLE_BOOST})
+message("Build type is          : " ${PYCICLE_BUILD_TYPE})
 
 #######################################################################
 # Load machine specific settings
 # This is where the main machine config file is read in and params set
 #######################################################################
 message("${CMAKE_CURRENT_LIST_DIR}")
-message("getting project settings ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake")
-include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_PROJECT_NAME}.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
+message("getting project settings ${PYCICLE_CONFIG_PATH}/${PYCICLE_PROJECT_NAME}.cmake")
+include(${PYCICLE_CONFIG_PATH}/${PYCICLE_PROJECT_NAME}.cmake)
+include(${PYCICLE_CONFIG_PATH}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
 # a function that calls ctest_submit - only used to make
@@ -83,10 +85,14 @@ set(CTEST_GIT_COMMAND "${GIT_EXECUTABLE}")
 set (make_repo_copy_ "")
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
   message("Configuring src repo copy from local repo cache")
-  set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY};")
+  set (make_repo_copy_ "cp -r ${PYCICLE_LOCAL_GIT_COPY} ${CTEST_SOURCE_DIRECTORY}")
   if (NOT EXISTS "${PYCICLE_LOCAL_GIT_COPY}/.git")
     message("Local repo cache missing, using full clone of src repo")
-    set (make_repo_copy_ "git clone git@github.com:${PYCICLE_GITHUB_ORGANISATION}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
+    if (PYCICLE_GITHUB_ORGANISATION)
+      set (make_repo_copy_ "git clone git@github.com:${PYCICLE_GITHUB_ORGANISATION}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
+    elseif (PYCICLE_GITHUB_USER_LOGIN)
+      set (make_repo_copy_ "git clone git@github.com:${PYCICLE_GITHUB_USER_NAME}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
+    endif(DEFINED PYCICLE_GITHUB_ORGANISATION)
   endif()
   message("${make_repo_copy_}")
 endif()
@@ -112,16 +118,18 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
 
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
   execute_process(
-    COMMAND bash "-c" "-e" "${make_repo_copy_}"
+    COMMAND bash "-c" "-e" "${make_repo_copy_};"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
-    ERROR_VARIABLE  output
+    ERROR_VARIABLE  error
     RESULT_VARIABLE failed
   )
   if ( failed EQUAL 1 )
     MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
-      "Could not copy local repo. "
-      "Is your local repo specified properly?" )
+      "Could not copy local repo."
+      "Is your local repo specified properly?"
+      "Output is ${output}"
+      "Error is ${error}")
   endif ( failed EQUAL 1 )
 
   execute_process(
@@ -130,15 +138,19 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
                       ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH};"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
-    ERROR_VARIABLE  output
+    ERROR_VARIABLE  error
     RESULT_VARIABLE failed
   )
   if ( failed EQUAL 1 )
-    MESSAGE( "First time for ${GIT_BRANCH} update?" )
+    MESSAGE( "First time for ${GIT_BRANCH} update? \n"
+        "Output is ${output} \n"
+        "Error is ${error}")
   endif ( failed EQUAL 1 )
 
+  MESSAGE("${make_repo_copy_}")
   execute_process(
-    COMMAND bash "-c" "-e" "${make_repo_copy_}
+    COMMAND bash "-c" "-e"
+                       "${make_repo_copy_};
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
                        ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BASE};
@@ -149,12 +161,14 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
                        ${CTEST_GIT_COMMAND} clean -fd;"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
-    ERROR_VARIABLE  output
+    ERROR_VARIABLE  error
     RESULT_VARIABLE failed
   )
   if ( failed EQUAL 1 )
     MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
-      "Can you access github from the build location?" )
+        "Can you access github from the build location?"
+        "Output is ${output}"
+        "Error is ${error}")
   endif ( failed EQUAL 1 )
 
  #${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
@@ -164,20 +178,31 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
 else()
   set(CTEST_SUBMISSION_TRACK "${PYCICLE_BASE}")
   set(WORK_DIR "${PYCICLE_PR_ROOT}")
+  MESSAGE("just before command\n ${make_repo_copy_}")
   execute_process(
-    COMMAND bash "-c" "-e" "${make_repo_copy_}
+    COMMAND bash "-c" "-e"
+                      "${make_repo_copy_};
                        cd ${CTEST_SOURCE_DIRECTORY};
                        ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
                        ${CTEST_GIT_COMMAND} fetch origin;
                        ${CTEST_GIT_COMMAND} reset --hard;"
     WORKING_DIRECTORY "${WORK_DIR}"
     OUTPUT_VARIABLE output
-    ERROR_VARIABLE  output
+    ERROR_VARIABLE  error
     RESULT_VARIABLE failed
   )
   if ( failed EQUAL 1 )
     MESSAGE( FATAL_ERROR "Update failed in ${CMAKE_CURRENT_LIST_FILE}. "
-      "Can you access github from the build location?" )
+      "Command:"
+      "${make_repo_copy_};
+                       cd ${CTEST_SOURCE_DIRECTORY};
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE};
+                       ${CTEST_GIT_COMMAND} fetch origin;
+                       ${CTEST_GIT_COMMAND} reset --hard;"
+      "Typical reasons : no access to github from the build location"
+      "                  Some dirty files in the source tree prevents merge"
+      "Output is ${output}"
+      "Error is ${error}")
   endif ( failed EQUAL 1 )
 endif()
 
@@ -287,6 +312,6 @@ execute_process(
     } > ${PYCICLE_BINARY_DIRECTORY}/pycicle-TAG.txt"
   WORKING_DIRECTORY "${PYCICLE_BINARY_DIRECTORY}"
   OUTPUT_VARIABLE output
-  ERROR_VARIABLE  output
+  ERROR_VARIABLE  error
   RESULT_VARIABLE failed
 )
