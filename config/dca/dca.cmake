@@ -13,7 +13,7 @@ set(PYCICLE_GITHUB_BASE_BRANCH   "master")
 # CDash server settings
 set(PYCICLE_CDASH_PROJECT_NAME   "DCA")
 set(PYCICLE_CDASH_SERVER_NAME    "cdash.cscs.ch")
-set(PYCICLE_CDASH_HTTP_PATH      "")
+#set(PYCICLE_CDASH_HTTP_PATH      "")
 
 # ----------------------------------------------
 # project specific target to build before running tests

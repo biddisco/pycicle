@@ -25,7 +25,6 @@ execute_process(COMMAND gcc -dumpversion OUTPUT_VARIABLE GCC_VERSION)
 string(STRIP "${GCC_VERSION}" GCC_VERSION)
 message("GCC version found ${GCC_VERSION}")
 #
-set(CTEST_SITE            "Arch linux(jblaptop)")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT    "500")
 set(BUILD_PARALLELISM     "4")
@@ -34,10 +33,25 @@ set(PYCICLE_BUILD_STAMP   "gcc-${GCC_VERSION}-${PYCICLE_CDASH_STRING}")
 # =========================================================
 # override project options for this machine configuration
 # =========================================================
-PYCICLE_CMAKE_OPTION(CMAKE_BUILD_TYPE "Release[R]")
-PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" MPI_C_COMPILER "/home/biddisco/apps/mpich/bin/mpicc[]")
-PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER "/home/biddisco/apps/mpich/bin/mpiexec[]")
+PYCICLE_CMAKE_OPTION(CTEST_SITE  "pop-os-jb[]")
+PYCICLE_CMAKE_OPTION(CMAKE_BUILD_TYPE "Debug[D]")
+PYCICLE_CMAKE_DEPENDENT_OPTION(CMAKE_BUILD_TYPE "Debug" HPX_DIR "/home/biddisco/build/hpx-debug/lib/cmake/HPX[]")
 PYCICLE_CMAKE_OPTION(DCA_WITH_CUDA "ON[Cuda]")
+PYCICLE_CMAKE_OPTION(CUDA_HOST_COMPILER "/usr/bin/gcc-8[]")
+
+PYCICLE_CMAKE_OPTION(DCA_WITH_MPI "ON[mpi]")
+PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" MPI_C_COMPILER "/home/biddisco/apps/mpich/3.3.1/bin/mpicc[]")
+PYCICLE_CMAKE_DEPENDENT_OPTION(DCA_WITH_MPI "ON" TEST_RUNNER    "/home/biddisco/apps/mpich/3.3.1/bin/mpiexec[]")
+
+PYCICLE_CMAKE_OPTION(MAGMA_DIR          "/home/biddisco/apps/magma[]")
+PYCICLE_CMAKE_OPTION(FFTW_ROOT          "/home/biddisco/apps/fftw[]")
+PYCICLE_CMAKE_OPTION(HDF5_ROOT          "/home/biddisco/apps/hdf5/1.8.12[]")
+
+PYCICLE_CMAKE_OPTION(DCA_WITH_TESTS_FAST        "ON[]")
+PYCICLE_CMAKE_OPTION(DCA_WITH_TESTS_PERFORMANCE "OFF[]")
+PYCICLE_CMAKE_OPTION(DCA_WITH_TESTS_EXTENSIVE   "OFF[]")
+PYCICLE_CMAKE_OPTION(DCA_WITH_TESTS_VALIDATION  "OFF[]")
+PYCICLE_CMAKE_OPTION(DCA_WITH_TESTS_STOCHASTIC  "OFF[]")
 
 #######################################################################
 # These are settings you can use to define anything useful
@@ -46,9 +60,9 @@ PYCICLE_CMAKE_OPTION(DCA_WITH_CUDA "ON[Cuda]")
 set(INSTALL_ROOT      "/home/biddisco/apps")
 #
 set(CFLAGS            "-fPIC")
-set(CXXFLAGS          "-fPIC -march native-mtune native-ffast-math-std c++14")
+set(CXXFLAGS          "-fPIC -march=native -mtune=native -ffast-math -std=c++14")
 set(LDFLAGS           "")
-set(LDCXXFLAGS        "${LDFLAGS} -std c++14")
+set(LDCXXFLAGS        "${LDFLAGS}")
 set(BUILD_PARALLELISM "4")
 
 #######################################################################
@@ -57,11 +71,14 @@ set(BUILD_PARALLELISM "4")
 #######################################################################
 
 string(CONCAT CTEST_BUILD_OPTIONS ${CTEST_BUILD_OPTIONS}
-    " -DMAGMA_DIR:PATH=/home/biddisco/apps/magma "
-    " -DFFTW_INCLUDE_DIR:PATH=/usr/include "
-    " -DFFTW_LIBRARY:FILEPATH=/usr/lib/libfftw3.so "
-    " \"-DLAPACK_LIBRARIES=/opt/intel/mkl/lib/intel64/libmkl_core.so;/opt/intel/mkl/lib/intel64/libmkl_sequential.so;/opt/intel/mkl/lib/intel64/libmkl_rt.so\""
-    " -DCUDA_HOST_COMPILER:FILEPATH=/usr/bin/gcc-6 "
+    "\"-DCMAKE_CXX_FLAGS=${CXXFLAGS}\" "
+    "\"-DCMAKE_C_FLAGS=${CFLAGS}\" "
+)
+#    " -DMAGMA_DIR:PATH=/home/biddisco/apps/magma "
+#    " -DFFTW_INCLUDE_DIR:PATH=/usr/include "
+#    " -DFFTW_LIBRARY:FILEPATH=/usr/lib/libfftw3.so "
+#    " \"-DLAPACK_LIBRARIES=/opt/intel/mkl/lib/intel64/libmkl_core.so;/opt/intel/mkl/lib/intel64/libmkl_sequential.so;/opt/intel/mkl/lib/intel64/libmkl_rt.so\""
+#    " -DCUDA_HOST_COMPILER:FILEPATH=/usr/bin/gcc-8 "
 #    " -DDCA_THREADING_LIBRARY:STRING=STDTHREAD "
 #    " -DHPX_DIR=$HOME/build/hpx-debug/lib/cmake/HPX "
-)
+#)

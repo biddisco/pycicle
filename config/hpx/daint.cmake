@@ -9,7 +9,7 @@
 # the name used to ssh into the machine
 set(PYCICLE_MACHINE "daint.cscs.ch")
 # the root location of the build/test tree on the machine
-set(PYCICLE_ROOT "/scratch/snx1600/biddisco/pycicle")
+set(PYCICLE_ROOT "/scratch/snx3000/biddisco/pycicle")
 # a flag that says if the machine can send http results to cdash
 set(PYCICLE_HTTP TRUE)
 # Method used to launch jobs "slurm", "pbs" or "direct" supported
@@ -21,6 +21,7 @@ set(PYCICLE_BUILDS_PER_PR "1")
 # Vars passed to CTest
 #######################################################################
 set(CTEST_SITE            "cray(daint)")
+set(SITE                  "${CTEST_SITE}")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_TEST_TIMEOUT    "240")
 set(BUILD_PARALLELISM     "16")
@@ -28,7 +29,8 @@ set(BUILD_PARALLELISM     "16")
 #######################################################################
 # Machine specific options
 #######################################################################
-PYCICLE_CMAKE_OPTION(PYCICLE_COMPILER_TYPE "gcc[]" "clang[]")
+PYCICLE_CMAKE_OPTION(PYCICLE_COMPILER_TYPE "gcc[]")
+#"clang[]")
 PYCICLE_CMAKE_DEPENDENT_OPTION(HPX_WITH_PARCELPORT_LIBFABRIC "ON" HPX_PARCELPORT_LIBFABRIC_PROVIDER "gni[LFg]")
 PYCICLE_CMAKE_OPTION(HPX_WITH_MAX_CPU_COUNT        "256[]")
 PYCICLE_CMAKE_OPTION(HPX_WITH_MORE_THAN_64_THREADS "ON[]")
@@ -47,37 +49,37 @@ PYCICLE_CMAKE_DEPENDENT_OPTION(PYCICLE_COMPILER_TYPE "clang" HPX_WITH_PARCELPORT
 # These versions are ok for gcc or clang
 set(BOOST_VER            "1.65.0")
 set(HWLOC_VER            "1.11.7")
-set(JEMALLOC_VER         "5.0.1")
-set(OTF2_VER             "2.0")
+set(JEMALLOC_VER         "5.1.0")
+set(OTF2_VER             "2.1.1")
 set(PAPI_VER             "5.5.1")
 set(BOOST_SUFFIX         "1_65_0")
-set(CMAKE_VER            "3.9.1")
+set(CMAKE_VER            "3.12.0")
 
 if (PYCICLE_COMPILER_TYPE MATCHES "gcc")
-  set(GCC_VER             "6.2.0")
+  set(GCC_VER             "7.3.0")
   set(PYCICLE_BUILD_STAMP "gcc-${GCC_VER}-B${BOOST_VER}-${PYCICLE_CDASH_STRING}")
   #
-  set(INSTALL_ROOT     "/apps/daint/UES/6.0.UP04/HPX")
+  set(INSTALL_ROOT     "/apps/daint/UES/biddisco/gcc/${GCC_VER}")
   set(BOOST_ROOT       "${INSTALL_ROOT}/boost/${GCC_VER}/${BOOST_VER}")
   #
   set(CFLAGS           "-fPIC")
-  set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math -std=c++14")
-  set(LDFLAGS          "-dynamic")
-  set(LDCXXFLAGS       "${LDFLAGS} -std=c++14")
+  set(CXXFLAGS         "-fPIC -march=native -mtune=native -ffast-math")
+  set(LDFLAGS          "-latomic")
+  set(LDCXXFLAGS       "${LDFLAGS}")
 
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
-    #
-    module load gcc/${GCC_VER}
-    #
-    # use Cray compiler wrappers to make MPI use easy
-    export  CC=/opt/cray/pe/craype/default/bin/cc
-    export CXX=/opt/cray/pe/craype/default/bin/CC
-    #
-    export CFLAGS=\"${CFLAGS}\"
-    export CXXFLAGS=\"${CXXFLAGS}\"
-    export LDFLAGS=\"${LDFLAGS}\"
-    export LDCXXFLAGS=\"${LDCXXFLAGS}\"
+#
+module load gcc/${GCC_VER}
+#
+# use Cray compiler wrappers to make MPI use easy
+export  CC=/opt/cray/pe/craype/default/bin/cc
+export CXX=/opt/cray/pe/craype/default/bin/CC
+#
+export CFLAGS=\"${CFLAGS}\"
+export CXXFLAGS=\"${CXXFLAGS}\"
+export LDFLAGS=\"${LDFLAGS}\"
+export LDCXXFLAGS=\"${LDCXXFLAGS}\"
   ")
 
 elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
@@ -99,21 +101,21 @@ elseif(PYCICLE_COMPILER_TYPE MATCHES "clang")
 
   # multiline string
   set(PYCICLE_COMPILER_SETUP "
-    #
-    export PATH=${CLANG_ROOT}/bin:$PATH
-    export LD_LIBRARY_PATH=${CLANG_ROOT}/lib:$LD_LIBRARY_PATH
-    export PATH=${CLANG_ROOT}/bin:$PATH
-    export LD_LIBRARY_PATH=${CLANG_ROOT}/lib:$LD_LIBRARY_PATH
-    #
-    export CFLAGS=\"${CFLAGS}\"
-    export CXXFLAGS=\"${CXXFLAGS}\"
-    export LDFLAGS=\"${LDFLAGS}\"
-    export LDCXXFLAGS=\"${LDCXXFLAGS}\"
-    #
-    export CC=${CLANG_ROOT}/bin/clang
-    export CXX=${CLANG_ROOT}/bin/clang++
-    export CPP=${CLANG_ROOT}/bin/clang-cpp
-    #
+#
+export PATH=${CLANG_ROOT}/bin:$PATH
+export LD_LIBRARY_PATH=${CLANG_ROOT}/lib:$LD_LIBRARY_PATH
+export PATH=${CLANG_ROOT}/bin:$PATH
+export LD_LIBRARY_PATH=${CLANG_ROOT}/lib:$LD_LIBRARY_PATH
+#
+export CFLAGS=\"${CFLAGS}\"
+export CXXFLAGS=\"${CXXFLAGS}\"
+export LDFLAGS=\"${LDFLAGS}\"
+export LDCXXFLAGS=\"${LDCXXFLAGS}\"
+#
+export CC=${CLANG_ROOT}/bin/clang
+export CXX=${CLANG_ROOT}/bin/clang++
+export CPP=${CLANG_ROOT}/bin/clang-cpp
+#
   ")
 
   string(CONCAT CTEST_BUILD_OPTIONS
@@ -158,25 +160,32 @@ endif()
 #######################################################################
 set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --job-name=hpx-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}
-#SBATCH --time=04:00:00
+#SBATCH --time=05:00:00
 #SBATCH --nodes=1
 #SBATCH --exclusive
 #SBATCH --constraint=mc
 #SBATCH --partition=normal
+#SBATCH --output=${PYCICLE_ROOT}/build/hpx-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}-%A.out
+
+export CRAYPE_LINK_TYPE=dynamic
 
 # ---------------------
 # unload or load modules that differ from the defaults on the system
 # ---------------------
-module load   slurm
-module load   git
-module load   CMake/${CMAKE_VER}
-module unload gcc
 
-#
+module load   daint-mc
+module switch PrgEnv-cray PrgEnv-gnu
+module switch gcc gcc/${GCC_VER}
+module load   CMake/${CMAKE_VER}
+
 # ---------------------
 # setup stuff that might differ between compilers
 # ---------------------
 ${PYCICLE_COMPILER_SETUP}
+
+echo =============================================
+module list
+echo =============================================
 
 # ---------------------
 # This is used by the hpx test runner
