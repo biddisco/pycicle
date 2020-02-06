@@ -6,6 +6,7 @@
 #--------------------------------------------------------------------------
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import sys
 import re
 
 class PycicleParamsHelper:
@@ -17,6 +18,7 @@ class PycicleParams:
     keys = ['PYCICLE_PROJECT_NAME',
             'PYCICLE_GITHUB_PROJECT_NAME',
             'PYCICLE_GITHUB_ORGANISATION',
+            'PYCICLE_GITHUB_USER_LOGIN',
             'PYCICLE_PR',
             'PYCICLE_BRANCH',
             'PYCICLE_BASE',
@@ -25,7 +27,8 @@ class PycicleParams:
             'PYCICLE_RANDOM',
             'PYCICLE_JOB_SCRIPT_TEMPLATE',
             'PYCICLE_SRC_ROOT',
-            'PYCICLE_BUILD_ROOT',
+            'PYCICLE_CONFIG_PATH',
+            'PYCICLE_USER_NAME',
             'PYCICLE_LOCAL_GIT_COPY',
             'PYCICLE_PR_ROOT',
             'PYCICLE_BINARY_DIRECTORY',
@@ -40,27 +43,37 @@ class PycicleParams:
             'PYCICLE_CDASH_SERVER_NAME',
             'PYCICLE_CDASH_PROJECT_NAME',
             'PYCICLE_CDASH_HTTP_PATH',
+            'PYCICLE_CDASH_DROP_METHOD',
             'PYCICLE_BUILD_STAMP',
             'PYCICLE_COMPILER_SETUP',
             'PYCICLE_CMAKE_OPTIONS',
             'PYCICLE_BUILDS_PER_PR']
     config_path = None
+    remote_config_path = None
 
-    def __init__(self, args, config_path=None,
-                 debug_print=PycicleParamsHelper.no_op):
+    def __init__(self, args, debug_print=PycicleParamsHelper.no_op):
         """Setup a pycicle params object using args
-        config_path: where the config files are if not in pycicle/config
+        config_path: where the local config files are if not in pycicle/config
         debug_print: function reference used for debug_print calls
         """
         self.debug_print = debug_print
 
-        if config_path:
+        # test for path relative to pycicle_params.py which we assume is in dir with pycicle.py
+        config_path = args.config_path
+        if config_path and not '.' in config_path[0]:
             self.config_path=config_path
+        elif not config_path:
+            raise DeprecationWarning("Pycicle now has the default config path set in args.\n"
+                                     "PycicleParams should not be constructed with config_path=None")
+            sys.exit()
         else:
             current_path = os.path.dirname(os.path.realpath(__file__))
-            self.config_path = current_path + '/config/' + args.project + '/'
+            self.config_path = os.path.join(current_path, config_path, args.project)
             self.debug_print("pycicle expects to "
-                             "find configs in {}".format(self.config_path))
+                "find local configs in {}".format(self.config_path))
+            self.remote_config_path = os.path.join('/pycicle/config/' , args.project)
+            self.debug_print("pycicle expects to "
+                "remote configs in {}".format(self.remote_config_path))
 
     def get_setting_from_file(self, config_file, setting):
         if setting not in self.keys:
@@ -77,19 +90,19 @@ class PycicleParams:
 
     # get setting from project file
     def get_setting_for_project(self, project, machine, setting):
-        config_file = self.config_path + project + '.cmake'
+        config_file = os.path.join(self.config_path, project) + '.cmake'
         return self.get_setting_from_file(config_file, setting)
 
     # get setting from machine file
     def get_setting_for_machine(self, project, machine, setting):
-        config_file = self.config_path + machine + '.cmake'
+        config_file = os.path.join(self.config_path, machine) + '.cmake'
         return self.get_setting_from_file(config_file, setting)
 
     # get setting from machine file if present, otherwise project file
     def get_setting_for_machine_project(self, project, machine, setting):
-        config_file = self.config_path + machine + '.cmake'
+        config_file = os.path.join(self.config_path, machine) + '.cmake'
         val = self.get_setting_from_file(config_file, setting)
         if val is None:
-            config_file = self.config_path + project + '.cmake'
+            config_file = os.path.join(self.config_path, project) + '.cmake'
             val = self.get_setting_from_file(config_file, setting)
         return val

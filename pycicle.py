@@ -1,5 +1,5 @@
-#  Copyright (c) 2018      Peter Doak
-#  Copyright (c) 2017-2018 John Biddiscombe
+#  Copyright (c) 2019      Peter Doak
+#  Copyright (c) 2017-2019 John Biddiscombe
 #
 #  Distributed under the Boost Software License, Version 1.0. (See accompanying
 #  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -161,7 +161,13 @@ def get_command_line_args():
     # force rebuild mode
     #----------------------------------------------
     parser.add_argument('-f', '--force', dest='force', action='store_true',
-                        default=False, help="Force rebuild of active PRs on next check")
+                        help="Force rebuild of active PRs on next check")
+
+    #----------------------------------------------
+    # basic access control
+    #----------------------------------------------
+    parser.add_argument('-a', '--access-control', dest='access_control', action='store_true',
+                        help="On PRs whose last commit was authored by a org member or the user themselves will be built and tested.")
 
     #----------------------------------------------
     # set default path for pycicle work dir
@@ -204,6 +210,12 @@ def get_command_line_args():
                         default=0, help='A single PR number for limited testing')
 
     #--------------------------------------------------------------------------
+    # Config dir if not in pycicle directory
+    #--------------------------------------------------------------------------
+    parser.add_argument('--config-path', dest='config_path',
+                        default='...', help='pycicle config path if not pycicle/config')
+
+    #--------------------------------------------------------------------------
     # only enable scraping to test github status setting
     #--------------------------------------------------------------------------
     parser.add_argument('-c', '--scrape-only', dest='scrape_only', action='store_true',
@@ -226,19 +238,22 @@ def get_command_line_args():
     #----------------------------------------------
     args = parser.parse_args()
     machine = args.machines[0]
-
+    if args.config_path == '...':
+        args.config_path = './config/'
     print('-' * 30)
-    print('pycicle: project       :', args.project)
-    print('pycicle: debug         :',
+    print('pycicle: project        :', args.project)
+    print('pycicle: debug          :',
           'enabled (no build trigger commands will be sent)' if args.debug else 'disabled')
-    print('pycicle: scrape-only   :', 'enabled' if args.scrape_only else 'disabled')
-    print('pycicle: force         :', 'enabled' if args.force else 'disabled')
-    print('pycicle: path          :', args.pycicle_dir)
-    print('pycicle: token         :', args.user_token)
-    print('pycicle: machines      :', args.machines)
-    print('pycicle: machine       :', machine, '(only 1 supported currently)')
-    print('pycicle: PR            :', args.pull_request)
-    print('pycicle: cmake options :', args.cmake_options)
+    print('pycicle: scrape-only    :', 'enabled' if args.scrape_only else 'disabled')
+    print('pycicle: force          :', 'enabled' if args.force else 'disabled')
+    print('pycicle: access_control :', args.access_control )
+    print('pycicle: config_path    :', args.config_path)
+    print('pycicle: path           :', args.pycicle_dir)
+    print('pycicle: token          :', args.user_token)
+    print('pycicle: machines       :', args.machines)
+    print('pycicle: machine        :', machine, '(only 1 supported currently)')
+    print('pycicle: PR             :', args.pull_request)
+    print('pycicle: cmake options  :', args.cmake_options)
     options = {}
     if args.cmake_options is not None:
         if len(args.cmake_options)>1:
@@ -402,11 +417,15 @@ def run_command(cmd, debug=False):
 # launch a command that will start one build
 #--------------------------------------------------------------------------
 def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
-    remote_ssh  = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_MACHINE')
-    remote_path = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_ROOT')
-    remote_http = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_HTTP')
-    job_type    = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_JOB_LAUNCH')
-    debug_mode  = 'ON' if (args.debug or args.debug_info) else 'OFF'
+    """ Calls the dashboard script, possibly remotely
+        pyc_p is a global PycicleParams object
+        ToDo: make pycicle runner into a class to get control of variable scope lifecycle
+    """
+    remote_ssh   = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_MACHINE')
+    pycicle_path = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_ROOT')
+    remote_http  = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_HTTP')
+    job_type     = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_JOB_LAUNCH')
+    debug_mode   = 'ON' if (args.debug or args.debug_info) else 'OFF'
     pyc_p.debug_print('-'*30)
     pyc_p.debug_print('launching build', branch_id, branch_name, job_type)
     pyc_p.debug_print('-'*30)
@@ -426,6 +445,7 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
         pyc_p.debug_print("direct build:", args.project)
         script = 'dashboard_script.cmake'
 
+    config_path = 'unset_value_for_testing_only'
     if 'local' not in remote_ssh:
         # We need to setup the environment on the remote machine,
         # often even cmake comes from a module or the like.
@@ -435,21 +455,30 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
             cmd1.append(args.pre_ctest_commands)
         cmd1.append('ctest')
         cmd1 = ' '.join(cmd1)
-        cmd = ['ssh', remote_ssh, cmd1, '-S',
-               remote_path  + '/pycicle/' + script ]
+        cmd = ['ssh', remote_ssh, cmd1, '--debug -S' if args.debug else '-S',
+               pycicle_path + '/pycicle/' + script ]
         # sending lists of options over SSH requires escaping them
         cmake_options = cmake_options.replace('"','\\"')
         cmake_options = '\"' + cmake_options + '\"'
+        config_path = pycicle_path + pyc_p.remote_config_path
     else:
         # if we're local we assume the current context has the module setup
         pyc_p.debug_print("Local build working in:", os.getcwd())
-        cmd = ['ctest','-S', script ]
+        cmd = ['ctest', '--debug -S' if args.debug else '-S', script ]
+        config_path = pyc_p.config_path
 
-    cmd = cmd + [ '-DPYCICLE_ROOT='                + remote_path,
+    if github_organisation:
+       cmd = cmd + [ '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation ]
+    if github_userlogin:
+       cmd = cmd + [ '-DPYCICLE_GITHUB_USER_LOGIN=' + github_userlogin ]
+
+    build_name = branch_id + '-' + branch_name + '-' + cdash_string
+
+    cmd = cmd + [ '-DPYCICLE_ROOT='                + pycicle_path,
                   '-DPYCICLE_HOST='                + machine,
                   '-DPYCICLE_PROJECT_NAME='        + args.project,
+                  '-DPYCICLE_CONFIG_PATH='         + config_path,
                   '-DPYCICLE_GITHUB_PROJECT_NAME=' + github_reponame,
-                  '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation,
                   '-DPYCICLE_PR='                  + branch_id,
                   '-DPYCICLE_BRANCH='              + branch_name,
                   '-DPYCICLE_RANDOM='              + random_string(10),
@@ -457,6 +486,8 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
                   '-DPYCICLE_DEBUG_MODE='          + debug_mode,
                   '-DPYCICLE_CMAKE_OPTIONS='       + cmake_options,
                   '-DPYCICLE_CDASH_STRING='        + cdash_string,
+                  '-DCTEST_BUILD_NAME='            + build_name,
+
                   # These are to quiet warnings from ctest about unset vars
                   '-DCTEST_SOURCE_DIRECTORY=.',
                   '-DCTEST_BINARY_DIRECTORY=.',
@@ -508,6 +539,7 @@ def find_scrape_files(project, machine) :
             cmd = []
 
         search_path = remote_path + '/build/'
+        print("Scraping in {}.".format(search_path))
         cmd = cmd + [ 'find', search_path,
                       '-maxdepth',  '2',
                       '-path', '\'' + search_path + project + '-*' + '\'',
@@ -568,7 +600,7 @@ def scrape_testing_results(project, machine, scrape_file, branch_id, branch_name
             DateURL   = DateStamp[0:4]+'-'+DateStamp[4:6]+'-'+DateStamp[6:8]
             print('Extracted date as', DateURL)
 
-            URL = ('http://{}/{}/index.php?project='.format(cdash_server, cdash_http_path) + cdash_project_name +
+            URL = ('{}://{}/{}/index.php?project='.format(cdash_drop_method, cdash_server, cdash_http_path) + cdash_project_name +
                    '&date=' + DateURL +
                    '&filtercount=1' +
                    '&field1=buildname/string&compare1=63&value1=' +
@@ -712,23 +744,31 @@ if __name__ == "__main__":
     #--------------------------------------------------------------------------
     github_reponame     = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_GITHUB_PROJECT_NAME')
     github_organisation = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_GITHUB_ORGANISATION')
+    github_userlogin    = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_GITHUB_USER_LOGIN')
     github_base         = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_GITHUB_BASE_BRANCH')
     if args.cdash_server:
         cdash_server = args.cdash_server
     else:
         cdash_server    = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_SERVER_NAME')
     cdash_project_name  = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_PROJECT_NAME')
+    cdash_drop_method   = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_CDASH_DROP_METHOD')
     cdash_http_path     = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_CDASH_HTTP_PATH')
+    if not cdash_drop_method:
+        cdash_drop_method = "https"
     builds_per_pr_str   = pyc_p.get_setting_for_machine_project(args.project, machine, 'PYCICLE_BUILDS_PER_PR')
     builds_per_pr       = int(builds_per_pr_str)
 
     pyc_p.debug_print('-' * 30)
     print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
-    print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
+    if github_organisation:
+        print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
+    else:
+        print('PYCICLE_GITHUB_USER_LOGIN  =', github_userlogin)
     print('PYCICLE_GITHUB_BASE_BRANCH   =', github_base)
     print('PYCICLE_CDASH_PROJECT_NAME   =', cdash_project_name)
     print('PYCICLE_CDASH_SERVER_NAME    =', cdash_server)
     print('PYCICLE_CDASH_HTTP_PATH      =', cdash_http_path)
+    print('PYCICLE_CDASH_DROP_METHOD    =', cdash_drop_method)
     print('PYCICLE_BUILDS_PER_PR        =', builds_per_pr)
 
     #--------------------------------------------------------------------------
@@ -740,16 +780,28 @@ if __name__ == "__main__":
     #
     random.seed()
     #
+
+    org = None
+
     try:
-        print('-' * 30)
-        print("Connecting    :", "github.Github({},{})".format(github_organisation, args.user_token))
-        git  = github.Github(github_organisation, args.user_token)
-        print("Github User   :",git.get_user().name)
-        print("Github Repo   :",github_reponame)
+        print("connecting to git hub with:")
+        if github_organisation:
+            print("github.Github({},{})".format(github_organisation, args.user_token))
+            git  = github.Github(github_organisation, args.user_token)
+        else:
+            print("github.Github({})".format(args.user_token))
+            git = github.Github(args.user_token)
+        if not github_userlogin:
+            github_userlogin = git.get_user().login
+        print("Github Login    :",git.get_user().login)
+        print("Github Reponame :",github_reponame)
         try:
-            org = git.get_organization(github_organisation)
-            print("Organisation  :", org.login, org.name)
-            repo = org.get_repo(github_reponame)
+            if github_organisation:
+                org = git.get_organization(github_organisation)
+                print("Organisation    :", org.login, org.name)
+                repo = org.get_repo(github_reponame)
+            else:
+                repo = git.get_repo(github_userlogin + '/' + github_reponame)
         except github.UnknownObjectException as ukoe:
             print("Exception     : Trying to recover from organization passed as name")
             git  = github.Github(args.user_token)
@@ -757,7 +809,7 @@ if __name__ == "__main__":
             print(vars(repo))
         except Exception as ex:
             print("unexpected exception caught in github connect:",ex)
-        print("Repo Fullname :", repo.full_name)
+        print("Repo Fullname   :", repo.full_name)
     except Exception as e:
         print(e, 'Failed to connect to github. Network down?')
 
@@ -765,7 +817,7 @@ if __name__ == "__main__":
         github_base = repo.default_branch
 
     #--------------------------------------------------------------------------
-    pyc_p.debug_print("Before main polling routine github_base:",github_base)
+    pyc_p.debug_print("Before main polling routine github_base:", github_base)
 
     #--------------------------------------------------------------------------
     # main polling routine
@@ -792,12 +844,18 @@ if __name__ == "__main__":
             #
             # just get a single PR if that was all that was asked for
             if args.pull_request!=0:
-                pr = repo.get_pull(args.pull_request)
+                pyc_p.debug_print('Getting PR', args.pull_request)
+                try:
+                    pr = repo.get_pull(args.pull_request)
+                except Exception as ex:
+                    pyc_p.debug_print('Could not get PR - is it valid?:', ex)
+                    break
                 pyc_p.debug_print(pr)
                 pull_requests = [pr]
                 pyc_p.debug_print('Requested PR: ', pr)
             # otherwise get all open PRs
             else:
+                print("Getting open PR's for ",base_branch.name)
                 pull_requests = repo.get_pulls('open', base=base_branch.name)
 
             pr_list = {}
@@ -827,18 +885,38 @@ if __name__ == "__main__":
                 pyc_p.debug_print('Branch short name    :', short_name)
                 branch_sha  = pr.head.sha
                 # need details, including last commit on PR for setting status
-                pr_list[branch_id] = [machine, branch_name, pr.get_commits().reversed[0]]
+                last_pr_commit = pr.get_commits().reversed[0]
+                pr_list[branch_id] = [machine, branch_name, last_pr_commit]
                 #
                 if args.pull_request!=0 and pr.number!=args.pull_request:
                     continue
                 if not pr.mergeable:
+                    pyc_p.debug_print('Skipping PR - not mergeable')
                     continue
                 #
                 if not args.scrape_only:
+                    #minimal security, only if last commit by org members or owner is it updated or built.   
+                    commit_author = last_pr_commit.author
                     update = force or needs_update(args.project, branch_id, branch_name, branch_sha, base_sha)
-                    if update:
+                    if args.access_control:
+                        if org:
+                            if org.has_in_members(commit_author):
+                                if update:
+                                    choose_and_launch(args.project, machine, branch_id, branch_name, compiler_type)
+                            else:
+                                print("{} is not a member of the organisation, PR will not be built.".format(commit_author.login))
+                        else:
+                            permission = repo.get_collaborator_permission(commit_author)
+                            if 'push' in permission:
+                                if update:
+                                    choose_and_launch(args.project, machine, branch_id, short_name, args.cmake_options, builds_per_pr)
+                            else:
+                                print("{} does not have push access, PR will not be built.".format(commit_author.login))
+                    else:
                         choose_and_launch(args.project, machine, branch_id, short_name, args.cmake_options, builds_per_pr)
 
+            print("The Open PRs:")
+            print(pr_list)
             # also build the base branch if it has changed
             if not args.scrape_only and args.pull_request==0:
                 if force or needs_update(args.project, github_base, github_base, base_sha, base_sha):

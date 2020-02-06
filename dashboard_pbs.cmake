@@ -20,6 +20,7 @@ message("CMAKE_CURRENT_LIST_FILE ${CMAKE_CURRENT_LIST_FILE}")
 message("Project name     " ${PYCICLE_PROJECT_NAME})
 message("Github name      " ${PYCICLE_GITHUB_PROJECT_NAME})
 message("Github org       " ${PYCICLE_GITHUB_ORGANISATION})
+message("Github user login is    " ${PYCICLE_GITHUB_USER_LOGIN})
 message("Pull request     " ${PYCICLE_PR})
 message("PR-Branchname    " ${PYCICLE_BRANCH})
 message("Base branch      " ${PYCICLE_BASE})
@@ -32,11 +33,12 @@ message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
 
 expand_pycicle_cmake_options(${PYCICLE_CMAKE_OPTIONS})
 
+message("Using config: ${PYCICLE_CONFIG_PATH}/${PYCICLE_HOST}.cmake")
+
 #######################################################################
 # Load machine specific settings
 #######################################################################
-message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
-include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
+include(${PYCICLE_CONFIG_PATH}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
 # If any options passed in have quotes, they must be escaped
@@ -53,11 +55,12 @@ string(CONCAT PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
   "-DPYCICLE_ROOT=${PYCICLE_ROOT} "
   "-DPYCICLE_HOST=${PYCICLE_HOST} "
   "-DPYCICLE_PROJECT_NAME=${PYCICLE_PROJECT_NAME} "
+  "-DPYCICLE_CONFIG_PATH=${PYCICLE_CONFIG_PATH} "
   "-DPYCICLE_GITHUB_PROJECT_NAME=${PYCICLE_GITHUB_PROJECT_NAME} "
   "-DPYCICLE_GITHUB_ORGANISATION=${PYCICLE_GITHUB_ORGANISATION} "
+  "-DPYCICLE_GITHUB_USER_LOGIN=${PYCICLE_GITHUB_USER_LOGIN} "
   "-DPYCICLE_PR=${PYCICLE_PR} "
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
-  "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} "
   "-DPYCICLE_BASE=${PYCICLE_BASE} "
   "-DPYCICLE_DEBUG_MODE=${PYCICLE_DEBUG_MODE} "
   "-DPYCICLE_CDASH_STRING=${PYCICLE_CDASH_STRING} "

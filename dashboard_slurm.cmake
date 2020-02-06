@@ -16,26 +16,34 @@ include(${CMAKE_CURRENT_LIST_DIR}/dashboard_macros.cmake)
 message("CMAKE_CURRENT_LIST_DIR  ${CMAKE_CURRENT_LIST_DIR}")
 message("CMAKE_CURRENT_LIST_FILE ${CMAKE_CURRENT_LIST_FILE}")
 #
-message("Project name     " ${PYCICLE_PROJECT_NAME})
-message("Github name      " ${PYCICLE_GITHUB_PROJECT_NAME})
-message("Github org       " ${PYCICLE_GITHUB_ORGANISATION})
-message("Pull request     " ${PYCICLE_PR})
-message("PR-Branchname    " ${PYCICLE_BRANCH})
-message("Base branch      " ${PYCICLE_BASE})
-message("Machine name     " ${PYCICLE_HOST})
-message("PYCICLE_ROOT     " ${PYCICLE_ROOT})
-message("Debug Mode       " ${PYCICLE_DEBUG_MODE})
-message("Random string    " ${PYCICLE_RANDOM})
-message("CDash string     " ${PYCICLE_CDASH_STRING})
-message("CMake options    " ${PYCICLE_CMAKE_OPTIONS})
+message("Project name        " ${PYCICLE_PROJECT_NAME})
+message("Github name         " ${PYCICLE_GITHUB_PROJECT_NAME})
+message("Github org          " ${PYCICLE_GITHUB_ORGANISATION})
+message("Github user name    " ${PYCICLE_GITHUB_USER_LOGIN})
+message("Pull request        " ${PYCICLE_PR})
+message("PR-Branchname       " ${PYCICLE_BRANCH})
+message("Base branch         " ${PYCICLE_BASE})
+message("Machine name        " ${PYCICLE_HOST})
+message("PYCICLE_ROOT        " ${PYCICLE_ROOT})
+message("PYCICLE_CONFIG_PATH " ${PYCICLE_CONFIG_PATH})
+message("Debug Mode          " ${PYCICLE_DEBUG_MODE})
+message("Random string       " ${PYCICLE_RANDOM})
+message("CDash string        " ${PYCICLE_CDASH_STRING})
+message("CMake options       " ${PYCICLE_CMAKE_OPTIONS})
+#
+set(SITE ${CTEST_SITE})
+set(BUILDNAME ${CTEST_BUILD_NAME})
+message("SITE                " ${SITE})
+message("CTEST_SITE          " ${CTEST_SITE})
+message("CTEST_BUILD_NAME    " ${CTEST_BUILD_NAME})
 
 expand_pycicle_cmake_options(${PYCICLE_CMAKE_OPTIONS})
 
 #######################################################################
 # Load machine specific settings
 #######################################################################
-message("Loading ${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake")
-include(${CMAKE_CURRENT_LIST_DIR}/config/${PYCICLE_PROJECT_NAME}/${PYCICLE_HOST}.cmake)
+message("Loading ${PYCICLE_CONFIG_PATH}/${PYCICLE_HOST}.cmake")
+include(${PYCICLE_CONFIG_PATH}/${PYCICLE_HOST}.cmake)
 
 #######################################################################
 # If any options passed in have quotes, they must be escaped
@@ -47,25 +55,28 @@ string(REPLACE "\"" "\\\"" PYCICLE_CMAKE_OPTIONS_ESCAPED "${PYCICLE_CMAKE_OPTION
 # we must pass all the parms we received through to the script
 #######################################################################
 string(CONCAT PYCICLE_JOB_SCRIPT_TEMPLATE ${PYCICLE_JOB_SCRIPT_TEMPLATE}
-  "ctest "
+  "ctest " "${EXTRA_CTEST_DEBUG} "
   "-S ${PYCICLE_ROOT}/pycicle/dashboard_script.cmake "
   "-DPYCICLE_ROOT=${PYCICLE_ROOT} "
+  "-DPYCICLE_CONFIG_PATH=${PYCICLE_CONFIG_PATH} "
   "-DPYCICLE_HOST=${PYCICLE_HOST} "
   "-DPYCICLE_PROJECT_NAME=${PYCICLE_PROJECT_NAME} "
   "-DPYCICLE_GITHUB_PROJECT_NAME=${PYCICLE_GITHUB_PROJECT_NAME} "
   "-DPYCICLE_GITHUB_ORGANISATION=${PYCICLE_GITHUB_ORGANISATION} "
+  "-DPYCICLE_GITHUB_USER_LOGIN=${PYCICLE_GITHUB_USER_LOGIN} "
   "-DPYCICLE_PR=${PYCICLE_PR} "
   "-DPYCICLE_BRANCH=${PYCICLE_BRANCH} "
-  "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} "
   "-DPYCICLE_BASE=${PYCICLE_BASE} "
   "-DPYCICLE_DEBUG_MODE=${PYCICLE_DEBUG_MODE} "
   "-DPYCICLE_CDASH_STRING=${PYCICLE_CDASH_STRING} "
   "-DPYCICLE_CMAKE_OPTIONS=\"${PYCICLE_CMAKE_OPTIONS_ESCAPED}\" "
+  "-DCTEST_BUILD_NAME=\"${CTEST_BUILD_NAME}\" "
+  "-DCTEST_SITE=\"${CTEST_SITE}\" "
 )
 
 # write the job script into a temp file
 file(WRITE "${PYCICLE_ROOT}/build/ctest-slurm-${PYCICLE_RANDOM}.sh"
-    "${PYCICLE_JOB_SCRIPT_TEMPLATE}"
+    "${PYCICLE_JOB_SCRIPT_TEMPLATE}\n"
 )
 debug_message("sbatch file contents\n"
     "${PYCICLE_JOB_SCRIPT_TEMPLATE}"

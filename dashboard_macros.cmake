@@ -6,23 +6,26 @@
 # ----------------------------------------------
 # These macros are just for syntax completeness
 # ----------------------------------------------
-macro(PYCICLE_CMAKE_OPTION option values)
+macro(PYCICLE_CMAKE_OPTION option dummy)
 endmacro(PYCICLE_CMAKE_OPTION)
 
-macro(PYCICLE_CMAKE_DEPENDENT_OPTION option values)
+macro(PYCICLE_CMAKE_DEPENDENT_OPTION dummy)
 endmacro(PYCICLE_CMAKE_DEPENDENT_OPTION)
 
 macro(PYCICLE_CMAKE_BOOLEAN_OPTION)
 endmacro(PYCICLE_CMAKE_BOOLEAN_OPTION)
 
 # ----------------------------------------------
-# Submit to the dashboard unless in debug mode
+# For debug output
 # ----------------------------------------------
-function(pycicle_submit)
-  if(NOT PYCICLE_DEBUG_MODE)
-    ctest_submit(${ARGN})
-  endif()
-endfunction()
+set(PYCICLE_LINE_STRING
+    "# ----------------------------------------------\n")
+
+# ----------------------------------------------
+# This provides a ton of feedback from ctest if needed, but it's too much for normal
+# use, so enable it manually to see trace information from ctest submit etc
+# ----------------------------------------------
+#set(EXTRA_CTEST_DEBUG "--debug")
 
 # ----------------------------------------------
 # Print message if in debug mode
@@ -30,6 +33,56 @@ endfunction()
 function(debug_message)
   if(PYCICLE_DEBUG_MODE)
     message("${ARGN}")
+  endif()
+endfunction()
+
+# ----------------------------------------------
+# Submit to the dashboard unless in debug mode
+# ----------------------------------------------
+macro(pycicle_submit)
+    debug_message("Calling ctest_submit with ${ARGN}")
+#  if(NOT PYCICLE_DEBUG_MODE)
+    ctest_submit(${ARGN}
+        RETURN_VALUE result
+        CAPTURE_CMAKE_ERROR error)
+    if(result)
+        message(FATAL_ERROR "Submit step ${ARGN} failed\n${error}")
+    else()
+        message("Submit step ${ARGN} success\n${error}")
+    endif()
+#  endif()
+endmacro()
+
+# ----------------------------------------------
+# execute_process with debug messages
+# ----------------------------------------------
+function(debug_execute_process)
+  set(options FATAL)
+  set(oneValueArgs WORKING_DIRECTORY TITLE MESSAGE)
+  set(multiValueArgs COMMAND)
+  cmake_parse_arguments(DEX "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  debug_message(
+      "execute_process : ${DEX_TITLE}\n\t"
+      "[WORKING_DIRECTORY] ${DEX_WORKING_DIRECTORY}\n\t"
+      "[COMMAND] ${DEX_COMMAND}")
+  execute_process(
+    COMMAND            ${DEX_COMMAND}
+    WORKING_DIRECTORY "${DEX_WORKING_DIRECTORY}"
+    #COMMAND_ECHO STDOUT (requires cmake 3.15)
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE  error
+    RESULT_VARIABLE failed
+  )
+  if (failed EQUAL 1)
+    if (DEX_FATAL)
+      set(IS_FATAL "FATAL_ERROR")
+    endif()
+    message(${IS_FATAL} "${DEX_TITLE}${PYCICLE_LINE_STRING}${DEX_MESSAGE} \n"
+        "Output is \n${output}${PYCICLE_LINE_STRING}"
+        "Error  is \n${error}${PYCICLE_LINE_STRING}")
+  else()
+      message("${DEX_TITLE} : execute_process : SUCCESS")
+      debug_message("Output is \n${output}${PYCICLE_LINE_STRING}")
   endif()
 endfunction()
 
