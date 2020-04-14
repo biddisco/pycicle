@@ -5,6 +5,8 @@
 
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
+# set(PYCICLE_DISABLE_SUBMIT 1)
+
 #######################################################################
 # Boilerplate macros we need
 #######################################################################
@@ -278,15 +280,16 @@ message("Found ${NB_CHANGED_FILES} changed file(s)")
 message("CTEST_CONFIGURE_COMMAND is\n${CTEST_CONFIGURE_COMMAND}")
 message("Configure...")
 ctest_configure()
-#pycicle_submit(PARTS Update Configure Notes)
-debug_execute_process(
-  COMMAND "${CMAKE_CTEST_COMMAND}" "${EXTRA_CTEST_DEBUG}"
-    "-D" "ExperimentalSubmit" "--track" "${CTEST_SUBMISSION_GROUP}"
-#    "--add-notes" "${CTEST_NOTES_FILES}"
-  WORKING_DIRECTORY "${CTEST_BINARY_DIRECTORY}"
-  TITLE   "Submit update step"
-  MESSAGE "Update submit failed"
-)
+if (NOT PYCICLE_DISABLE_SUBMIT)
+    debug_execute_process(
+      COMMAND "${CMAKE_CTEST_COMMAND}" "${EXTRA_CTEST_DEBUG}"
+        "-D" "ExperimentalSubmit" "--track" "${CTEST_SUBMISSION_GROUP}"
+        #    "--add-notes" "${CTEST_NOTES_FILES}"
+      WORKING_DIRECTORY "${CTEST_BINARY_DIRECTORY}"
+      TITLE   "Submit update step"
+      MESSAGE "Update submit failed"
+    )
+endif()
 
 #--------------
 # build step
@@ -295,13 +298,15 @@ message("Build...")
 set(CTEST_BUILD_FLAGS "-j ${BUILD_PARALLELISM}")
 ctest_build(TARGET ${PYCICLE_CTEST_BUILD_TARGET} )
 #pycicle_submit(PARTS Build)
-debug_execute_process(
-  COMMAND "${CMAKE_CTEST_COMMAND}" "${EXTRA_CTEST_DEBUG}"
-    "-D"  "ExperimentalSubmit" "--track" "${CTEST_SUBMISSION_GROUP}"
-  WORKING_DIRECTORY "${CTEST_BINARY_DIRECTORY}"
-  TITLE   "Submit build step"
-  MESSAGE "Build submit failed"
-)
+if (NOT PYCICLE_DISABLE_SUBMIT)
+    debug_execute_process(
+      COMMAND "${CMAKE_CTEST_COMMAND}" "${EXTRA_CTEST_DEBUG}"
+        "-D"  "ExperimentalSubmit" "--track" "${CTEST_SUBMISSION_GROUP}"
+      WORKING_DIRECTORY "${CTEST_BINARY_DIRECTORY}"
+      TITLE   "Submit build step"
+      MESSAGE "Build submit failed"
+    )
+endif()
 
 #--------------
 # test step
@@ -309,13 +314,15 @@ debug_execute_process(
 message("Test...")
 ctest_test(RETURN_VALUE test_result_ EXCLUDE "compile")
 #pycicle_submit(PARTS Test)
-debug_execute_process(
-  COMMAND "${CMAKE_CTEST_COMMAND}" "${EXTRA_CTEST_DEBUG}"
-    "-D"  "ExperimentalSubmit" "--track" "${CTEST_SUBMISSION_GROUP}"
-  WORKING_DIRECTORY "${CTEST_BINARY_DIRECTORY}"
-  TITLE   "Submit test step"
-  MESSAGE "Test submit failed"
-)
+if (NOT PYCICLE_DISABLE_SUBMIT)
+    debug_execute_process(
+      COMMAND "${CMAKE_CTEST_COMMAND}" "${EXTRA_CTEST_DEBUG}"
+        "-D"  "ExperimentalSubmit" "--track" "${CTEST_SUBMISSION_GROUP}"
+      WORKING_DIRECTORY "${CTEST_BINARY_DIRECTORY}"
+      TITLE   "Submit test step"
+      MESSAGE "Test submit failed"
+    )
+endif()
 
 if (WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
   ctest_coverage()
