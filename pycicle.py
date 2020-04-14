@@ -472,7 +472,10 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
     if github_userlogin:
        cmd = cmd + [ '-DPYCICLE_GITHUB_USER_LOGIN=' + github_userlogin ]
 
-    build_name = branch_id + '-' + branch_name + '-' + cdash_string
+    if branch_name=='master':
+        build_name = branch_name + '-' + cdash_string
+    else:
+        build_name = branch_id + '-' + branch_name + '-' + cdash_string
 
     cmd = cmd + [ '-DPYCICLE_ROOT='                + pycicle_path,
                   '-DPYCICLE_HOST='                + machine,
