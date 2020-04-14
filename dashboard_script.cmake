@@ -116,8 +116,7 @@ endif()
 # (i.e not a test of master branch on its own)
 #####################################################################
 if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
-  set(CTEST_SUBMISSION_TRACK "Pull_Requests")
-  set(PYCICLE_SUBMISSION_TRACK "--group" "Pull_Requests")
+  set(CTEST_SUBMISSION_GROUP "Pull_Requests")
   set(PYCICLE_BRANCH "pull/${PYCICLE_PR}/head")
   set(GIT_BRANCH "PYCICLE_PR_${PYCICLE_PR}")
   #
@@ -180,8 +179,11 @@ else()
   #####################################################################
   # This is a just branch test and not a PR
   #####################################################################
-  set(CTEST_SUBMISSION_TRACK "${PYCICLE_BASE}")
-  set(PYCICLE_SUBMISSION_TRACK "--group" "${PYCICLE_BASE}")
+  if ("master" STREQUAL "${PYCICLE_BASE}")
+    set(CTEST_SUBMISSION_GROUP "Master")
+  else()
+      set(CTEST_SUBMISSION_GROUP "${PYCICLE_BASE}")
+  endif()
   debug_execute_process(
     COMMAND bash "-c" "-e"
                       "${make_repo_copy_} &&
@@ -235,7 +237,7 @@ file(REMOVE "${CTEST_BINARY_DIRECTORY}/pycicle-TAG.txt")
 #######################################################################
 message("Initialize ${CTEST_MODEL} testing...")
 ctest_start(${CTEST_MODEL}
-    TRACK "${CTEST_SUBMISSION_TRACK}"
+    TRACK "${CTEST_SUBMISSION_GROUP}"
     "${CTEST_SOURCE_DIRECTORY}"
     "${CTEST_BINARY_DIRECTORY}"
 )
@@ -278,8 +280,8 @@ message("Configure...")
 ctest_configure()
 #pycicle_submit(PARTS Update Configure Notes)
 debug_execute_process(
-  COMMAND "ctest" "${EXTRA_CTEST_DEBUG}"
-    "-D" "ExperimentalSubmit" "${PYCICLE_SUBMISSION_TRACK}"
+  COMMAND "${CMAKE_CTEST_COMMAND}" "${EXTRA_CTEST_DEBUG}"
+    "-D" "ExperimentalSubmit" "--track" "${CTEST_SUBMISSION_GROUP}"
 #    "--add-notes" "${CTEST_NOTES_FILES}"
   WORKING_DIRECTORY "${CTEST_BINARY_DIRECTORY}"
   TITLE   "Submit update step"
@@ -294,7 +296,8 @@ set(CTEST_BUILD_FLAGS "-j ${BUILD_PARALLELISM}")
 ctest_build(TARGET ${PYCICLE_CTEST_BUILD_TARGET} )
 #pycicle_submit(PARTS Build)
 debug_execute_process(
-  COMMAND "ctest" "${EXTRA_CTEST_DEBUG}" "-D"  "ExperimentalSubmit" "${PYCICLE_SUBMISSION_TRACK}"
+  COMMAND "${CMAKE_CTEST_COMMAND}" "${EXTRA_CTEST_DEBUG}"
+    "-D"  "ExperimentalSubmit" "--track" "${CTEST_SUBMISSION_GROUP}"
   WORKING_DIRECTORY "${CTEST_BINARY_DIRECTORY}"
   TITLE   "Submit build step"
   MESSAGE "Build submit failed"
@@ -307,7 +310,8 @@ message("Test...")
 ctest_test(RETURN_VALUE test_result_ EXCLUDE "compile")
 #pycicle_submit(PARTS Test)
 debug_execute_process(
-  COMMAND "ctest" "${EXTRA_CTEST_DEBUG}" "-D"  "ExperimentalSubmit" "${PYCICLE_SUBMISSION_TRACK}"
+  COMMAND "${CMAKE_CTEST_COMMAND}" "${EXTRA_CTEST_DEBUG}"
+    "-D"  "ExperimentalSubmit" "--track" "${CTEST_SUBMISSION_GROUP}"
   WORKING_DIRECTORY "${CTEST_BINARY_DIRECTORY}"
   TITLE   "Submit test step"
   MESSAGE "Test submit failed"

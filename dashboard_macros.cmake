@@ -40,8 +40,8 @@ endfunction()
 # Submit to the dashboard unless in debug mode
 # ----------------------------------------------
 macro(pycicle_submit)
-    debug_message("Calling ctest_submit with ${ARGN}")
-#  if(NOT PYCICLE_DEBUG_MODE)
+  debug_message("Calling ctest_submit with ${ARGN}")
+  if(NOT PYCICLE_DEBUG_MODE)
     ctest_submit(${ARGN}
         RETURN_VALUE result
         CAPTURE_CMAKE_ERROR error)
@@ -50,7 +50,9 @@ macro(pycicle_submit)
     else()
         message("Submit step ${ARGN} success\n${error}")
     endif()
-#  endif()
+  else()
+      message("Submit step disabled in Debug mode")
+  endif()
 endmacro()
 
 # ----------------------------------------------
