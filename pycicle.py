@@ -747,7 +747,7 @@ if __name__ == "__main__":
     #--------------------------------------------------------------------------
     github_reponame     = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_GITHUB_PROJECT_NAME')
     github_organisation = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_GITHUB_ORGANISATION')
-    github_userlogin    = pyc_p.get_setting_for_machine(args.project, machine, 'PYCICLE_GITHUB_USER_LOGIN')
+    github_userlogin    = pyc_p.get_setting_for_machine_project(args.project, machine, 'PYCICLE_GITHUB_USER_LOGIN')
     github_base         = pyc_p.get_setting_for_project(args.project, machine, 'PYCICLE_GITHUB_BASE_BRANCH')
     if args.cdash_server:
         cdash_server = args.cdash_server
@@ -766,7 +766,7 @@ if __name__ == "__main__":
     if github_organisation:
         print('PYCICLE_GITHUB_ORGANISATION  =', github_organisation)
     else:
-        print('PYCICLE_GITHUB_USER_LOGIN  =', github_userlogin)
+        print('PYCICLE_GITHUB_USER_LOGIN    =', github_userlogin)
     print('PYCICLE_GITHUB_BASE_BRANCH   =', github_base)
     print('PYCICLE_CDASH_PROJECT_NAME   =', cdash_project_name)
     print('PYCICLE_CDASH_SERVER_NAME    =', cdash_server)
@@ -786,17 +786,22 @@ if __name__ == "__main__":
 
     org = None
 
-    try:
-        print("connecting to git hub with:")
+    try:        
         if github_organisation:
-            print("github.Github({},{})".format(github_organisation, args.user_token))
+            print("github init     : ({},{})".format(github_organisation, args.user_token))
             git  = github.Github(github_organisation, args.user_token)
-        else:
-            print("github.Github({})".format(args.user_token))
+        elif github_userlogin:
+            print("github init     : ({},{})".format(github_userlogin, args.user_token))
+            git = github.Github(github_userlogin, args.user_token)
+        elif args.user_token:
+            print("github init     : ({})".format(args.user_token))
             git = github.Github(args.user_token)
+        else:
+            print('github init     : No login mode specified')
         if not github_userlogin:
             github_userlogin = git.get_user().login
         print("Github Login    :",git.get_user().login)
+        print("Github (User)   :",github_userlogin)
         print("Github Reponame :",github_reponame)
         try:
             if github_organisation:
@@ -804,6 +809,7 @@ if __name__ == "__main__":
                 print("Organisation    :", org.login, org.name)
                 repo = org.get_repo(github_reponame)
             else:
+                print("Getting Repo    :", github_userlogin + '/' + github_reponame)
                 repo = git.get_repo(github_userlogin + '/' + github_reponame)
         except github.UnknownObjectException as ukoe:
             print("Exception     : Trying to recover from organization passed as name")
