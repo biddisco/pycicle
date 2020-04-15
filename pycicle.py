@@ -915,7 +915,7 @@ if __name__ == "__main__":
                                     choose_and_launch(args.project, machine, branch_id, short_name, args.cmake_options, builds_per_pr)
                             else:
                                 print("{} does not have push access, PR will not be built.".format(commit_author.login))
-                    else:
+                    elif update:
                         choose_and_launch(args.project, machine, branch_id, short_name, args.cmake_options, builds_per_pr)
 
             print("The Open PRs:")
