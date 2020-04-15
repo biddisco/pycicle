@@ -845,8 +845,9 @@ if __name__ == "__main__":
             base_sha    = base_branch.commit.sha
             pyc_p.debug_print(base_branch)
             #
+            pull_requests = []
             # just get a single PR if that was all that was asked for
-            if args.pull_request!=0:
+            if args.pull_request>0:
                 pyc_p.debug_print('Getting PR', args.pull_request)
                 try:
                     pr = repo.get_pull(args.pull_request)
@@ -856,6 +857,9 @@ if __name__ == "__main__":
                 pyc_p.debug_print(pr)
                 pull_requests = [pr]
                 pyc_p.debug_print('Requested PR: ', pr)
+            # -1 means only master/base branch
+            elif args.pull_request==-1:
+                print("Building only",base_branch.name)
             # otherwise get all open PRs
             else:
                 print("Getting open PR's for ",base_branch.name)
@@ -921,7 +925,7 @@ if __name__ == "__main__":
             print("The Open PRs:")
             print(pr_list)
             # also build the base branch if it has changed
-            if not args.scrape_only and args.pull_request==0:
+            if not args.scrape_only and args.pull_request<=0:
                 if force or needs_update(args.project, github_base, github_base, base_sha, base_sha):
                     choose_and_launch(args.project, machine, github_base, github_base, args.cmake_options, builds_per_pr)
                     pr_list[github_base] = [machine, github_base, base_branch.commit, ""]
