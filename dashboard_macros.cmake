@@ -79,12 +79,43 @@ function(debug_execute_process)
     if (DEX_FATAL)
       set(IS_FATAL "FATAL_ERROR")
     endif()
-    message(${IS_FATAL} "${DEX_TITLE}${PYCICLE_LINE_STRING}${DEX_MESSAGE} \n"
-        "Output is \n${output}${PYCICLE_LINE_STRING}"
-        "Error  is \n${error}${PYCICLE_LINE_STRING}")
+    message(${IS_FATAL} "${DEX_TITLE}\n${PYCICLE_LINE_STRING}\n${DEX_MESSAGE}\n"
+        "Output is :\n${output}${PYCICLE_LINE_STRING}"
+        "Error  is :\n${error}${PYCICLE_LINE_STRING}")
   else()
       message("${DEX_TITLE} : execute_process : SUCCESS")
       debug_message("Output is \n${output}${PYCICLE_LINE_STRING}")
+  endif()
+endfunction()
+
+# special version that allows multiple bash commands using semicolon 's/+/;/g'
+function(debug_execute_bash)
+  set(options FATAL)
+  set(oneValueArgs WORKING_DIRECTORY TITLE MESSAGE COMMAND)
+  cmake_parse_arguments(DEX "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+  string(REPLACE "+" ";" BASH_COMMAND "${DEX_COMMAND}")
+  message(
+      "execute_process : ${DEX_TITLE}\n\t"
+      "[WORKING_DIRECTORY] ${DEX_WORKING_DIRECTORY}\n\t"
+      "[COMMAND] bash -c ${BASH_COMMAND}")
+  execute_process(
+      COMMAND           "bash" "-c" "${BASH_COMMAND}"
+      WORKING_DIRECTORY "${DEX_WORKING_DIRECTORY}"
+      OUTPUT_VARIABLE output
+      ERROR_VARIABLE  error
+      RESULT_VARIABLE failed
+  )
+  if (failed EQUAL 1)
+    if (DEX_FATAL)
+      set(IS_FATAL "FATAL_ERROR")
+    endif()
+    message(${IS_FATAL} "${DEX_TITLE}\n${PYCICLE_LINE_STRING}\n${DEX_MESSAGE}\n"
+        "Output is :\n${output}${PYCICLE_LINE_STRING}"
+        "Error  is :\n${error}${PYCICLE_LINE_STRING}")
+  else()
+      message("${DEX_TITLE} : execute_process : SUCCESS")
+      message("Output is \n${output}\n *******************${PYCICLE_LINE_STRING}")
   endif()
 endfunction()
 

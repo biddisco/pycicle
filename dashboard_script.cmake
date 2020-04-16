@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
-# set(PYCICLE_DISABLE_SUBMIT 1)
+#set(PYCICLE_DISABLE_SUBMIT 1)
 
 #######################################################################
 # Boilerplate macros we need
@@ -153,21 +153,20 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
     MESSAGE "Could not delete old ${GIT_BRANCH} (first time test?)"
   )
 
-  debug_execute_process(
-    COMMAND bash "-c" "-e"
-                      "echo 'Checking out base branch' &&
-                       ${CTEST_GIT_COMMAND} checkout -f  ${PYCICLE_BASE} &&
-                       echo 'Fetching from origin' &&
-                       ${CTEST_GIT_COMMAND} fetch --all &&
-                       echo 'reset --hard' &&
-                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_BASE} &&
-                       echo 'checkout new ${GIT_BRANCH}' &&
-                       ${CTEST_GIT_COMMAND} checkout -b  ${GIT_BRANCH} &&
-                       echo 'pull from ${PYCICLE_BRANCH}' &&
-                       ${CTEST_GIT_COMMAND} pull origin  ${PYCICLE_BRANCH} --no-edit
-                       echo 'switch back to base' &&
-                       ${CTEST_GIT_COMMAND} checkout     ${PYCICLE_BASE} &&
-                       echo 'clean remaining cruft' &&
+  debug_execute_bash(
+    COMMAND           "echo 'Checking out base branch' +
+                       ${CTEST_GIT_COMMAND} checkout -f ${PYCICLE_BASE} +
+                       echo 'Fetching from origin' +
+                       ${CTEST_GIT_COMMAND} fetch --all +
+                       echo 'reset --hard origin/${PYCICLE_BASE}' +
+                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_BASE} +
+                       echo 'checkout new ${GIT_BRANCH}' +
+                       ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH} +
+                       echo 'pull from ${PYCICLE_BRANCH}' +
+                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH} --no-edit +
+                       echo 'switch back to base' +
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE} +
+                       echo 'clean remaining cruft' +
                        ${CTEST_GIT_COMMAND} clean -fd"
     WORKING_DIRECTORY "${CTEST_SOURCE_DIRECTORY}"
     TITLE   "Update + merge PR branch"
@@ -186,12 +185,11 @@ else()
   else()
       set(CTEST_SUBMISSION_GROUP "${PYCICLE_BASE}")
   endif()
-  debug_execute_process(
-    COMMAND bash "-c" "-e"
-                      "${make_repo_copy_} &&
-                       cd ${CTEST_SOURCE_DIRECTORY} &&
-                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE} &&
-                       ${CTEST_GIT_COMMAND} fetch origin &&
+  debug_execute_bash(
+    COMMAND           "${make_repo_copy_} +
+                       cd ${CTEST_SOURCE_DIRECTORY} +
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE} +
+                       ${CTEST_GIT_COMMAND} fetch origin +
                        ${CTEST_GIT_COMMAND} reset --hard"
     WORKING_DIRECTORY "${PYCICLE_PR_ROOT}"
     TITLE   "Checkout branch"
@@ -335,9 +333,9 @@ endif (WITH_MEMCHECK AND CTEST_MEMORYCHECK_COMMAND)
 # recent results and use them to update the github  pull request status
 # we will get the TAG from ctest and use it to find the correct XML files
 # with our Configure/Build/Test errors/warnings
-debug_execute_process(
-  COMMAND bash "-c"
-    "TEMP=$(head -n 1 ${PYCICLE_BINARY_DIRECTORY}/Testing/TAG);
+debug_execute_bash(
+  COMMAND
+    "TEMP=$(head -n 1 ${PYCICLE_BINARY_DIRECTORY}/Testing/TAG)+
     {
     grep '<Error>' ${PYCICLE_BINARY_DIRECTORY}/Testing/$TEMP/Configure.xml | wc -l
     grep '<Error>' ${PYCICLE_BINARY_DIRECTORY}/Testing/$TEMP/Build.xml | wc -l
