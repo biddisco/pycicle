@@ -105,9 +105,9 @@ if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/.git")
   if (NOT EXISTS "${PYCICLE_LOCAL_GIT_COPY}/.git")
     message("Local repo cache \"${PYCICLE_LOCAL_GIT_COPY}/.git\" missing, using full clone of src repo")
     if (PYCICLE_GITHUB_ORGANISATION)
-      set (make_repo_copy_ "git clone git@github.com:${PYCICLE_GITHUB_ORGANISATION}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
+      set (make_repo_copy_ "${CTEST_GIT_COMMAND} clone git@github.com:${PYCICLE_GITHUB_ORGANISATION}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
     elseif (PYCICLE_GITHUB_USER_LOGIN)
-      set (make_repo_copy_ "git clone git@github.com:${PYCICLE_GITHUB_USER_NAME}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
+      set (make_repo_copy_ "${CTEST_GIT_COMMAND} clone git@github.com:${PYCICLE_GITHUB_USER_NAME}/${PYCICLE_GITHUB_PROJECT_NAME}.git ${CTEST_SOURCE_DIRECTORY}")
     endif()
   endif()
   message("${make_repo_copy_}")
@@ -145,40 +145,34 @@ if (NOT PYCICLE_PR STREQUAL "${PYCICLE_BASE}")
     MESSAGE "Could not copy local repo"
   )
 
-  debug_execute_process(
-    COMMAND bash "-c" "-e"
-                      "${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH}"
-    WORKING_DIRECTORY "${CTEST_SOURCE_DIRECTORY}"
-    TITLE   "Delete old PR branch"
-    MESSAGE "Could not delete old ${GIT_BRANCH} (first time test?)"
-  )
-
-  debug_execute_bash(
-    COMMAND           "echo 'Checking out base branch' +
-                       ${CTEST_GIT_COMMAND} checkout -f ${PYCICLE_BASE} +
-                       echo 'Fetching from origin' +
-                       ${CTEST_GIT_COMMAND} fetch --all +
-                       echo 'reset --hard origin/${PYCICLE_BASE}' +
-                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_BASE} +
-                       echo 'checkout new ${GIT_BRANCH}' +
-                       ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH} +
-                       echo 'pull from ${PYCICLE_BRANCH}' +
-                       ${CTEST_GIT_COMMAND} pull origin ${PYCICLE_BRANCH} --no-edit +
-                       echo 'switch back to base' +
-                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE} +
-                       echo 'clean remaining cruft' +
+  execute_process(
+    COMMAND "bash" "-c" "echo '1. Checking out base branch' ;
+                       ${CTEST_GIT_COMMAND} checkout -f ${PYCICLE_BASE} ;
+                       echo '2. Fetching from origin' ;
+                       ${CTEST_GIT_COMMAND} fetch --all ;
+                       echo '3. reset --hard origin/${PYCICLE_BASE}' ;
+                       ${CTEST_GIT_COMMAND} reset --hard origin/${PYCICLE_BASE} ;
+                       echo '4. Delete old ${GIT_BRANCH} branch' ;
+                       ${CTEST_GIT_COMMAND} branch -D ${GIT_BRANCH} ;
+                       echo '5. Create branch ${GIT_BRANCH}' ;
+                       ${CTEST_GIT_COMMAND} checkout -b ${GIT_BRANCH} ;
+                       echo '6. pull from ${PYCICLE_BRANCH}' ;
+                       ${CTEST_GIT_COMMAND} pull origin '${PYCICLE_BRANCH}' --no-edit ;
+                       echo '7. switch back to base' ;
+                       ${CTEST_GIT_COMMAND} checkout ${PYCICLE_BASE} ;
+                       echo '8. clean any remaining cruft' ;
                        ${CTEST_GIT_COMMAND} clean -fd"
     WORKING_DIRECTORY "${CTEST_SOURCE_DIRECTORY}"
-    TITLE   "Update + merge PR branch"
-    MESSAGE "Update PR failed - Can you access github from the build location?"
-    FATAL
+#    TITLE   "Update + merge PR branch"
+#    MESSAGE "Update PR failed - Can you access github from the build location?"
+#    FATAL
   )
   # the update command will checkout the merged PR branch
   set(CTEST_GIT_UPDATE_OPTIONS "checkout" "${GIT_BRANCH}")
 
 else()
   #####################################################################
-  # This is a just branch test and not a PR
+  # This is a just a base branch(master?) test and not a PR
   #####################################################################
   if ("master" STREQUAL "${PYCICLE_BASE}")
     set(CTEST_SUBMISSION_GROUP "Master")
