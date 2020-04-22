@@ -106,6 +106,7 @@ set(PYCICLE_JOB_SCRIPT_TEMPLATE "#!/bin/bash
 #SBATCH --exclusive
 #SBATCH --constraint=gpu
 #SBATCH --partition=normal
+#SBATCH --output=${PYCICLE_ROOT}/build/${PYCICLE_PROJECT_NAME}-${PYCICLE_PR}-${PYCICLE_BUILD_STAMP}-${PYCICLE_RANDOM}-%j.out
 
 export CRAYPE_LINK_TYPE=dynamic
 
