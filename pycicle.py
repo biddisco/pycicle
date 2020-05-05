@@ -143,7 +143,7 @@ def get_command_line_args():
     # here. Right now it just takes a string to be run in shell
     #----------------------------------------------
     parser.add_argument('--pre_ctest_commands', dest='pre_ctest_commands', type=str,
-                        default=None, help="Pre ctest commands")
+                        default=None, help='Pre ctest commands')
 
     #----------------------------------------------
     # enable/debug mode
@@ -155,19 +155,19 @@ def get_command_line_args():
     # enable/debug display mode
     #----------------------------------------------
     parser.add_argument('-D', '--debug-info', dest='debug_info', action='store_true',
-                        default=False, help="Display extra debugging info (but build as normal)")
+                        default=False, help='Display extra debugging info (but build as normal)')
 
     #----------------------------------------------
     # force rebuild mode
     #----------------------------------------------
     parser.add_argument('-f', '--force', dest='force', action='store_true',
-                        help="Force rebuild of active PRs on next check")
+                        help='Force rebuild of active PRs on next check')
 
     #----------------------------------------------
     # basic access control
     #----------------------------------------------
     parser.add_argument('-a', '--access-control', dest='access_control', action='store_true',
-                        help="On PRs whose last commit was authored by a org member or the user themselves will be built and tested.")
+                        help='On PRs whose last commit was authored by a org member or the user themselves will be built and tested.')
 
     #----------------------------------------------
     # set default path for pycicle work dir
@@ -231,7 +231,13 @@ def get_command_line_args():
     # CDash Server
     #--------------------------------------------------------------------------
     parser.add_argument('--cdash-server', dest='cdash_server',
-                        help='CDash server', default=None)
+                        default=None, help='CDash server')
+
+    #----------------------------------------------
+    # set username for ssh access to remote machine
+    #----------------------------------------------
+    parser.add_argument('-s', '--ssh-user', dest='sshusername', type=to_unicode,
+                        default=None, help='Specify ssh username for remote machine access')
 
     #----------------------------------------------
     # print summary of parse args
@@ -252,6 +258,7 @@ def get_command_line_args():
     print('pycicle: token          :', args.user_token)
     print('pycicle: machines       :', args.machines)
     print('pycicle: machine        :', machine, '(only 1 supported currently)')
+    print('pycicle: ssh user       :', args.sshusername)
     print('pycicle: PR             :', args.pull_request)
     print('pycicle: cmake options  :', args.cmake_options)
     options = {}
@@ -455,7 +462,7 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
             cmd1.append(args.pre_ctest_commands)
         cmd1.append('ctest')
         cmd1 = ' '.join(cmd1)
-        cmd = ['ssh', remote_ssh, cmd1, '--debug -S' if args.debug else '-S',
+        cmd = ['ssh', sshusername + remote_ssh, cmd1, '--debug -S' if args.debug else '-S',
                pycicle_path + '/pycicle/' + script ]
         # sending lists of options over SSH requires escaping them
         cmake_options = cmake_options.replace('"','\\"')
@@ -517,7 +524,7 @@ def choose_and_launch(project, machine, branch_id, branch_name, cmake_options, n
 def erase_file(remote_ssh, file):
     # erase the pycicle scrape file if we have set status corectly
     if 'local' not in remote_ssh:
-        cmd = ['ssh', remote_ssh ]
+        cmd = ['ssh', sshusername + remote_ssh]
     else:
         cmd = []
     cmd = cmd + [ 'rm', '-f', file]
@@ -537,7 +544,7 @@ def find_scrape_files(project, machine) :
     #
     try:
         if 'local' not in remote_ssh:
-            cmd = ['ssh', remote_ssh ]
+            cmd = ['ssh', sshusername + remote_ssh]
         else:
             cmd = []
 
@@ -573,7 +580,7 @@ def scrape_testing_results(project, machine, scrape_file, branch_id, branch_name
     remote_ssh  = pyc_p.get_setting_for_machine(project, machine, 'PYCICLE_MACHINE')
 
     if 'local' not in remote_ssh:
-        cmd = ['ssh', remote_ssh ]
+        cmd = ['ssh', sshusername + remote_ssh]
     else:
         cmd = []
     cmd = cmd + [ 'cat', scrape_file ]
@@ -690,7 +697,7 @@ def delete_old_files(machine, path, days) :
     Dirs        = []
 
     if 'local' not in remote_ssh:
-        cmd_transport = ['ssh', remote_ssh ]
+        cmd_transport = ['ssh', sshusername + remote_ssh]
     else:
         cmd_transport = []
     cmd = cmd_transport + ['find', directory,
@@ -760,7 +767,10 @@ if __name__ == "__main__":
         cdash_drop_method = "https"
     builds_per_pr_str   = pyc_p.get_setting_for_machine_project(args.project, machine, 'PYCICLE_BUILDS_PER_PR')
     builds_per_pr       = int(builds_per_pr_str)
-
+    if args.sshusername:
+        sshusername = args.sshusername + '@'
+    else:
+        sshusername = ''
     pyc_p.debug_print('-' * 30)
     print('PYCICLE_GITHUB_PROJECT_NAME  =', github_reponame)
     if github_organisation:
