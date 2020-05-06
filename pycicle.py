@@ -567,17 +567,16 @@ def find_scrape_files(project, machine) :
 
         result = run_command(cmd, args.debug)
         print(result)
-        pyc_p.debug_print('find pycicle-TAG using', cmd, 'gives :\n', result)
 
-        for s in result:
-            tagfile = s.decode('utf-8')
+        for tagfile in result:
             JobFiles.append(tagfile)
-            pyc_p.debug_print('#'*5, tagfile)
+            pyc_p.debug_print('Processing', tagfile)
             # for each build dir, return the PR number and results file
             m = re.search(search_path + project + '-([0-9]+).*/pycicle-TAG.txt', tagfile)
             if m:
-                PR_numbers[m.group(1)] = tagfile
-                pyc_p.debug_print('#'*5, 'Regex search pycicle-TAG gives PR:', m.group(1))
+                pyc_p.debug_print('Regex search pycicle-TAG gives PR:', m.group(1))
+                # create default empty list (if needed) and then add item to list
+                PR_numbers.setdefault(m.group(1), []).append(tagfile)
 
     except Exception as e:
         print("Exception", e, " : "
@@ -962,13 +961,14 @@ if __name__ == "__main__":
                 print('Scraping results:', 'Time since last check', scrape_tdiff.seconds, '(s)')
                 builds_done = find_scrape_files(args.project, machine)
                 print('scrape files for PRs', builds_done)
-                for branch_id in builds_done:
+                for branch_id, tagfiles in builds_done.items():
                     if branch_id in pr_list:
-                        # machine, scrape_file, branch_id, branch_name, head_commit
-                        scrape_testing_results(
-                            args.project,
-                            pr_list[branch_id][0], builds_done.get(branch_id),
-                            branch_id, pr_list[branch_id][1], pr_list[branch_id][2])
+                        for tagfile in tagfiles:
+                            # machine, scrape_file, branch_id, branch_name, head_commit
+                            scrape_testing_results(
+                                args.project,
+                                pr_list[branch_id][0], tagfile,
+                                branch_id, pr_list[branch_id][1], pr_list[branch_id][2])
                     else:
                         # just delete the file, it is probably an old one
                         erase_file(
