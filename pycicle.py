@@ -11,6 +11,7 @@
 #--------------------------------------------------------------------------
 #--------------------------------------------------------------------------
 from __future__ import absolute_import, division, print_function, unicode_literals
+import requests
 import github
 import ssl
 import os
@@ -714,6 +715,24 @@ def delete_old_files(machine, path, days) :
     except Exception as ex:
         print('Cleanup failed for ', machine, ex)
 
+def git_login(github_organisation, github_userlogin):
+    if github_organisation:
+        print("github init     : ({},{})".format(github_organisation, args.user_token))
+        git  = github.Github(github_organisation, args.user_token)
+    elif github_userlogin:
+        print("github init     : ({},{})".format(github_userlogin, args.user_token))
+        git = github.Github(github_userlogin, args.user_token)
+    elif args.user_token:
+        print("github init     : ({})".format(args.user_token))
+        git = github.Github(args.user_token)
+    else:
+        print('github init     : No login mode specified')
+    if not github_userlogin:
+        github_userlogin = git.get_user().login
+    print("Github Login    :",git.get_user().login)
+    print("Github (User)   :",github_userlogin)
+    print("Github Reponame :",github_reponame)
+    return git
 
 #--------------------------------------------------------------------------
 # main program starts here
@@ -797,22 +816,7 @@ if __name__ == "__main__":
     org = None
 
     try:        
-        if github_organisation:
-            print("github init     : ({},{})".format(github_organisation, args.user_token))
-            git  = github.Github(github_organisation, args.user_token)
-        elif github_userlogin:
-            print("github init     : ({},{})".format(github_userlogin, args.user_token))
-            git = github.Github(github_userlogin, args.user_token)
-        elif args.user_token:
-            print("github init     : ({})".format(args.user_token))
-            git = github.Github(args.user_token)
-        else:
-            print('github init     : No login mode specified')
-        if not github_userlogin:
-            github_userlogin = git.get_user().login
-        print("Github Login    :",git.get_user().login)
-        print("Github (User)   :",github_userlogin)
-        print("Github Reponame :",github_reponame)
+        git = git_login(github_organisation, github_userlogin)
         try:
             if github_organisation:
                 org = git.get_organization(github_organisation)
@@ -857,9 +861,17 @@ if __name__ == "__main__":
             print('Checking github:', 'Time since last check:', github_tdiff.seconds, '(s)')
             print('-' * 30)
 
-            base_branch = repo.get_branch(github_base) #should be PYCICLE_BASE
-            base_sha    = base_branch.commit.sha
-            pyc_p.debug_print(base_branch)
+            try:
+                base_branch = repo.get_branch(github_base) #should be PYCICLE_BASE
+                base_sha    = base_branch.commit.sha
+                pyc_p.debug_print(base_branch)
+
+            except requests.exceptions.ConnectionError as ex:
+                # github might have closed the connection after a long delay
+                # so we will reconnect using the same credentials as before
+                print('Github ConnectionError:', ex)
+                git = git_login(github_organisation, github_userlogin)
+
             #
             pull_requests = []
             # just get a single PR if that was all that was asked for
