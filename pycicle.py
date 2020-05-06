@@ -402,24 +402,45 @@ def find_build_options(project, machine, commandline_options) :
     return cmake_string, cdash_string
 
 #--------------------------------------------------------------------------
-# Execute a shell comand and display the output as it appears
+# Format the host access command prefix for ssh if it is a remote machine
 #--------------------------------------------------------------------------
-def run_command(cmd, debug=False):
+def format_command(remote_ssh, sshusername):
+    if 'local' not in remote_ssh:
+        cmd = ['ssh', sshusername + remote_ssh]
+    else:
+        cmd = []
+    return cmd
+
+#--------------------------------------------------------------------------
+# Execute a shell comand and display the output as it appears
+# returns output as string list with empty lines removed
+# if shellmode is true, the subprocess command can execute multiple
+# bash commands using the usual ';' or '&&' chaining operators
+#--------------------------------------------------------------------------
+def run_command(cmd, debug=False, shellmode=False):
     try:
+        output = []
         if debug:
-            print('\n', '-' * 20, 'Debug\n', subprocess.list2cmdline(cmd))
+            print('\n', '-' * 20, 'Debug\n\n', subprocess.list2cmdline(cmd))
         else:
-            print('\n', '-' * 20, 'Executing\n', subprocess.list2cmdline(cmd))
-            print('\n', '-' * 30)
+            shell_string = '(Shell=True)' if shellmode else ''
+            print('\n', '-' * 20, 'Executing ',shell_string, '\n\n', subprocess.list2cmdline(cmd))
+            print('\n', '-' * 20, 'Output\n')
+            if shellmode:
+                cmd = ' '.join(cmd)
             process = subprocess.Popen(cmd,
                 stderr=subprocess.STDOUT,
-                stdout=subprocess.PIPE)
+                stdout=subprocess.PIPE,
+                shell=shellmode)
             for line in iter(process.stdout.readline, b''):
                 sys.stdout.write(line.decode(sys.stdout.encoding))
-        print('\n', '-' * 30, 'Finished execution')
+                output.append(line.decode(sys.stdout.encoding).rstrip())
+        print('\n', '-' * 20, 'Finished execution')
     except Exception as ex:
         print('\n', '*' * 30, "Caught Exception from subprocess :\n", ex)
         print('\n', '*' * 30)
+
+    return output
 
 #--------------------------------------------------------------------------
 # launch a command that will start one build
@@ -453,27 +474,23 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
         pyc_p.debug_print("direct build:", args.project)
         script = 'dashboard_script.cmake'
 
-    config_path = 'unset_value_for_testing_only'
+    cmd = format_command(remote_ssh, sshusername)
+    # Setup the environment (often even cmake comes from a module)
+    if args.pre_ctest_commands:
+        cmd = cmd + (args.pre_ctest_commands).split() + [' && ']
+    cmd = cmd + ['ctest', '--debug', '-S'] if args.debug else cmd + ['ctest', '-S']
+
     if 'local' not in remote_ssh:
-        # We need to setup the environment on the remote machine,
-        # often even cmake comes from a module or the like.
-        org_dir = '.'
-        cmd1 = []
-        if args.pre_ctest_commands:
-            cmd1.append(args.pre_ctest_commands)
-        cmd1.append('ctest')
-        cmd1 = ' '.join(cmd1)
-        cmd = ['ssh', sshusername + remote_ssh, cmd1, '--debug -S' if args.debug else '-S',
-               pycicle_path + '/pycicle/' + script ]
         # sending lists of options over SSH requires escaping them
         cmake_options = cmake_options.replace('"','\\"')
         cmake_options = '\"' + cmake_options + '\"'
         config_path = pycicle_path + pyc_p.remote_config_path
+        cmd = cmd + [pycicle_path + '/pycicle/' + script]
     else:
         # if we're local we assume the current context has the module setup
         pyc_p.debug_print("Local build working in:", os.getcwd())
-        cmd = ['ctest', '--debug -S' if args.debug else '-S', script ]
         config_path = pyc_p.config_path
+        cmd = cmd + [script]
 
     if github_organisation:
        cmd = cmd + [ '-DPYCICLE_GITHUB_ORGANISATION=' + github_organisation ]
@@ -505,7 +522,6 @@ def launch_build(machine, branch_id, branch_name, cmake_options, cdash_string) :
                   '-DCTEST_COMMAND=":"' ]
 
     run_command(cmd, args.debug)
-    return None
 
 #--------------------------------------------------------------------------
 # launch one build from a list of options
@@ -524,12 +540,9 @@ def choose_and_launch(project, machine, branch_id, branch_name, cmake_options, n
 #--------------------------------------------------------------------------
 def erase_file(remote_ssh, file):
     # erase the pycicle scrape file if we have set status corectly
-    if 'local' not in remote_ssh:
-        cmd = ['ssh', sshusername + remote_ssh]
-    else:
-        cmd = []
+    cmd = format_command(remote_ssh, sshusername)
     cmd = cmd + [ 'rm', '-f', file]
-    run_command(cmd)
+    run_command(remote_ssh, cmd, args.debug)
     print('File removed', file)
 
 #--------------------------------------------------------------------------
@@ -543,12 +556,8 @@ def find_scrape_files(project, machine) :
     JobFiles   = []
     PR_numbers = {}
     #
+    cmd = format_command(remote_ssh, sshusername)
     try:
-        if 'local' not in remote_ssh:
-            cmd = ['ssh', sshusername + remote_ssh]
-        else:
-            cmd = []
-
         search_path = remote_path + '/build/'
         print("Scraping in {}.".format(search_path))
         cmd = cmd + [ 'find', search_path,
@@ -556,9 +565,10 @@ def find_scrape_files(project, machine) :
                       '-path', '\'' + search_path + project + '-*' + '\'',
                       '-name', 'pycicle-TAG.txt']
 
-        pyc_p.debug_print('executing', cmd)
-        result = subprocess.check_output(cmd).splitlines()
+        result = run_command(cmd, args.debug)
+        print(result)
         pyc_p.debug_print('find pycicle-TAG using', cmd, 'gives :\n', result)
+
         for s in result:
             tagfile = s.decode('utf-8')
             JobFiles.append(tagfile)
@@ -580,10 +590,7 @@ def find_scrape_files(project, machine) :
 def scrape_testing_results(project, machine, scrape_file, branch_id, branch_name, head_commit) :
     remote_ssh  = pyc_p.get_setting_for_machine(project, machine, 'PYCICLE_MACHINE')
 
-    if 'local' not in remote_ssh:
-        cmd = ['ssh', sshusername + remote_ssh]
-    else:
-        cmd = []
+    cmd = format_command(remote_ssh, sshusername)
     cmd = cmd + [ 'cat', scrape_file ]
 
     Config_Errors = 0
@@ -597,53 +604,50 @@ def scrape_testing_results(project, machine, scrape_file, branch_id, branch_name
     else:
         origin = 'unknown'
 
-    try:
-        result = subprocess.check_output(cmd).split()
-        for s in result: Errors.append(s.decode('utf-8'))
-        print('Config/Build/Test Errors are', Errors)
+    result = run_command(cmd, args.debug)
+    for s in result:
+        Errors.append(s.decode('utf-8'))
+    print('Config/Build/Test Errors are', Errors)
 
-        Config_Errors = int(Errors[0])
-        Build_Errors  = int(Errors[1])
-        Test_Errors   = int(Errors[2])
-        StatusValid   = True if len(Errors)>3 else False
-        if StatusValid:
-            DateStamp = Errors[3]
-            DateURL   = DateStamp[0:4]+'-'+DateStamp[4:6]+'-'+DateStamp[6:8]
-            print('Extracted date as', DateURL)
+    Config_Errors = int(Errors[0])
+    Build_Errors  = int(Errors[1])
+    Test_Errors   = int(Errors[2])
+    StatusValid   = True if len(Errors)>3 else False
+    if StatusValid:
+        DateStamp = Errors[3]
+        DateURL   = DateStamp[0:4]+'-'+DateStamp[4:6]+'-'+DateStamp[6:8]
+        print('Extracted date as', DateURL)
 
-            URL = ('{}://{}/{}/index.php?project='.format(cdash_drop_method, cdash_server, cdash_http_path) + cdash_project_name +
-                   '&date=' + DateURL +
-                   '&filtercount=1' +
-                   '&field1=buildname/string&compare1=63&value1=' +
-                   branch_id + '-' + branch_name)
-            print("URL:", URL)
-            if args.debug:
-                print('Debug github PR status', URL)
-            elif args.no_status:
-                print('Disabled github PR status setting', URL)
-            else:
-                head_commit.create_status(
-                    'success' if Config_Errors==0 else 'failure',
-                    target_url=URL,
-                    description='errors ' + Errors[0],
-                    context='pycicle ' + origin + ' Config')
-                head_commit.create_status(
-                    'success' if Build_Errors==0 else 'failure',
-                    target_url=URL,
-                    description='errors ' + Errors[1],
-                    context='pycicle ' + origin + ' Build')
-                head_commit.create_status(
-                    'success' if Test_Errors==0 else 'failure',
-                    target_url=URL,
-                    description='errors ' + Errors[2],
-                    context='pycicle ' + origin + ' Test')
-                print('Done setting github PR status for', origin)
+        URL = ('{}://{}/{}/index.php?project='.format(cdash_drop_method, cdash_server, cdash_http_path) + cdash_project_name +
+               '&date=' + DateURL +
+               '&filtercount=1' +
+               '&field1=buildname/string&compare1=63&value1=' +
+               branch_id + '-' + branch_name)
+        print("URL:", URL)
+        if args.debug:
+            print('Debug github PR status', URL)
+        elif args.no_status:
+            print('Disabled github PR status setting', URL)
+        else:
+            head_commit.create_status(
+                'success' if Config_Errors==0 else 'failure',
+                target_url=URL,
+                description='errors ' + Errors[0],
+                context='pycicle ' + origin + ' Config')
+            head_commit.create_status(
+                'success' if Build_Errors==0 else 'failure',
+                target_url=URL,
+                description='errors ' + Errors[1],
+                context='pycicle ' + origin + ' Build')
+            head_commit.create_status(
+                'success' if Test_Errors==0 else 'failure',
+                target_url=URL,
+                description='errors ' + Errors[2],
+                context='pycicle ' + origin + ' Test')
+            print('Done setting github PR status for', origin)
 
-        erase_file(remote_ssh, scrape_file)
-        print('-' * 30)
-
-    except Exception as ex:
-        print('Scrape failed for PR', branch_id, ex)
+    erase_file(remote_ssh, scrape_file)
+    print('-' * 30)
 
 #--------------------------------------------------------------------------
 # random string of N chars
@@ -697,23 +701,16 @@ def delete_old_files(machine, path, days) :
     directory   = remote_path + '/' + path
     Dirs        = []
 
-    if 'local' not in remote_ssh:
-        cmd_transport = ['ssh', sshusername + remote_ssh]
-    else:
-        cmd_transport = []
-    cmd = cmd_transport + ['find', directory,
+    cmd1 = format_command(remote_ssh, sshusername)
+    cmd = cmd1 + ['find', directory,
         '-mindepth', '1', '-maxdepth', '1', '-type', 'd', '-mtime', '+' + str(days)]
 
-    pyc_p.debug_print('Cleanup find:', cmd)
-    try:
-        result = subprocess.check_output(cmd).split()
-        for s in result:
-            temp = s.decode('utf-8')
-            cmd = cmd_transport + [ 'rm', '-rf', temp]
-            print('Deleting old/stale directory : ', temp)
-            result = subprocess.check_output(cmd).split()
-    except Exception as ex:
-        print('Cleanup failed for ', machine, ex)
+    result = run_command(cmd, args.debug)
+
+    for s in result:
+        cmd = cmd1 + [ 'rm', '-rf', s]
+        print('Deleting old/stale directory : ', s)
+        run_command(cmd, args.debug)
 
 def git_login(github_organisation, github_userlogin):
     if github_organisation:
