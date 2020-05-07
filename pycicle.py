@@ -1,5 +1,5 @@
+#  Copyright (c) 2017-2020 John Biddiscombe
 #  Copyright (c) 2019      Peter Doak
-#  Copyright (c) 2017-2019 John Biddiscombe
 #
 #  Distributed under the Boost Software License, Version 1.0. (See accompanying
 #  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -23,6 +23,7 @@ import string
 import random
 import socket
 import datetime
+from   dateutil.relativedelta import relativedelta
 import argparse
 import shlex     # splitting strings whilst keeping quoted sections
 import copy
@@ -433,8 +434,9 @@ def run_command(cmd, debug=False, shellmode=False):
                 stdout=subprocess.PIPE,
                 shell=shellmode)
             for line in iter(process.stdout.readline, b''):
-                sys.stdout.write(line.decode(sys.stdout.encoding))
-                output.append(line.decode(sys.stdout.encoding).rstrip())
+                templine = line.decode(sys.stdout.encoding).rstrip()
+                sys.stdout.write(templine)
+                output.append(templine)
         print('\n', '-' * 20, 'Finished execution')
     except Exception as ex:
         print('\n', '*' * 30, "Caught Exception from subprocess :\n", ex)
@@ -842,8 +844,9 @@ if __name__ == "__main__":
     # main polling routine
     #--------------------------------------------------------------------------
     #
-    github_t1       = datetime.datetime.now()
-    scrape_t1       = github_t1 + datetime.timedelta(hours=-1)
+    startuptime     = datetime.datetime.now()
+    github_t1       = startuptime
+    scrape_t1       = startuptime + datetime.timedelta(hours=-1)
     scrape_tdiff    = 0
     force           = args.force
     #
@@ -853,8 +856,10 @@ if __name__ == "__main__":
             github_t2     = datetime.datetime.now()
             github_tdiff  = github_t2 - github_t1
             github_t1     = github_t2
+            uptime        = relativedelta(github_t2, startuptime)
             print('-' * 30)
-            print('Checking github:', 'Time since last check:', github_tdiff.seconds, '(s)')
+            print(f'Checking github - elapsed = {github_tdiff.seconds}s : '
+                  f'Uptime = {uptime.years:02}Y:{uptime.months:02}M:{uptime.days:02}D {uptime.hours:02}h:{uptime.minutes:02}m:{uptime.seconds:02}s')
             print('-' * 30)
 
             try:
