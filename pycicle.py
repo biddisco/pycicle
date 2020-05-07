@@ -605,7 +605,7 @@ def scrape_testing_results(project, machine, scrape_file, branch_id, branch_name
 
     result = run_command(cmd, args.debug)
     for s in result:
-        Errors.append(s.decode('utf-8'))
+        Errors.append(s)
     print('Config/Build/Test Errors are', Errors)
 
     Config_Errors = int(Errors[0])
