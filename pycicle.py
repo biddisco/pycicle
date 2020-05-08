@@ -407,7 +407,11 @@ def find_build_options(project, machine, commandline_options) :
 #--------------------------------------------------------------------------
 def format_command(remote_ssh, sshusername):
     if 'local' not in remote_ssh:
-        cmd = ['ssh', sshusername + remote_ssh]
+        cmd = ['ssh',
+               '-o', 'PreferredAuthentications=publickey',  # No password prompts
+               '-o', 'PasswordAuthentication=no',           # alternative option
+               '-o', 'StrictHostKeyChecking=yes',           # never modify known_hosts
+               '-q', sshusername + remote_ssh]
     else:
         cmd = []
     return cmd
@@ -435,7 +439,7 @@ def run_command(cmd, debug=False, shellmode=False):
                 shell=shellmode)
             for line in iter(process.stdout.readline, b''):
                 templine = line.decode(sys.stdout.encoding).rstrip()
-                sys.stdout.write(templine)
+                print(templine)
                 output.append(templine)
         print('\n', '-' * 20, 'Finished execution')
     except Exception as ex:
